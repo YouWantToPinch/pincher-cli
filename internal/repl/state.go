@@ -18,6 +18,13 @@ type command struct {
 	description string
 }
 
+func (c *command) require(argCount int) error {
+	if len(c.args) < argCount {
+		return fmt.Errorf("Not enough arguments for command: %s", c.name)
+	}
+	return nil
+}
+
 type cmdFlag struct {
 	word        string
 	letter      string
@@ -31,7 +38,6 @@ type cmdHandler struct {
 	flags       []cmdFlag
 	description string
 	callback    func(*State, command) error
-	minArgs     int64
 }
 
 func (c *cmdHandler) parseFlags(args []string) {
@@ -46,9 +52,6 @@ func (c *commandRegistry) run(s *State, cmd command) error {
 	handler, ok := c.handlers[cmd.name]
 	if !ok {
 		return fmt.Errorf("Unknown command '%s'", cmd.name)
-	}
-	if len(cmd.args) < int(handler.minArgs) {
-		return fmt.Errorf("Not enough arguments for command: %s", handler.name)
 	}
 	return handler.callback(s, cmd)
 }

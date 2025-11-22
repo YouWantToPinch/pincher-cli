@@ -24,7 +24,6 @@ func StartRepl(cliState *State) {
 	cmdRegistry.register("help", cmdHandler{
 		name:        "help",
 		description: "See usage of the program",
-		minArgs:     0,
 		callback:    handlerHelp,
 	})
 	cmdRegistry.register("config", cmdHandler{
@@ -36,7 +35,6 @@ func StartRepl(cliState *State) {
 			cmdFlag{word: "load", letter: "l",
 				description: "load a user configuration from the local machine"},
 		},
-		minArgs:  1,
 		callback: handlerConfig,
 	})
 	cmdRegistry.register("connect", cmdHandler{
@@ -68,6 +66,11 @@ func StartRepl(cliState *State) {
 		name:        "list",
 		description: "list instances of some resource from the database",
 		callback:    handlerList,
+	})
+	cmdRegistry.register("login", cmdHandler{
+		name:        "login",
+		description: "log in as a user in the database",
+		callback:    handlerLogin,
 	})
 
 	scanner := bufio.NewScanner(os.Stdin)

@@ -79,7 +79,7 @@ func handlerReady(s *State, cmd command) error {
 		fmt.Println("Server is ready!")
 		return nil
 	}
-	fmt.Print("Server not ready.")
+	fmt.Println("Server not ready.")
 	return nil
 }
 
@@ -88,9 +88,51 @@ func handlerList(s *State, cmd command) error {
 }
 
 func handlerAdd(s *State, cmd command) error {
-	return fmt.Errorf("ERROR: Command not implemented.")
+	if err := cmd.require(1); err != nil {
+		return err
+	}
+
+	switch cmd.args[0] {
+	case "user":
+		if err := cmd.require(4); err != nil {
+			return err
+		}
+
+		if cmd.args[2] != cmd.args[3] {
+			return fmt.Errorf("ERROR: password fields did not match.")
+		}
+		userCreated, err := s.Client.CreateUser(cmd.args[1], cmd.args[2])
+		if err != nil {
+			return fmt.Errorf("ERROR: %s", err)
+		}
+		if userCreated {
+			fmt.Println("User " + cmd.args[1] + " successfully created with new password.")
+			//fmt.Println("For help with logging in, see: `help login`")
+			return nil
+		} else {
+			return fmt.Errorf("ERROR: username already exists.")
+		}
+	default:
+		return fmt.Errorf("ERROR: Command not implemented.")
+	}
 }
 
 func handlerReport(s *State, cmd command) error {
 	return fmt.Errorf("ERROR: Command not implemented.")
+}
+
+func handlerLogin(s *State, cmd command) error {
+	if err := cmd.require(3); err != nil {
+		return err
+	}
+	if cmd.args[0] != "user" {
+		return fmt.Errorf("Usage: login user")
+	}
+	user, err := s.Client.LoginUser(cmd.args[1], cmd.args[2])
+	if err != nil {
+		return fmt.Errorf("ERROR: %s", err)
+	}
+	s.Client.JSONWebToken = user.Token
+	fmt.Printf("Logged in as %s, using new access token: %s\n", user.Username, user.Token)
+	return nil
 }

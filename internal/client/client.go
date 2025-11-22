@@ -12,7 +12,7 @@ import (
 type Client struct {
 	cache        pcache.Cache
 	httpClient   http.Client
-	jsonWebToken string
+	JSONWebToken string
 	BaseUrl      string
 }
 
@@ -42,7 +42,7 @@ func (c *Client) MakeRequest(method, path, token string, body any) (*http.Reques
 	if body != nil {
 		b, err := json.Marshal(body)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		buffer = bytes.NewReader(b)
 	}
