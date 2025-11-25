@@ -5,7 +5,16 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/YouWantToPinch/pincher-cli/internal/client"
+	"github.com/YouWantToPinch/pincher-cli/internal/config"
 )
+
+type State struct {
+	Config          *config.Config
+	Client          *client.Client
+	CommandRegistry *commandRegistry
+}
 
 func StartRepl(cliState *State) {
 	if cliState == nil {

@@ -2,16 +2,7 @@ package repl
 
 import (
 	"fmt"
-
-	"github.com/YouWantToPinch/pincher-cli/internal/client"
-	"github.com/YouWantToPinch/pincher-cli/internal/config"
 )
-
-type State struct {
-	Config          *config.Config
-	Client          *client.Client
-	CommandRegistry *commandRegistry
-}
 
 // command represents a user-attempted input
 type command struct {
@@ -55,24 +46,6 @@ type cmdHandler struct {
 	// The further away a command gets from relevance to the state of
 	// the CLI at startup, the lower priority it ought to be given.
 	priority int
-}
-
-func ExtractStrings[T any](items []T, f func(T) string) []string {
-	strings := make([]string, len(items))
-	for i, v := range items {
-		strings[i] = f(v)
-	}
-	return strings
-}
-
-func MaxOfStrings(s []string) int {
-	maxLen := 0
-	for _, str := range s {
-		if len(str) > maxLen {
-			maxLen = len(str)
-		}
-	}
-	return maxLen
 }
 
 func (c *cmdHandler) help() {
