@@ -19,7 +19,7 @@ func (c *Client) doRequest(method, url, token string, payload, out any) (*http.R
 	defer resp.Body.Close()
 
 	if out != nil {
-		json.NewDecoder(resp.Body).Decode(out)
+		err := json.NewDecoder(resp.Body).Decode(out)
 		if err != nil {
 			return resp, err
 		}
