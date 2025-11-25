@@ -41,7 +41,6 @@ type cmdHandler struct {
 }
 
 func (c *cmdHandler) parseFlags(args []string) {
-	return
 }
 
 type commandRegistry struct {
@@ -62,7 +61,6 @@ func (c *commandRegistry) register(name string, handler cmdHandler) {
 		fmt.Printf("ERROR: Command '%s' already exists in command registry\n", name)
 	}
 	c.handlers[name] = handler
-	return
 }
 
 func (c *commandRegistry) exists(name string) error {
