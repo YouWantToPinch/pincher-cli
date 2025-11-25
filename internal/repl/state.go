@@ -59,7 +59,7 @@ func (c *commandRegistry) run(s *State, cmd command) error {
 func (c *commandRegistry) register(name string, handler cmdHandler) {
 	_, ok := c.handlers[name]
 	if ok {
-		fmt.Println(fmt.Sprintf("ERROR: Command '%s' already exists in command registry", name))
+		fmt.Printf("ERROR: Command '%s' already exists in command registry\n", name)
 	}
 	c.handlers[name] = handler
 	return

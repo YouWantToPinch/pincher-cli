@@ -35,12 +35,12 @@ func handlerConfig(s *State, cmd command) error {
 			return err
 		} else {
 			if entry.(tmodels.ModelMakeStruct).QuitWithCancel {
-				fmt.Println(fmt.Sprintf("Canceled user configuration changes."))
+				fmt.Printf("Canceled user configuration changes.\n")
 			} else {
 				err = entry.(tmodels.ModelMakeStruct).ParseStruct(&newConfig)
 				s.Config = &newConfig
 				s.Config.WriteToFile()
-				fmt.Println(fmt.Sprintf("Saved configuration changes."))
+				fmt.Println("Saved configuration changes.")
 			}
 		}
 		return nil
