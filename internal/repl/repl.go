@@ -69,23 +69,15 @@ func StartRepl(cliState *State) {
 		callback:    handlerReady,
 	})
 
-	cmdRegistry.register("add", cmdHandler{
-		name:        "add",
-		description: "Create an instance of some resource in the database",
+	cmdRegistry.register("user", cmdHandler{
+		name:        "user",
+		description: "Create a new user, or log in",
 		priority:    50,
-		callback:    handlerAdd,
-		usage: `add <resource> [options] [arguments]
-add user <new_username> <new_password> <new_password>`,
+		callback:    handlerUser,
+		usage: `user <action> [options] [arguments]
+user add <new_username> <new_password> <new_password>
+user login <username> <password>`,
 	})
-
-	cmdRegistry.register("login", cmdHandler{
-		name:        "login",
-		description: "log in as a user in the database",
-		usage:       "login user <username> <password>",
-		priority:    75,
-		callback:    handlerLogin,
-	})
-	cliState.CommandRegistry = cmdRegistry
 
 	cmdRegistry.register("report", cmdHandler{
 		name:        "report",
@@ -100,6 +92,7 @@ add user <new_username> <new_password> <new_password>`,
 		callback:    handlerList,
 	})
 
+	cliState.CommandRegistry = cmdRegistry
 	scanner := bufio.NewScanner(os.Stdin)
 	fmt.Println("Welcome to the Pincher CLI!")
 	fmt.Println("Use 'help' for available commands.")

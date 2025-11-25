@@ -107,13 +107,13 @@ func handlerList(s *State, cmd command) error {
 	return fmt.Errorf("ERROR: Command not implemented.")
 }
 
-func handlerAdd(s *State, cmd command) error {
+func handlerUser(s *State, cmd command) error {
 	if err := cmd.require(1); err != nil {
 		return err
 	}
 
 	switch cmd.args[0] {
-	case "user":
+	case "add":
 		if err := cmd.require(4); err != nil {
 			return err
 		}
@@ -132,6 +132,18 @@ func handlerAdd(s *State, cmd command) error {
 		} else {
 			return fmt.Errorf("ERROR: username already exists.")
 		}
+	case "login":
+		if err := cmd.require(3); err != nil {
+			return err
+		}
+
+		user, err := s.Client.LoginUser(cmd.args[1], cmd.args[2])
+		if err != nil {
+			return fmt.Errorf("ERROR: %s", err)
+		}
+		s.Client.JSONWebToken = user.Token
+		fmt.Printf("Logged in as %s, using new access token: %s\n", user.Username, user.Token)
+		return nil
 	default:
 		return fmt.Errorf("ERROR: Command not implemented.")
 	}
@@ -139,20 +151,4 @@ func handlerAdd(s *State, cmd command) error {
 
 func handlerReport(s *State, cmd command) error {
 	return fmt.Errorf("ERROR: Command not implemented.")
-}
-
-func handlerLogin(s *State, cmd command) error {
-	if err := cmd.require(3); err != nil {
-		return err
-	}
-	if cmd.args[0] != "user" {
-		return fmt.Errorf("Usage: login user")
-	}
-	user, err := s.Client.LoginUser(cmd.args[1], cmd.args[2])
-	if err != nil {
-		return fmt.Errorf("ERROR: %s", err)
-	}
-	s.Client.JSONWebToken = user.Token
-	fmt.Printf("Logged in as %s, using new access token: %s\n", user.Username, user.Token)
-	return nil
 }
