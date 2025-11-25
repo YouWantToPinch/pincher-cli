@@ -8,14 +8,15 @@ import (
 )
 
 type State struct {
-	Config *config.Config
-	Client *client.Client
+	Config          *config.Config
+	Client          *client.Client
+	CommandRegistry *commandRegistry
 }
 
+// command represents a user-attempted input
 type command struct {
-	name        string
-	args        []string
-	description string
+	name string
+	args []string
 }
 
 func (c *command) require(argCount int) error {
@@ -33,14 +34,61 @@ type cmdFlag struct {
 	isOptional  bool
 }
 
+// cmdHandler represents a command which can be run.
 type cmdHandler struct {
 	name        string
-	flags       []cmdFlag
 	description string
+	flags       []cmdFlag
+	usage       string
 	callback    func(*State, command) error
+	// priority refers to a handler's relevance to users.
+	// It is purely used for the purpose of sorting outputs related
+	// to the handlers.
+	// The lower the value, the higher the priority.
+	//
+	// Handlers more integral to the base functioning of the CLI,
+	// such as 'exit', 'help', and 'config', reserve values 0-99.
+	//
+	// Handlers more relevant after a login, such as 'list',
+	// reserve values over 99.
+	//
+	// The further away a command gets from relevance to the state of
+	// the CLI at startup, the lower priority it ought to be given.
+	priority int
 }
 
-func (c *cmdHandler) parseFlags(args []string) {
+func ExtractStrings[T any](items []T, f func(T) string) []string {
+	strings := make([]string, len(items))
+	for i, v := range items {
+		strings[i] = f(v)
+	}
+	return strings
+}
+
+func MaxOfStrings(s []string) int {
+	maxLen := 0
+	for _, str := range s {
+		if len(str) > maxLen {
+			maxLen = len(str)
+		}
+	}
+	return maxLen
+}
+
+func (c *cmdHandler) help() {
+	fmt.Println("COMMAND: " + c.name)
+	fmt.Println(c.description)
+	if c.usage != "" {
+		fmt.Println("USAGE: " + c.usage)
+	}
+	if len(c.flags) > 0 {
+		fmt.Println("OPTIONS:")
+		maxLen := MaxOfStrings(ExtractStrings(c.flags, func(c cmdFlag) string { return c.word }))
+		for _, flag := range c.flags {
+			fmt.Printf("  %-*s  %s\n", maxLen, flag.word, flag.description)
+		}
+	}
+	fmt.Println()
 }
 
 type commandRegistry struct {
@@ -63,10 +111,18 @@ func (c *commandRegistry) register(name string, handler cmdHandler) {
 	c.handlers[name] = handler
 }
 
-func (c *commandRegistry) exists(name string) error {
-	_, ok := c.handlers[name]
+func (c *commandRegistry) exists(name string) (cmdHandler, bool) {
+	handler, ok := c.handlers[name]
 	if ok {
-		return nil
+		return handler, ok
 	}
-	return fmt.Errorf("Command does not exist")
+	return cmdHandler{}, false
+}
+
+func (c *commandRegistry) GetRegisteredHandlers() []cmdHandler {
+	handlers := make([]cmdHandler, 0, len(c.handlers))
+	for _, handler := range c.handlers {
+		handlers = append(handlers, handler)
+	}
+	return handlers
 }

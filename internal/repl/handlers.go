@@ -3,6 +3,7 @@ package repl
 import (
 	"fmt"
 	"os"
+	"sort"
 
 	"github.com/YouWantToPinch/pincher-cli/internal/config"
 	"github.com/YouWantToPinch/pincher-cli/internal/tmodels"
@@ -16,8 +17,27 @@ func handlerExit(s *State, cmd command) error {
 }
 
 func handlerHelp(s *State, cmd command) error {
-	fmt.Println("Exit, Help, Config, Log, Connect, Report, Add, List")
-	return nil
+	if len(cmd.args) >= 1 {
+		if handler, exists := s.CommandRegistry.exists(cmd.args[0]); exists {
+			handler.help()
+			return nil
+		}
+	}
+	if handler, exists := s.CommandRegistry.exists("help"); exists {
+		handler.help()
+		fmt.Println("AVAILABLE COMMANDS: ")
+		registered := s.CommandRegistry.GetRegisteredHandlers()
+		sort.Slice(registered, func(i, j int) bool {
+			return registered[i].priority < registered[j].priority
+		})
+		maxLen := MaxOfStrings(ExtractStrings(registered, func(c cmdHandler) string { return c.name }))
+		for _, handler := range registered {
+			fmt.Printf("  %-*s  %s\n", maxLen, handler.name, handler.description)
+		}
+
+		return nil
+	}
+	return fmt.Errorf("ERROR: Could not get help for command: 'help'")
 }
 
 func handlerConfig(s *State, cmd command) error {
@@ -107,7 +127,7 @@ func handlerAdd(s *State, cmd command) error {
 		}
 		if userCreated {
 			fmt.Println("User " + cmd.args[1] + " successfully created with new password.")
-			//fmt.Println("For help with logging in, see: `help login`")
+			fmt.Println("For help with logging in, see: `help login`")
 			return nil
 		} else {
 			return fmt.Errorf("ERROR: username already exists.")

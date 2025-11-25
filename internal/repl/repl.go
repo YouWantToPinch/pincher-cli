@@ -12,71 +12,90 @@ func StartRepl(cliState *State) {
 		panic("startRepl: cliState is nil")
 	}
 
-	cmdRegistry := commandRegistry{
+	cmdRegistry := &commandRegistry{
 		handlers: make(map[string]cmdHandler),
 	}
-	//cmdRegistry.register("reset", handlerReset)
 	cmdRegistry.register("exit", cmdHandler{
 		name:        "exit",
 		description: "exit the program",
+		priority:    0,
 		callback:    handlerExit,
 	})
 	cmdRegistry.register("help", cmdHandler{
 		name:        "help",
-		description: "See usage of the program",
+		description: "See usage of another command\n",
+		usage:       "help <command>",
+		priority:    1,
 		callback:    handlerHelp,
 	})
 	cmdRegistry.register("config", cmdHandler{
 		name:        "config",
 		description: "Add, Load, or Save a local user configuration for the Pincher-CLI",
+		usage:       "config (--edit | --load)",
 		flags: []cmdFlag{
-			cmdFlag{word: "edit", letter: "e",
+			{word: "edit", letter: "e",
 				description: "edit current user configuration"},
-			cmdFlag{word: "load", letter: "l",
-				description: "load a user configuration from the local machine"},
+			{word: "load", letter: "l",
+				description: "load user configuration from the local machine"},
 		},
+		priority: 2,
 		callback: handlerConfig,
-	})
-	cmdRegistry.register("connect", cmdHandler{
-		name:        "connect",
-		description: "Conenct to a remote or local database",
-		callback:    handlerConnect,
 	})
 	cmdRegistry.register("log", cmdHandler{
 		name:        "log",
 		description: "see Pincher-CLI logs",
+		priority:    3,
 		callback:    handlerLog,
 	})
-	cmdRegistry.register("report", cmdHandler{
-		name:        "report",
-		description: "Get a report from the database",
-		callback:    handlerReport,
+	cmdRegistry.register("connect", cmdHandler{
+		name:        "connect",
+		description: "Conenct to a remote or local database",
+		priority:    4,
+		callback:    handlerConnect,
 	})
 	cmdRegistry.register("ready", cmdHandler{
 		name:        "ready",
 		description: "Check server readiness",
+		priority:    5,
 		callback:    handlerReady,
 	})
+
 	cmdRegistry.register("add", cmdHandler{
 		name:        "add",
-		description: "add an instance of some resource to the database",
+		description: "Create an instance of some resource in the database",
+		priority:    50,
 		callback:    handlerAdd,
+		usage: `add <resource> [options] [arguments]
+add user <new_username> <new_password> <new_password>`,
+	})
+
+	cmdRegistry.register("login", cmdHandler{
+		name:        "login",
+		description: "log in as a user in the database",
+		usage:       "login user <username> <password>",
+		priority:    75,
+		callback:    handlerLogin,
+	})
+	cliState.CommandRegistry = cmdRegistry
+
+	cmdRegistry.register("report", cmdHandler{
+		name:        "report",
+		description: "Get a report from the database",
+		priority:    100,
+		callback:    handlerReport,
 	})
 	cmdRegistry.register("list", cmdHandler{
 		name:        "list",
 		description: "list instances of some resource from the database",
+		priority:    101,
 		callback:    handlerList,
-	})
-	cmdRegistry.register("login", cmdHandler{
-		name:        "login",
-		description: "log in as a user in the database",
-		callback:    handlerLogin,
 	})
 
 	scanner := bufio.NewScanner(os.Stdin)
 	fmt.Println("Welcome to the Pincher CLI!")
 	fmt.Println("Use 'help' for available commands.")
 	for {
+		fmt.Println("__________________")
 		fmt.Print("Pincher > ")
 		if scanner.Scan() {
 			input := scanner.Text()
