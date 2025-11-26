@@ -31,7 +31,7 @@ func StartRepl(cliState *State) {
 	})
 	cmdRegistry.register("help", cmdHandler{
 		name:        "help",
-		description: "See usage of another command\n",
+		description: "See usage of another command",
 		usage:       "help <command>",
 		priority:    1,
 		callback:    handlerHelp,

@@ -4,65 +4,50 @@ import (
 	"fmt"
 )
 
-func handlerUser(s *State, cmd command) error {
-	if err := cmd.require(1); err != nil {
-		return err
-	}
-
-	switch cmd.args[0] {
+func handlerUser(s *State, c handlerContext) error {
+	action := c.args.pfx()
+	switch action {
 	case "add":
-		if err := cmd.require(4); err != nil {
-			return err
-		}
-
-		if cmd.args[2] != cmd.args[3] {
-			return fmt.Errorf("ERROR: password fields did not match.")
-		}
-		userCreated, err := s.Client.CreateUser(cmd.args[1], cmd.args[2])
-		if err != nil {
-			return fmt.Errorf("ERROR: %s", err)
-		}
-		if userCreated {
-			fmt.Println("User " + cmd.args[1] + " successfully created with new password.")
-			fmt.Println("For help with logging in, see: `help login`")
-			return nil
-		} else {
-			return fmt.Errorf("ERROR: username already exists.")
-		}
+		return handle_userAdd(s, c)
 	case "login":
-		if err := cmd.require(3); err != nil {
-			return err
-		}
-
-		user, err := s.Client.LoginUser(cmd.args[1], cmd.args[2])
-		if err != nil {
-			return fmt.Errorf("ERROR: %s", err)
-		}
-		s.Client.JSONWebToken = user.Token
-		fmt.Printf("Logged in as %s, using new access token: %s\n", user.Username, user.Token)
-		return nil
+		return handle_userLogin(s, c)
+	case "":
+		return fmt.Errorf("ERROR: no action specified")
 	default:
-		return fmt.Errorf("ERROR: Command not implemented.")
+		return fmt.Errorf("ERROR: invalid action for user: %s", action)
 	}
 }
 
-func handle_userAdd(s *State, cmd command) error {
-	if err := cmd.require(4); err != nil {
-		return err
-	}
+func handle_userAdd(s *State, c handlerContext) error {
+	username := c.args.pfx()
+	password := c.args.pfx()
+	retypedPassword := c.args.pfx()
 
-	if cmd.args[2] != cmd.args[3] {
+	if password != retypedPassword {
 		return fmt.Errorf("ERROR: password fields did not match.")
 	}
-	userCreated, err := s.Client.CreateUser(cmd.args[1], cmd.args[2])
+	userCreated, err := s.Client.CreateUser(username, password)
 	if err != nil {
 		return fmt.Errorf("ERROR: %s", err)
 	}
 	if userCreated {
-		fmt.Println("User " + cmd.args[1] + " successfully created with new password.")
-		fmt.Println("For help with logging in, see: `help login`")
+		fmt.Println("User " + username + " successfully created with new password.")
+		fmt.Println("For help logging in, see: `help login`")
 		return nil
 	} else {
 		return fmt.Errorf("ERROR: username already exists.")
 	}
+}
+
+func handle_userLogin(s *State, c handlerContext) error {
+	username := c.args.pfx()
+	password := c.args.pfx()
+
+	user, err := s.Client.LoginUser(username, password)
+	if err != nil {
+		return fmt.Errorf("ERROR: %s", err)
+	}
+	s.Client.JSONWebToken = user.Token
+	fmt.Printf("Logged in as %s, using new access token: %s\n", user.Username, user.Token)
+	return nil
 }

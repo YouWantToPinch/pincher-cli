@@ -6,18 +6,31 @@ import (
 	"sort"
 )
 
-func handlerExit(s *State, cmd command) error {
+// ========= MIDDLEWARE ==============
+// NOTE: This is handled by commandRegistry.run() instead!
+// Keep this comment in case middleware written in this fashion
+// may ever become necessary in the future.
+/*
+func middlewareAddArgsContext(next HandlerFunc) HandlerFunc {
+	return HandlerFunc(func(s *State, c handlerContext) error {
+		c.args.init(&c.cmd)
+		return next(s, c)
+	})
+}
+*/
+// =========== HANDLERS =============
+
+func handlerExit(s *State, c handlerContext) error {
 	fmt.Println("Closing Pincher-CLI program...")
 	os.Exit(0)
 	return nil
 }
 
-func handlerHelp(s *State, cmd command) error {
-	if len(cmd.args) >= 1 {
-		if handler, exists := s.CommandRegistry.exists(cmd.args[0]); exists {
-			handler.help()
-			return nil
-		}
+func handlerHelp(s *State, c handlerContext) error {
+	commandInquiry := c.args.pfx()
+	if handler, exists := s.CommandRegistry.exists(commandInquiry); exists {
+		handler.help()
+		return nil
 	}
 	if handler, exists := s.CommandRegistry.exists("help"); exists {
 		handler.help()
@@ -36,17 +49,17 @@ func handlerHelp(s *State, cmd command) error {
 	return fmt.Errorf("ERROR: Could not get help for command: 'help'")
 }
 
-func handlerLog(s *State, cmd command) error {
+func handlerLog(s *State, c handlerContext) error {
 	return fmt.Errorf("ERROR: Command not implemented.")
 }
 
-func handlerConnect(s *State, cmd command) error {
+func handlerConnect(s *State, c handlerContext) error {
 	s.Client.BaseUrl = s.Config.BaseURL
 	fmt.Println("Set URL from config: " + s.Config.BaseURL)
 	return nil
 }
 
-func handlerReady(s *State, cmd command) error {
+func handlerReady(s *State, c handlerContext) error {
 	isReady, err := s.Client.GetServerReady()
 	if err != nil {
 		return fmt.Errorf("ERROR: Server could not be reached; %s", err)
@@ -59,10 +72,10 @@ func handlerReady(s *State, cmd command) error {
 	return nil
 }
 
-func handlerList(s *State, cmd command) error {
+func handlerList(s *State, c handlerContext) error {
 	return fmt.Errorf("ERROR: Command not implemented.")
 }
 
-func handlerReport(s *State, cmd command) error {
+func handlerReport(s *State, c handlerContext) error {
 	return fmt.Errorf("ERROR: Command not implemented.")
 }
