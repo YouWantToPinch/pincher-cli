@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/YouWantToPinch/pincher-cli/internal/client"
 	"github.com/YouWantToPinch/pincher-cli/internal/config"
@@ -41,10 +40,10 @@ func StartRepl(cliState *State) {
 		name:        "config",
 		description: "Add, Load, or Save a local user configuration for the Pincher-CLI",
 		usage:       "config (--edit | --load)",
-		flags: []cmdFlag{
-			{word: "edit", letter: "e",
+		opts: []cmdOption{
+			{word: "edit",
 				description: "edit current user configuration"},
-			{word: "load", letter: "l",
+			{word: "load",
 				description: "load user configuration from the local machine"},
 		},
 		priority: 2,
@@ -104,16 +103,10 @@ user login <username> <password>`,
 			if len(input) == 0 {
 				continue
 			}
-			command := command{name: cleanInput(input)[0], args: cleanInput(input)[1:]}
-			err := cmdRegistry.run(cliState, command)
+			err := cmdRegistry.run(cliState, input)
 			if err != nil {
 				fmt.Println(err.Error())
 			}
 		}
 	}
-}
-
-func cleanInput(text string) []string {
-	lower := strings.ToLower(text)
-	return strings.Fields(lower)
 }

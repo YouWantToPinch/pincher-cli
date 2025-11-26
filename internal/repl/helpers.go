@@ -1,5 +1,9 @@
 package repl
 
+import (
+	"strings"
+)
+
 func ExtractStrings[T any](items []T, f func(T) string) []string {
 	strings := make([]string, len(items))
 	for i, v := range items {
@@ -16,4 +20,9 @@ func MaxOfStrings(s []string) int {
 		}
 	}
 	return maxLen
+}
+
+func cleanInput(text string) []string {
+	lower := strings.ToLower(text)
+	return strings.Fields(lower)
 }

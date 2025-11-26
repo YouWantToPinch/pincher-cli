@@ -2,12 +2,83 @@ package repl
 
 import (
 	"fmt"
+	"strings"
 )
 
 // command represents a user-attempted input
 type command struct {
 	name string
+	// positional arguments that a handler may expect
 	args []string
+	// options, mapped to their own subset of arguments, that a handler may permit
+	opts map[string][]string
+}
+
+func (c *command) hasOpt(name string) ([]string, bool) {
+	opt, ok := c.opts[name]
+	if ok {
+		return opt, true
+	}
+	return []string{}, false
+}
+
+func (c *command) parse(h *cmdHandler, input string) error {
+
+	for _, opt := range h.opts {
+		if opt.isMandatory && !strings.Contains(input, "-"+opt.letter()) {
+			return fmt.Errorf("ERROR: command could not be parsed; missing mandatory flag: '--%s'", opt.word)
+		}
+	}
+
+	cmdFields := cleanInput(input)
+	c.name = cmdFields[0]
+	parsingFlag := ""
+	argCountNeeded := 0
+
+	for i := 1; i < len(cmdFields); i++ {
+		// have we encountered a flag?
+		if strings.HasPrefix(cmdFields[i], "-") {
+			// return error if we encounter a flag while still parsing another one
+			if parsingFlag != "" {
+				return fmt.Errorf("ERROR: command could not be parsed; missing positional argument(s) for option: '--%s'", parsingFlag)
+			}
+			// find out of the handler takes this flag
+			userOpt := strings.TrimLeft(cmdFields[i], "-")
+			foundMatch := false
+			for _, opt := range h.opts {
+				fmt.Println("Checking: " + opt.word + " against " + userOpt)
+				foundMatch = (opt.word == userOpt || opt.letter() == userOpt)
+				if foundMatch {
+					c.opts[opt.word] = []string{}
+					if opt.argCount > 0 {
+						parsingFlag = opt.word
+						argCountNeeded = opt.argCount
+					}
+					break
+				}
+			}
+			// return error if this flag is not taken by the handler
+			if !foundMatch {
+				return fmt.Errorf("ERROR: command includes unexpected option '%s'", cmdFields[i])
+			}
+		} else {
+			if parsingFlag == "" {
+				// not parsing a flag; include in arguments
+				c.args = append(c.args, cmdFields[i])
+			} else {
+				// parsing a flag; include in flag's own argument stack
+				c.opts[parsingFlag] = append(c.opts[parsingFlag], cmdFields[i])
+				argCountNeeded -= 1
+				if argCountNeeded == 0 {
+					parsingFlag = ""
+				}
+			}
+		}
+	}
+	if argCountNeeded > 0 {
+		return fmt.Errorf("ERROR: command could not be parsed; missing positional argument(s) for option: '--%s'", parsingFlag)
+	}
+	return nil
 }
 
 func (c *command) require(argCount int) error {
@@ -17,19 +88,22 @@ func (c *command) require(argCount int) error {
 	return nil
 }
 
-type cmdFlag struct {
+type cmdOption struct {
 	word        string
-	letter      string
-	argCount    int64
+	argCount    int
 	description string
-	isOptional  bool
+	isMandatory bool
+}
+
+func (c *cmdOption) letter() string {
+	return string(c.word[0])
 }
 
 // cmdHandler represents a command which can be run.
 type cmdHandler struct {
 	name        string
 	description string
-	flags       []cmdFlag
+	opts        []cmdOption
 	usage       string
 	callback    func(*State, command) error
 	// priority refers to a handler's relevance to users.
@@ -54,10 +128,10 @@ func (c *cmdHandler) help() {
 	if c.usage != "" {
 		fmt.Println("USAGE: " + c.usage)
 	}
-	if len(c.flags) > 0 {
+	if len(c.opts) > 0 {
 		fmt.Println("OPTIONS:")
-		maxLen := MaxOfStrings(ExtractStrings(c.flags, func(c cmdFlag) string { return c.word }))
-		for _, flag := range c.flags {
+		maxLen := MaxOfStrings(ExtractStrings(c.opts, func(c cmdOption) string { return c.word }))
+		for _, flag := range c.opts {
 			fmt.Printf("  %-*s  %s\n", maxLen, flag.word, flag.description)
 		}
 	}
@@ -68,11 +142,19 @@ type commandRegistry struct {
 	handlers map[string]cmdHandler
 }
 
-func (c *commandRegistry) run(s *State, cmd command) error {
-	handler, ok := c.handlers[cmd.name]
+func (c *commandRegistry) run(s *State, input string) error {
+	cmd := command{opts: map[string][]string{}}
+
+	handler, ok := c.handlers[cleanInput(input)[0]]
 	if !ok {
 		return fmt.Errorf("Unknown command '%s'", cmd.name)
 	}
+
+	err := cmd.parse(&handler, input)
+	if err != nil {
+		return err
+	}
+
 	return handler.callback(s, cmd)
 }
 
