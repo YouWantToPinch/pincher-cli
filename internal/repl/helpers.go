@@ -23,6 +23,20 @@ func MaxOfStrings(s []string) int {
 }
 
 func cleanInput(text string) []string {
-	lower := strings.ToLower(text)
-	return strings.Fields(lower)
+	fields := []string{}
+	split := strings.Split(text, `"`)
+	for i, substr := range split {
+		if i%2 == 0 {
+			lower := strings.ToLower(substr)
+			addFields := strings.Fields(lower)
+			fields = append(fields, addFields...)
+		} else {
+			fields = append(fields, substr)
+		}
+	}
+	return fields
+}
+
+func nDashes(n int) string {
+	return strings.Repeat("-", n)
 }

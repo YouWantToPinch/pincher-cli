@@ -78,19 +78,6 @@ user add <new_username> <new_password> <new_password>
 user login <username> <password>`,
 	})
 
-	cmdRegistry.register("report", cmdHandler{
-		name:        "report",
-		description: "Get a report from the database",
-		priority:    100,
-		callback:    handlerReport,
-	})
-	cmdRegistry.register("list", cmdHandler{
-		name:        "list",
-		description: "list instances of some resource from the database",
-		priority:    101,
-		callback:    handlerList,
-	})
-
 	cliState.CommandRegistry = cmdRegistry
 	scanner := bufio.NewScanner(os.Stdin)
 	fmt.Println("Welcome to the Pincher CLI!")

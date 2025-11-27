@@ -9,10 +9,15 @@ import (
 	"time"
 )
 
+type userInfo struct {
+	JSONWebToken string
+	Username     string
+}
+
 type Client struct {
 	cache        pcache.Cache
 	httpClient   http.Client
-	JSONWebToken string
+	LoggedInUser userInfo
 	BaseUrl      string
 }
 

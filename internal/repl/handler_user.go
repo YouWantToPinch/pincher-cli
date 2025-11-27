@@ -47,7 +47,35 @@ func handle_userLogin(s *State, c handlerContext) error {
 	if err != nil {
 		return fmt.Errorf("ERROR: %s", err)
 	}
-	s.Client.JSONWebToken = user.Token
+	s.Client.LoggedInUser.JSONWebToken = user.Token
+	s.Client.LoggedInUser.Username = user.Username
+	registerResourceCommands(s)
 	fmt.Printf("Logged in as %s, using new access token: %s\n", user.Username, user.Token)
+	return nil
+}
+
+func registerResourceCommands(s *State) error {
+	s.CommandRegistry.register("budget", cmdHandler{
+		name:        "budget",
+		description: "Manage " + s.Client.LoggedInUser.Username + "'s budgets",
+		priority:    100,
+		callback:    handlerBudget,
+		opts: []cmdOption{
+			{
+				word:        "role",
+				description: "Filter results by user role. Can be ADMIN, MANAGER, CONTRIBUTOR, or VIEWER.",
+				argCount:    1,
+			},
+			{
+				word:        "notes",
+				description: "Give your budget some notes",
+				argCount:    1,
+			},
+		},
+		usage: `budget <action> (arguments) [options]
+budget add <name> [ --notes ]
+budget list [ --role ]
+budget view <budget_name>`,
+	})
 	return nil
 }
