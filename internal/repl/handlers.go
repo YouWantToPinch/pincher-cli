@@ -50,7 +50,7 @@ func handlerHelp(s *State, c handlerContext) error {
 }
 
 func handlerLog(s *State, c handlerContext) error {
-	return fmt.Errorf("ERROR: Command not implemented.")
+	return fmt.Errorf("ERROR: Command not implemented")
 }
 
 func handlerConnect(s *State, c handlerContext) error {
@@ -73,9 +73,9 @@ func handlerReady(s *State, c handlerContext) error {
 }
 
 func handlerList(s *State, c handlerContext) error {
-	return fmt.Errorf("ERROR: Command not implemented.")
+	return fmt.Errorf("ERROR: Command not implemented")
 }
 
 func handlerReport(s *State, c handlerContext) error {
-	return fmt.Errorf("ERROR: Command not implemented.")
+	return fmt.Errorf("ERROR: Command not implemented")
 }

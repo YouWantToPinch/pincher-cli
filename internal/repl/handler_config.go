@@ -12,17 +12,17 @@ func handlerConfig(s *State, c handlerContext) error {
 	action := c.args.pfx()
 	switch action {
 	case "edit":
-		return handle_editConfig(s, c)
+		return handleConfigEdit(s, c)
 
 	case "load":
-		return handle_LoadConfig(s, c)
+		return handleConfigLoad(s, c)
 	default:
-		return fmt.Errorf("Expected one of two options: ( --edit | --load)")
+		return fmt.Errorf("expected one of two options: ( --edit | --load)")
 
 	}
 }
 
-func handle_editConfig(s *State, c handlerContext) error {
+func handleConfigEdit(s *State, c handlerContext) error {
 	fmt.Println("Edit your local configuration: ")
 	newConfig := config.Config{}
 	newConfig = *s.Config
@@ -49,13 +49,13 @@ func handle_editConfig(s *State, c handlerContext) error {
 	}
 }
 
-func handle_LoadConfig(s *State, c handlerContext) error {
+func handleConfigLoad(s *State, c handlerContext) error {
 	userConfig := config.Config{}
 	var err error
 	userConfig, err = config.Read()
 	if err != nil {
 		s.Config = &userConfig
-		return fmt.Errorf("Trouble loading config: %s", err.Error())
+		return fmt.Errorf("trouble loading config: %s", err.Error())
 	}
 	s.Config = &userConfig
 	fmt.Println("Loaded configuration settings.")

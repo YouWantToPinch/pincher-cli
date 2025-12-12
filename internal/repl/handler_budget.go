@@ -12,12 +12,12 @@ func handlerBudget(s *State, c handlerContext) error {
 	action := c.args.pfx()
 	switch action {
 	case "add":
-		return handle_budgetAdd(s, c)
+		return handleBudgetAdd(s, c)
 	case "list":
-		return handle_budgetList(s, c)
+		return handleBudgetList(s, c)
 	case "view":
-		//return handle_budgetView(s, c)
-		return fmt.Errorf("ERROR: action not implemented.")
+		// return handle_budgetView(s, c)
+		return fmt.Errorf("ERROR: action not implemented")
 	case "":
 		return fmt.Errorf("ERROR: no action specified")
 	default:
@@ -25,7 +25,7 @@ func handlerBudget(s *State, c handlerContext) error {
 	}
 }
 
-func handle_budgetAdd(s *State, c handlerContext) error {
+func handleBudgetAdd(s *State, c handlerContext) error {
 	name := c.args.pfx()
 	c.args.trackOptArgs(&c.cmd, "notes")
 	notes := c.args.pfx()
@@ -39,11 +39,11 @@ func handle_budgetAdd(s *State, c handlerContext) error {
 		fmt.Println("See it with: `budget view`")
 		return nil
 	} else {
-		return fmt.Errorf("ERROR: budget could not be created.")
+		return fmt.Errorf("ERROR: budget could not be created")
 	}
 }
 
-func handle_budgetList(s *State, c handlerContext) error {
+func handleBudgetList(s *State, c handlerContext) error {
 	c.args.trackOptArgs(&c.cmd, "role")
 	roleQuery := c.args.pfx()
 	roles := cleanInput(roleQuery)

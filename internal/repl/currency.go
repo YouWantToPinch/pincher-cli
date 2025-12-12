@@ -20,9 +20,11 @@ var Currencies = map[string]Currency{
 	"GBP": {"GBP", "£", '.', ',', true, "Pound Sterling"},
 }
 
-// An abstract unit used to represent some amount in US cents.
+// CurrencyUnit is an abstract unit used to represent some amount in US cents.
 type CurrencyUnit int64
 
+// Format returns a string providing readers with the appropriate visual
+// corresponding to their currency's ISO Code.
 // NOTE: Further localization of this software may require
 // a refactor of this formatting logic.
 func (c CurrencyUnit) Format(ISOCode string, useSymbol bool) string {

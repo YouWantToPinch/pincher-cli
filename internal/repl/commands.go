@@ -23,7 +23,6 @@ func (c *command) hasOpt(name string) ([]string, bool) {
 }
 
 func (c *command) parse(h *cmdHandler, input string) error {
-
 	for _, opt := range h.opts {
 		if opt.isMandatory && !strings.Contains(input, "-"+opt.letter()) {
 			return fmt.Errorf("ERROR: command could not be parsed; missing mandatory flag: '--%s'", opt.word)
@@ -46,7 +45,7 @@ func (c *command) parse(h *cmdHandler, input string) error {
 			userOpt := strings.TrimLeft(cmdFields[i], "-")
 			foundMatch := false
 			for _, opt := range h.opts {
-				//fmt.Println("Checking: " + opt.word + " against " + userOpt) // DEBUG
+				// fmt.Println("Checking: " + opt.word + " against " + userOpt) // DEBUG
 				foundMatch = (opt.word == userOpt || opt.letter() == userOpt)
 				if foundMatch {
 					c.opts[opt.word] = []string{}
@@ -166,7 +165,7 @@ func (a *argTracker) pfx() string {
 	index, args := a.chooseIndex()
 	if *index >= len(*args) {
 		return ""
-		//return fmt.Sprintf("ERROR: %d >= %d", *index, len(*args))
+		// return fmt.Sprintf("ERROR: %d >= %d", *index, len(*args))
 	}
 	current := *index
 	*index += 1
@@ -198,7 +197,7 @@ func (c *commandRegistry) run(s *State, input string) error {
 
 	handler, ok := c.handlers[cleanInput(input)[0]]
 	if !ok {
-		return fmt.Errorf("Unknown command '%s'", cmd.name)
+		return fmt.Errorf("unknown command '%s'", cmd.name)
 	}
 
 	err := cmd.parse(&handler, input)

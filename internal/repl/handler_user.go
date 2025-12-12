@@ -8,9 +8,9 @@ func handlerUser(s *State, c handlerContext) error {
 	action := c.args.pfx()
 	switch action {
 	case "add":
-		return handle_userAdd(s, c)
+		return handleUserAdd(s, c)
 	case "login":
-		return handle_userLogin(s, c)
+		return handleUserLogin(s, c)
 	case "":
 		return fmt.Errorf("ERROR: no action specified")
 	default:
@@ -18,13 +18,13 @@ func handlerUser(s *State, c handlerContext) error {
 	}
 }
 
-func handle_userAdd(s *State, c handlerContext) error {
+func handleUserAdd(s *State, c handlerContext) error {
 	username := c.args.pfx()
 	password := c.args.pfx()
 	retypedPassword := c.args.pfx()
 
 	if password != retypedPassword {
-		return fmt.Errorf("ERROR: password fields did not match.")
+		return fmt.Errorf("ERROR: password fields did not match")
 	}
 	userCreated, err := s.Client.CreateUser(username, password)
 	if err != nil {
@@ -35,11 +35,11 @@ func handle_userAdd(s *State, c handlerContext) error {
 		fmt.Println("For help logging in, see: `help login`")
 		return nil
 	} else {
-		return fmt.Errorf("ERROR: username already exists.")
+		return fmt.Errorf("ERROR: username already exists")
 	}
 }
 
-func handle_userLogin(s *State, c handlerContext) error {
+func handleUserLogin(s *State, c handlerContext) error {
 	username := c.args.pfx()
 	password := c.args.pfx()
 
@@ -49,7 +49,10 @@ func handle_userLogin(s *State, c handlerContext) error {
 	}
 	s.Client.LoggedInUser.JSONWebToken = user.Token
 	s.Client.LoggedInUser.Username = user.Username
-	registerResourceCommands(s)
+	err = registerResourceCommands(s)
+	if err != nil {
+		return fmt.Errorf("ERROR: %s", err)
+	}
 	fmt.Printf("Logged in as %s, using new access token: %s\n", user.Username, user.Token)
 	return nil
 }
