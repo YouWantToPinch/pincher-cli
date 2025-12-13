@@ -1,3 +1,5 @@
+// Package repl contains all logic pertaining to the Pincher CLI's Read-Execute-Print loop,
+// including handlers and commands.
 package repl
 
 import (
@@ -39,12 +41,16 @@ func StartRepl(cliState *State) {
 	cmdRegistry.register("config", cmdHandler{
 		name:        "config",
 		description: "Add, Load, or Save a local user configuration for the Pincher-CLI",
-		usage:       "config (--edit | --load)",
+		usage:       "config (edit | load)",
 		opts: []cmdOption{
-			{word: "edit",
-				description: "edit current user configuration"},
-			{word: "load",
-				description: "load user configuration from the local machine"},
+			{
+				word:        "edit",
+				description: "edit current user configuration",
+			},
+			{
+				word:        "load",
+				description: "load user configuration from the local machine",
+			},
 		},
 		priority: 2,
 		callback: handlerConfig,

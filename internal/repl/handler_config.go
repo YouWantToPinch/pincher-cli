@@ -17,15 +17,14 @@ func handlerConfig(s *State, c handlerContext) error {
 	case "load":
 		return handleConfigLoad(s, c)
 	default:
-		return fmt.Errorf("expected one of two options: ( --edit | --load)")
+		return fmt.Errorf("expected one of two arguments: ( edit | load )")
 
 	}
 }
 
 func handleConfigEdit(s *State, c handlerContext) error {
 	fmt.Println("Edit your local configuration: ")
-	newConfig := config.Config{}
-	newConfig = *s.Config
+	newConfig := *s.Config
 	tmodel, err := tmodels.InitialModelMakeStruct(&newConfig, nil, true)
 	if err != nil {
 		return err
@@ -42,7 +41,10 @@ func handleConfigEdit(s *State, c handlerContext) error {
 				return err
 			}
 			s.Config = &newConfig
-			s.Config.WriteToFile()
+			err := s.Config.WriteToFile()
+			if err != nil {
+				return err
+			}
 			fmt.Println("Saved configuration changes.")
 		}
 		return nil
@@ -50,9 +52,8 @@ func handleConfigEdit(s *State, c handlerContext) error {
 }
 
 func handleConfigLoad(s *State, c handlerContext) error {
-	userConfig := config.Config{}
 	var err error
-	userConfig, err = config.Read()
+	userConfig, err := config.Read()
 	if err != nil {
 		s.Config = &userConfig
 		return fmt.Errorf("trouble loading config: %s", err.Error())
