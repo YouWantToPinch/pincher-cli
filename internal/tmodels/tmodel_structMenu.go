@@ -1,7 +1,6 @@
+// Package tmodels provides custom bubbletea models
+// intended for the pincher-cli
 package tmodels
-
-// This bubbletea model can be used to expose primitive struct values to end users
-// 	as if they were elements of a menu.
 
 import (
 	"errors"
@@ -13,7 +12,10 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type ModelMakeStruct struct {
+// TModelStructMenu is a bubbletea model that can be used to expose
+// primitive struct fields to end users for input,
+// as if they were elements of a menu.
+type TModelStructMenu struct {
 	fields []string // fields which can be edited; populated dynamically
 	cursor int      // which field our cursor is pointing at
 	// tracks state of field editing
@@ -23,22 +25,22 @@ type ModelMakeStruct struct {
 	QuitWithCancel bool           // can be used to communicate whether changes ought be saved
 }
 
-func InitialModelMakeStruct(structObj any, fieldList []string, asBlacklist bool) (ModelMakeStruct, error) {
+func InitialTModelStructMenu(structObj any, fieldList []string, asBlacklist bool) (TModelStructMenu, error) {
 	// if fieldList is empty, all fields are exposed to users; otherwise, it is used as a whitelist.
 	// if bool parameter 'asBlacklist' is 'true', the fieldList is used as a blacklist instead of a whitelist.
 	t := reflect.TypeOf(structObj)
 	v := reflect.ValueOf(structObj)
-	if t.Kind() == reflect.Ptr {
+	if t.Kind() == reflect.Pointer {
 		t = t.Elem()
 		v = v.Elem()
 	} else {
-		return ModelMakeStruct{}, errors.New("structObj should be a pointer to struct, so as to have addressable fields")
+		return TModelStructMenu{}, errors.New("structObj should be a pointer to struct, so as to have addressable fields")
 	}
 	if t.Kind() != reflect.Struct {
 		fmt.Println("ERROR: Not a struct. Check your input!")
-		return ModelMakeStruct{}, nil
+		return TModelStructMenu{}, nil
 	}
-	newModel := ModelMakeStruct{
+	newModel := TModelStructMenu{
 		isEditingValue: false,
 		structType:     t,
 		structFields:   make(map[string]any),
@@ -54,7 +56,6 @@ func InitialModelMakeStruct(structObj any, fieldList []string, asBlacklist bool)
 					continue
 				}
 			} else {
-
 				if !(slices.Contains(fieldList, field.Name)) {
 					continue
 				}
@@ -80,15 +81,15 @@ func InitialModelMakeStruct(structObj any, fieldList []string, asBlacklist bool)
 	}
 
 	if len(newModel.structFields) == 0 {
-		return ModelMakeStruct{}, fmt.Errorf("ERROR: No fields to expose to users in struct '%v'", newModel.structType.Name())
+		return TModelStructMenu{}, fmt.Errorf("ERROR: No fields to expose to users in struct '%v'", newModel.structType.Name())
 	}
 
 	return newModel, nil
 }
 
-func (m ModelMakeStruct) ParseStruct(obj any) error {
+func (m TModelStructMenu) ParseStruct(obj any) error {
 	v := reflect.ValueOf(obj)
-	if v.Kind() != reflect.Ptr || v.Elem().Kind() != reflect.Struct {
+	if v.Kind() != reflect.Pointer || v.Elem().Kind() != reflect.Struct {
 		return fmt.Errorf("ERROR: expected a pointer to a struct, got %v", v.Kind())
 	}
 	v = v.Elem()
@@ -116,11 +117,11 @@ func (m ModelMakeStruct) ParseStruct(obj any) error {
 				field.SetBool(val)
 			} else if val, ok := newValue.(int); ok {
 				boolVal := (val != 0)
-				//fmt.Println(fmt.Sprintf("Bool digit value %d translated as: %t", val, boolVal))
+				// fmt.Println(fmt.Sprintf("Bool digit value %d translated as: %t", val, boolVal))
 				field.SetBool(boolVal)
 			} else if val, ok := newValue.(string); ok {
 				boolVal := (val != "f")
-				//fmt.Println(fmt.Sprintf("Bool string value %s translated as: %t", val, boolVal))
+				// fmt.Println(fmt.Sprintf("Bool string value %s translated as: %t", val, boolVal))
 				field.SetBool(boolVal)
 			} else if !ok {
 				fmt.Println("Error parsing digit as boolean value.")
@@ -136,15 +137,13 @@ func (m ModelMakeStruct) ParseStruct(obj any) error {
 	return nil
 }
 
-func (m ModelMakeStruct) Init() tea.Cmd {
+func (m TModelStructMenu) Init() tea.Cmd {
 	// Just return `nil`, which means "no I/O right now, please."
 	return nil
 }
 
-func (m ModelMakeStruct) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-
+func (m TModelStructMenu) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-
 	// Is it a key press?
 	case tea.KeyMsg:
 
@@ -185,7 +184,6 @@ func (m ModelMakeStruct) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		} else {
-
 			if m.isEditingValue {
 				switch m.structFields[m.fields[m.cursor]].(type) {
 				case bool:
@@ -265,12 +263,12 @@ func (m ModelMakeStruct) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	// Return the updated ModelMakeStruct to the Bubble Tea runtime for processing.
+	// Return the updated TModelStructMenu to the Bubble Tea runtime for processing.
 	// Note that we're not returning a command.
 	return m, nil
 }
 
-func (m ModelMakeStruct) View() string {
+func (m TModelStructMenu) View() string {
 	// The header
 	s := "Set values for the following:\n\n"
 
@@ -318,7 +316,7 @@ func (m ModelMakeStruct) View() string {
 	}
 
 	// The footer
-	s += "\nPress q to quit.\n"
+	s += "\nPress s to save and quit.\nPress q to quit without saving.\n"
 
 	// Send the UI for rendering
 	return s

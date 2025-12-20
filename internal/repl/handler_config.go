@@ -25,7 +25,7 @@ func handlerConfig(s *State, c handlerContext) error {
 func handleConfigEdit(s *State, c handlerContext) error {
 	fmt.Println("Edit your local configuration: ")
 	newConfig := *s.Config
-	tmodel, err := tmodels.InitialModelMakeStruct(&newConfig, nil, true)
+	tmodel, err := tmodels.InitialTModelStructMenu(&newConfig, nil, true)
 	if err != nil {
 		return err
 	}
@@ -33,10 +33,10 @@ func handleConfigEdit(s *State, c handlerContext) error {
 	if entry, err := p.Run(); err != nil {
 		return err
 	} else {
-		if entry.(tmodels.ModelMakeStruct).QuitWithCancel {
+		if entry.(tmodels.TModelStructMenu).QuitWithCancel {
 			fmt.Printf("Canceled user configuration changes.\n")
 		} else {
-			err = entry.(tmodels.ModelMakeStruct).ParseStruct(&newConfig)
+			err = entry.(tmodels.TModelStructMenu).ParseStruct(&newConfig)
 			if err != nil {
 				return err
 			}
