@@ -1,3 +1,4 @@
+// Package config handles interpretation of pincher-cli user configuration
 package config
 
 import (
@@ -22,9 +23,9 @@ func getConfigPath() string {
 	return fmt.Sprintf("%s/.config/pincher/%s", homeDir, configFileName)
 }
 
-func (c *Config) New(dbUrl, username string) error {
+func (c *Config) New(dbURL, username string) error {
 	newCfg := Config{
-		BaseURL:        dbUrl,
+		BaseURL:        dbURL,
 		VimKeysEnabled: true,
 	}
 	err := newCfg.WriteToFile()
@@ -52,11 +53,11 @@ func Read() (Config, error) {
 func (c *Config) WriteToFile() error {
 	jsonData, err := json.MarshalIndent(c, "", " \t")
 	if err != nil {
-		return fmt.Errorf("Error: %v", err)
+		return err
 	}
-	err = os.WriteFile(getConfigPath(), jsonData, 0666)
+	err = os.WriteFile(getConfigPath(), jsonData, 0o666)
 	if err != nil {
-		return fmt.Errorf("Error: %v", err)
+		return err
 	}
 	return nil
 }
