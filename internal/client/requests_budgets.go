@@ -14,6 +14,7 @@ type resourceNotes struct {
 }
 
 // CREATE
+
 func (c *Client) CreateBudget(name, notes string) (success bool, error error) {
 	url := c.API() + "/budgets"
 	payload := resourceNotes{
@@ -30,7 +31,7 @@ func (c *Client) CreateBudget(name, notes string) (success bool, error error) {
 	case http.StatusCreated:
 		return true, nil
 	default:
-		return false, fmt.Errorf("Failed to create budget.")
+		return false, fmt.Errorf("failed to create budget")
 	}
 }
 
@@ -51,8 +52,8 @@ func (c *Client) GetBudgets(urlQuery string) ([]Budget, error) {
 	case http.StatusOK:
 		return budgets.Budgets, nil
 	case http.StatusNotFound:
-		return nil, fmt.Errorf("Resource not found!")
+		return nil, fmt.Errorf("resource not found")
 	default:
-		return nil, fmt.Errorf("Failed to retrieve user budgets")
+		return nil, fmt.Errorf("failed to retrieve user budgets")
 	}
 }

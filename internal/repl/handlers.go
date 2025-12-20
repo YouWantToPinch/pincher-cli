@@ -54,7 +54,7 @@ func handlerLog(s *State, c handlerContext) error {
 }
 
 func handlerConnect(s *State, c handlerContext) error {
-	s.Client.BaseUrl = s.Config.BaseURL
+	s.Client.BaseURL = s.Config.BaseURL
 	fmt.Println("Set URL from config: " + s.Config.BaseURL)
 	return nil
 }

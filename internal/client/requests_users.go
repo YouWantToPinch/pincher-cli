@@ -14,6 +14,7 @@ type userCredentials struct {
 }
 
 // CREATE
+
 func (c *Client) CreateUser(username, password string) (success bool, error error) {
 	url := c.API() + "/users"
 	payload := userCredentials{
@@ -30,9 +31,9 @@ func (c *Client) CreateUser(username, password string) (success bool, error erro
 	case http.StatusCreated:
 		return true, nil
 	case http.StatusConflict:
-		return false, fmt.Errorf("Username already exists.")
+		return false, fmt.Errorf("username already exists")
 	default:
-		return false, fmt.Errorf("Failed to create user.")
+		return false, fmt.Errorf("failed to create user")
 	}
 }
 
@@ -53,6 +54,6 @@ func (c *Client) LoginUser(username, password string) (User, error) {
 	case http.StatusOK:
 		return user, nil
 	default:
-		return User{}, fmt.Errorf("Failed to log in as user")
+		return User{}, fmt.Errorf("failed to log in as user")
 	}
 }

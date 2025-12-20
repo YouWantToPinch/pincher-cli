@@ -1,12 +1,14 @@
+// Package client handles pincher-api calls
 package client
 
 import (
 	"bytes"
 	"encoding/json"
-	pcache "github.com/YouWantToPinch/pincher-cli/internal/pinchercache"
 	"io"
 	"net/http"
 	"time"
+
+	pcache "github.com/YouWantToPinch/pincher-cli/internal/pinchercache"
 )
 
 type userInfo struct {
@@ -18,26 +20,26 @@ type Client struct {
 	cache        pcache.Cache
 	httpClient   http.Client
 	LoggedInUser userInfo
-	BaseUrl      string
+	BaseURL      string
 }
 
 func (c *Client) API() string {
-	return c.BaseUrl + "/api"
+	return c.BaseURL + "/api"
 }
 
-func NewClient(timeout, cacheInterval time.Duration, baseUrl string) Client {
+func NewClient(timeout, cacheInterval time.Duration, baseURL string) Client {
 	var url string
-	if baseUrl == "" {
+	if baseURL == "" {
 		url = defaultBaseUrl
 	} else {
-		url = baseUrl
+		url = baseURL
 	}
 	return Client{
 		cache: pcache.NewCache(cacheInterval),
 		httpClient: http.Client{
 			Timeout: timeout,
 		},
-		BaseUrl: url,
+		BaseURL: url,
 	}
 }
 
