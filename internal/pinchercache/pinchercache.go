@@ -1,3 +1,4 @@
+// Package pinchercache provides a cache for the pincher-cli
 package pinchercache
 
 import (
@@ -6,8 +7,8 @@ import (
 )
 
 type cacheEntry struct {
-	createdAt time.Time //time entry was created
-	data      []byte    //raw data we're caching
+	createdAt time.Time // time entry was created
+	data      []byte    // raw data we're caching
 }
 
 type Cache struct {
@@ -24,7 +25,6 @@ func (c *Cache) Add(key string, value []byte) {
 		createdAt: time.Now().UTC(),
 		data:      value,
 	}
-
 }
 
 func (c *Cache) Get(key string) (entryData []byte, found bool) {
@@ -40,7 +40,6 @@ func (c *Cache) Get(key string) (entryData []byte, found bool) {
 }
 
 func (c *Cache) reapLoop() {
-
 	ticker := time.NewTicker(c.interval)
 	defer ticker.Stop()
 
@@ -69,5 +68,4 @@ func NewCache(interval time.Duration) Cache {
 	go cache.reapLoop()
 
 	return cache
-
 }
