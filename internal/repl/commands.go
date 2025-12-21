@@ -14,44 +14,32 @@ type command struct {
 	opts map[string][]string
 }
 
-func (c *command) hasOpt(name string) ([]string, bool) {
-	opt, ok := c.opts[name]
-	if ok {
-		return opt, true
-	}
-	return []string{}, false
-}
-
-func (c *command) parse(h *cmdHandler, input string) error {
-	for _, opt := range h.opts {
-		if opt.isMandatory && !strings.Contains(input, "-"+opt.letter()) {
-			return fmt.Errorf("ERROR: command could not be parsed; missing mandatory flag: '--%s'", opt.word)
-		}
-	}
-
+func (c *command) parse(handler *cmdHandler, input string) error {
 	cmdFields := cleanInput(input)
 	c.name = cmdFields[0]
-	parsingFlag := ""
+	var parsingOptions []cmdElement
+	parsingOptions = handler.options
+	parsingOption := ""
 	argCountNeeded := 0
 
 	for i := 1; i < len(cmdFields); i++ {
 		// have we encountered an option?
 		if strings.HasPrefix(cmdFields[i], "-") {
 			// return error if we encounter an option while still parsing another one
-			if parsingFlag != "" {
-				return fmt.Errorf("ERROR: command could not be parsed; missing positional argument(s) for option: '--%s'", parsingFlag)
+			if parsingOption != "" {
+				return fmt.Errorf("ERROR: command could not be parsed; missing positional argument(s) for option: '--%s'", parsingOption)
 			}
-			// find out of the handler takes this option
+			// find out if the handler takes this option
 			userOpt := strings.TrimLeft(cmdFields[i], "-")
 			foundMatch := false
-			for _, opt := range h.opts {
+			for _, opt := range parsingOptions {
 				// fmt.Println("Checking: " + opt.word + " against " + userOpt) // DEBUG
-				foundMatch = (opt.word == userOpt || opt.letter() == userOpt)
+				foundMatch = (opt.name == userOpt || opt.letter() == userOpt)
 				if foundMatch {
-					c.opts[opt.word] = []string{}
-					if opt.argCount > 0 {
-						parsingFlag = opt.word
-						argCountNeeded = opt.argCount
+					c.opts[opt.name] = []string{}
+					if opt.argCount() > 0 {
+						parsingOption = opt.name
+						argCountNeeded = opt.argCount()
 					}
 					break
 				}
@@ -61,49 +49,86 @@ func (c *command) parse(h *cmdHandler, input string) error {
 				return fmt.Errorf("ERROR: command includes unexpected option '%s'", cmdFields[i])
 			}
 		} else {
-			if parsingFlag == "" {
-				// not parsing a option; include in arguments
+			if parsingOption == "" {
+				// not parsing an option; include in arguments
 				c.args = append(c.args, cmdFields[i])
+				// check whether or not we are past the point of parsing command options,
+				// and onto the opportunity of parsing action options
+				if el, found := findCMDElementWithName(handler.actions, cmdFields[i]); found {
+					parsingOptions = el.options
+				}
 			} else {
 				// parsing a option; include in option's own argument stack
-				c.opts[parsingFlag] = append(c.opts[parsingFlag], cmdFields[i])
+				c.opts[parsingOption] = append(c.opts[parsingOption], cmdFields[i])
 				argCountNeeded -= 1
 				if argCountNeeded == 0 {
-					parsingFlag = ""
+					parsingOption = ""
 				}
 			}
 		}
 	}
 	if argCountNeeded > 0 {
-		return fmt.Errorf("ERROR: command could not be parsed; missing positional argument(s) for option: '--%s'", parsingFlag)
+		return fmt.Errorf("ERROR: command could not be parsed; missing positional argument(s) for option: '--%s'", parsingOption)
 	}
 	return nil
 }
 
-type cmdOption struct {
-	word        string
-	argCount    int
+// cmdElement is the building block of the command infrastructure.
+// It may represent any of:
+//
+// meta info for a command handler
+//   - options accepted by a command handler
+//   - actions accepted by a command handler
+//     -> options accepted by an action
+type cmdElement struct {
+	name        string
 	description string
-	isMandatory bool
+	// Priority refers to an element's relevance to output.
+	// The lower the value, the higher the priority.
+	priority int
+	// A slice of arguments, in order, expected by this cmdElement.
+	arguments []string
+	// Options that this cmdElement accepts.
+	// Should go UNUSED in cases where cmdElement IS an option, for obvious reasons.
+	options []cmdElement
 }
 
-func (c *cmdOption) letter() string {
-	return string(c.word[0])
+func (e *cmdElement) usage(withOptions bool) string {
+	usage := e.name
+	for _, arg := range e.arguments {
+		usage += " <" + arg + ">"
+	}
+	if len(e.options) > 0 {
+		usage += " [options]\n"
+		if withOptions {
+			usage += "OPTIONS:\n"
+			maxLen := MaxOfStrings(ExtractStrings(e.options, func(c cmdElement) string { return c.name }))
+			for _, opt := range e.options {
+				usage += fmt.Sprintf("  %-*s  %s\n", maxLen, opt.name, opt.description)
+			}
+		}
+	} else {
+		usage += "\n"
+	}
+	return usage
 }
 
-type HandlerFunc func(*State, handlerContext) error
+func (e *cmdElement) argCount() int {
+	return len(e.arguments)
+}
+
+func (e *cmdElement) letter() string {
+	return string(e.name[0])
+}
+
+type HandlerFunc func(*State, *handlerContext) error
 
 // cmdHandler represents a command which can be run.
 type cmdHandler struct {
-	name        string
-	description string
-	opts        []cmdOption
-	usage       string
-	callback    HandlerFunc
-	// priority refers to a handler's relevance to users.
-	// It is purely used for the purpose of sorting outputs related
-	// to the handlers.
-	// The lower the value, the higher the priority.
+	cmdElement
+	actions  []cmdElement
+	callback HandlerFunc
+	//
 	//
 	// Handlers more integral to the base functioning of the CLI,
 	// such as 'exit', 'help', and 'config', reserve values 0-99.
@@ -117,18 +142,14 @@ type cmdHandler struct {
 }
 
 type handlerContext struct {
-	cmd  command
-	args argTracker
+	cmd       command
+	args      argTracker
+	ctxValues map[string]string
 }
 
-// The argTracker struct progressively provides handlers with
-// argument values, whether that be a regular command argument
-// OR an option argument.
-// These are acquired by simply calling its pfx() function,
-// which works to postfix an internal index used to track
-// WHICH argument it ought to provide next, and returns
-// the argument associated with that index, for the relevant
-// slice (arguments or options).
+// argTracker is an iterator that progressively provides handlers with
+// command argument OR option argument values
+// (depending on the tracked index), with each call of its postfix function.
 type argTracker struct {
 	cmdArgs     *[]string
 	cmdArgIndex int
@@ -141,11 +162,13 @@ func (a *argTracker) init(cmd *command) {
 	a.cmdArgs = &cmd.args
 }
 
+// start tracking the arguments of a given option
 func (a *argTracker) trackOptArgs(cmd *command, option string) {
 	optArgsAddressable := cmd.opts[option]
 	a.optArgs = &optArgsAddressable
 }
 
+// reset internal indeces
 func (a *argTracker) reset() {
 	a.cmdArgs = nil
 	a.cmdArgIndex = 0
@@ -153,6 +176,7 @@ func (a *argTracker) reset() {
 	a.optArgIndex = 0
 }
 
+// return the currently-tracked index
 func (a *argTracker) chooseIndex() (*int, *[]string) {
 	if a.optArgs != nil {
 		return &a.optArgIndex, a.optArgs
@@ -160,61 +184,64 @@ func (a *argTracker) chooseIndex() (*int, *[]string) {
 	return &a.cmdArgIndex, a.cmdArgs
 }
 
-// postfix index, returning current value
-func (a *argTracker) pfx() string {
+// postfix the tracked index, returning current value
+func (a *argTracker) pfx() (string, error) {
 	index, args := a.chooseIndex()
 	if *index >= len(*args) {
-		return ""
+		return "", fmt.Errorf("index out of range")
 		// return fmt.Sprintf("ERROR: %d >= %d", *index, len(*args))
 	}
 	current := *index
 	*index += 1
-	return (*args)[current]
+	return (*args)[current], nil
 }
 
 func (c *cmdHandler) help() {
 	fmt.Println("COMMAND: " + c.name)
 	fmt.Println(c.description)
-	if c.usage != "" {
-		fmt.Println("USAGE: " + c.usage)
-	}
-	if len(c.opts) > 0 {
-		fmt.Println("OPTIONS:")
-		maxLen := MaxOfStrings(ExtractStrings(c.opts, func(c cmdOption) string { return c.word }))
-		for _, flag := range c.opts {
-			fmt.Printf("  %-*s  %s\n", maxLen, flag.word, flag.description)
+	fmt.Println("USAGE: " + c.usage(true))
+	if len(c.actions) > 0 {
+		fmt.Println("ACTIONS:")
+		fmt.Printf("(for further help, specify \"help %s <action>\")\n", c.name)
+		maxLen := MaxOfStrings(ExtractStrings(c.actions, func(c cmdElement) string { return c.name }))
+		for _, opt := range c.actions {
+			fmt.Printf("  %-*s  %s\n", maxLen, opt.name, opt.description)
 		}
 	}
 	fmt.Println()
 }
 
 type commandRegistry struct {
-	handlers map[string]cmdHandler
+	handlers map[string]*cmdHandler
 }
 
 func (c *commandRegistry) run(s *State, input string) error {
-	cmd := command{opts: map[string][]string{}}
+	cmd := command{
+		name: cleanInput(input)[0],
+		opts: map[string][]string{},
+	}
 
-	handler, ok := c.handlers[cleanInput(input)[0]]
+	handler, ok := c.handlers[cmd.name]
 	if !ok {
 		return fmt.Errorf("unknown command '%s'", cmd.name)
 	}
 
-	err := cmd.parse(&handler, input)
+	err := cmd.parse(handler, input)
 	if err != nil {
 		return err
 	}
 
-	context := handlerContext{
-		cmd:  cmd,
-		args: argTracker{},
+	context := &handlerContext{
+		cmd:       cmd,
+		args:      argTracker{},
+		ctxValues: make(map[string]string),
 	}
 	context.args.init(&context.cmd)
 
 	return handler.callback(s, context)
 }
 
-func (c *commandRegistry) register(name string, handler cmdHandler) {
+func (c *commandRegistry) register(name string, handler *cmdHandler) {
 	_, ok := c.handlers[name]
 	if ok {
 		fmt.Printf("ERROR: Command '%s' already exists in command registry\n", name)
@@ -222,18 +249,18 @@ func (c *commandRegistry) register(name string, handler cmdHandler) {
 	c.handlers[name] = handler
 }
 
-func (c *commandRegistry) exists(name string) (cmdHandler, bool) {
+func (c *commandRegistry) exists(name string) (*cmdHandler, bool) {
 	handler, ok := c.handlers[name]
 	if ok {
 		return handler, ok
 	}
-	return cmdHandler{}, false
+	return nil, false
 }
 
 func (c *commandRegistry) GetRegisteredHandlers() []cmdHandler {
 	handlers := make([]cmdHandler, 0, len(c.handlers))
 	for _, handler := range c.handlers {
-		handlers = append(handlers, handler)
+		handlers = append(handlers, *handler)
 	}
 	return handlers
 }

@@ -8,27 +8,29 @@ import (
 	"github.com/YouWantToPinch/pincher-cli/internal/client"
 )
 
-func handlerBudget(s *State, c handlerContext) error {
-	action := c.args.pfx()
-	switch action {
-	case "add":
-		return handleBudgetAdd(s, c)
-	case "list":
-		return handleBudgetList(s, c)
-	case "view":
-		// return handle_budgetView(s, c)
-		return fmt.Errorf("ERROR: action not implemented")
-	case "":
-		return fmt.Errorf("ERROR: no action specified")
-	default:
-		return fmt.Errorf("ERROR: invalid action for budget: %s", action)
+func handlerBudget(s *State, c *handlerContext) error {
+	if val, ok := c.ctxValues["action"]; ok {
+		switch val {
+		case "add":
+			return handleBudgetAdd(s, c)
+		case "list":
+			return handleBudgetList(s, c)
+		case "view":
+			// return handleBudgetView(s, c)
+			fallthrough
+		default:
+			return fmt.Errorf("ERROR: action not implemented")
+		}
+	} else {
+		return fmt.Errorf("ERROR: action was not saved to context")
 	}
 }
 
-func handleBudgetAdd(s *State, c handlerContext) error {
-	name := c.args.pfx()
+func handleBudgetAdd(s *State, c *handlerContext) error {
+	name, _ := c.args.pfx()
+
 	c.args.trackOptArgs(&c.cmd, "notes")
-	notes := c.args.pfx()
+	notes, _ := c.args.pfx()
 
 	budgetCreated, err := s.Client.CreateBudget(name, notes)
 	if err != nil {
@@ -43,9 +45,10 @@ func handleBudgetAdd(s *State, c handlerContext) error {
 	}
 }
 
-func handleBudgetList(s *State, c handlerContext) error {
+func handleBudgetList(s *State, c *handlerContext) error {
 	c.args.trackOptArgs(&c.cmd, "role")
-	roleQuery := c.args.pfx()
+	roleQuery, _ := c.args.pfx()
+
 	roles := cleanInput(roleQuery)
 	if len(roles) > 0 {
 		roleQuery = "?role="

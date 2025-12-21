@@ -4,24 +4,34 @@ import (
 	"fmt"
 )
 
-func handlerUser(s *State, c handlerContext) error {
-	action := c.args.pfx()
-	switch action {
-	case "add":
-		return handleUserAdd(s, c)
-	case "login":
-		return handleUserLogin(s, c)
-	case "":
-		return fmt.Errorf("ERROR: no action specified")
-	default:
-		return fmt.Errorf("ERROR: invalid action for user: %s", action)
+func handlerUser(s *State, c *handlerContext) error {
+	if val, ok := c.ctxValues["action"]; ok {
+		switch val {
+		case "add":
+			return handleUserAdd(s, c)
+		case "login":
+			return handleUserLogin(s, c)
+		default:
+			return fmt.Errorf("ERROR: action not implemented")
+		}
+	} else {
+		return fmt.Errorf("ERROR: action was not saved to context")
 	}
 }
 
-func handleUserAdd(s *State, c handlerContext) error {
-	username := c.args.pfx()
-	password := c.args.pfx()
-	retypedPassword := c.args.pfx()
+func handleUserAdd(s *State, c *handlerContext) error {
+	username, err := c.args.pfx()
+	if err != nil {
+		return fmt.Errorf("missing argument for command: <username>")
+	}
+	password, err := c.args.pfx()
+	if err != nil {
+		return fmt.Errorf("missing argument for command: <password>")
+	}
+	retypedPassword, err := c.args.pfx()
+	if err != nil {
+		return fmt.Errorf("missing argument for command: <retyped password>")
+	}
 
 	if password != retypedPassword {
 		return fmt.Errorf("ERROR: password fields did not match")
@@ -32,16 +42,22 @@ func handleUserAdd(s *State, c handlerContext) error {
 	}
 	if userCreated {
 		fmt.Println("User " + username + " successfully created with new password.")
-		fmt.Println("For help logging in, see: `help login`")
+		fmt.Println("For help logging in, see: `help user login`")
 		return nil
 	} else {
 		return fmt.Errorf("ERROR: username already exists")
 	}
 }
 
-func handleUserLogin(s *State, c handlerContext) error {
-	username := c.args.pfx()
-	password := c.args.pfx()
+func handleUserLogin(s *State, c *handlerContext) error {
+	username, err := c.args.pfx()
+	if err != nil {
+		return fmt.Errorf("missing argument for command: <username>")
+	}
+	password, err := c.args.pfx()
+	if err != nil {
+		return fmt.Errorf("missing argument for command: <password>")
+	}
 
 	user, err := s.Client.LoginUser(username, password)
 	if err != nil {
@@ -58,27 +74,41 @@ func handleUserLogin(s *State, c handlerContext) error {
 }
 
 func registerResourceCommands(s *State) error {
-	s.CommandRegistry.register("budget", cmdHandler{
-		name:        "budget",
-		description: "Manage " + s.Client.LoggedInUser.Username + "'s budgets",
-		priority:    100,
-		callback:    handlerBudget,
-		opts: []cmdOption{
+	s.CommandRegistry.register("budget", &cmdHandler{
+		cmdElement: cmdElement{
+			name:        "budget",
+			description: "Manage " + s.Client.LoggedInUser.Username + "'s budgets",
+			priority:    100,
+		},
+		callback: middlewareValidateAction(handlerBudget),
+		actions: []cmdElement{
 			{
-				word:        "role",
-				description: "Filter results by user role. Can be ADMIN, MANAGER, CONTRIBUTOR, or VIEWER.",
-				argCount:    1,
+				name:      "add",
+				arguments: []string{"name"},
+				options: []cmdElement{
+					{
+						name:        "notes",
+						description: "Give your budget some notes",
+						arguments:   []string{"notes_value"},
+					},
+				},
 			},
 			{
-				word:        "notes",
-				description: "Give your budget some notes",
-				argCount:    1,
+				name: "list",
+				options: []cmdElement{
+					{
+						name:        "role",
+						description: "Filter results by user role. Can be ADMIN, MANAGER, CONTRIBUTOR, or VIEWER.",
+						arguments:   []string{"role_title"},
+					},
+				},
+			},
+			{
+				name:      "view",
+				arguments: []string{"budget_name"},
 			},
 		},
-		usage: `budget <action> (arguments) [options]
-budget add <name> [ --notes ]
-budget list [ --role ]
-budget view <budget_name>`,
 	})
+
 	return nil
 }

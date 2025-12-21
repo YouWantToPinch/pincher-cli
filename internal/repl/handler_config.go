@@ -8,21 +8,22 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-func handlerConfig(s *State, c handlerContext) error {
-	action := c.args.pfx()
-	switch action {
-	case "edit":
-		return handleConfigEdit(s, c)
-
-	case "load":
-		return handleConfigLoad(s, c)
-	default:
-		return fmt.Errorf("expected one of two arguments: ( edit | load )")
-
+func handlerConfig(s *State, c *handlerContext) error {
+	if val, ok := c.ctxValues["action"]; ok {
+		switch val {
+		case "edit":
+			return handleConfigEdit(s, c)
+		case "load":
+			return handleConfigLoad(s, c)
+		default:
+			return fmt.Errorf("ERROR: action not implemented")
+		}
+	} else {
+		return fmt.Errorf("ERROR: action was not saved to context")
 	}
 }
 
-func handleConfigEdit(s *State, c handlerContext) error {
+func handleConfigEdit(s *State, c *handlerContext) error {
 	fmt.Println("Edit your local configuration: ")
 	newConfig := *s.Config
 	tmodel, err := tmodels.InitialTModelStructMenu(&newConfig, nil, true)
@@ -51,7 +52,7 @@ func handleConfigEdit(s *State, c handlerContext) error {
 	}
 }
 
-func handleConfigLoad(s *State, c handlerContext) error {
+func handleConfigLoad(s *State, c *handlerContext) error {
 	var err error
 	userConfig, err := config.Read()
 	if err != nil {

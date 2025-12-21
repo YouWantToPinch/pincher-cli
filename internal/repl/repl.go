@@ -19,69 +19,93 @@ type State struct {
 
 func StartRepl(cliState *State) {
 	if cliState == nil {
-		panic("startRepl: cliState is nil")
+		panic("StartRepl: cliState is nil")
 	}
 
+	mdAct := middlewareValidateAction
+
 	cmdRegistry := &commandRegistry{
-		handlers: make(map[string]cmdHandler),
+		handlers: make(map[string]*cmdHandler),
 	}
-	cmdRegistry.register("exit", cmdHandler{
-		name:        "exit",
-		description: "exit the program",
-		priority:    0,
-		callback:    handlerExit,
+	cmdRegistry.register("exit", &cmdHandler{
+		cmdElement: cmdElement{
+			name:        "exit",
+			description: "exit the program",
+			priority:    0,
+		},
+		callback: handlerExit,
 	})
-	cmdRegistry.register("help", cmdHandler{
-		name:        "help",
-		description: "See usage of another command",
-		usage:       "help <command>",
-		priority:    1,
-		callback:    handlerHelp,
+	cmdRegistry.register("help", &cmdHandler{
+		cmdElement: cmdElement{
+			name:        "help",
+			description: "See usage of another command",
+			arguments:   []string{"command"},
+			priority:    1,
+		},
+		callback: handlerHelp,
 	})
-	cmdRegistry.register("config", cmdHandler{
-		name:        "config",
-		description: "Add, Load, or Save a local user configuration for the Pincher-CLI",
-		usage:       "config (edit | load)",
-		opts: []cmdOption{
+	cmdRegistry.register("config", &cmdHandler{
+		cmdElement: cmdElement{
+			name:        "config",
+			description: "Add, Load, or Save a local user configuration for the Pincher-CLI",
+			arguments:   []string{"action"},
+			priority:    2,
+		},
+		actions: []cmdElement{
 			{
-				word:        "edit",
+				name:        "edit",
 				description: "edit current user configuration",
 			},
 			{
-				word:        "load",
+				name:        "load",
 				description: "load user configuration from the local machine",
 			},
 		},
-		priority: 2,
-		callback: handlerConfig,
+		callback: mdAct(handlerConfig),
 	})
-	cmdRegistry.register("log", cmdHandler{
-		name:        "log",
-		description: "see Pincher-CLI logs",
-		priority:    3,
-		callback:    handlerLog,
+	cmdRegistry.register("log", &cmdHandler{
+		cmdElement: cmdElement{
+			name:        "log",
+			description: "see Pincher-CLI logs",
+			priority:    3,
+		},
+		callback: handlerLog,
 	})
-	cmdRegistry.register("connect", cmdHandler{
-		name:        "connect",
-		description: "Conenct to a remote or local database",
-		priority:    4,
-		callback:    handlerConnect,
+	cmdRegistry.register("connect", &cmdHandler{
+		cmdElement: cmdElement{
+			name:        "connect",
+			description: "Connect to a remote or local database",
+			priority:    4,
+		},
+		callback: handlerConnect,
 	})
-	cmdRegistry.register("ready", cmdHandler{
-		name:        "ready",
-		description: "Check server readiness",
-		priority:    5,
-		callback:    handlerReady,
+	cmdRegistry.register("ready", &cmdHandler{
+		cmdElement: cmdElement{
+			name:        "ready",
+			description: "Check server readiness",
+			priority:    5,
+		},
+		callback: handlerReady,
 	})
 
-	cmdRegistry.register("user", cmdHandler{
-		name:        "user",
-		description: "Create a new user, or log in",
-		priority:    50,
-		callback:    handlerUser,
-		usage: `user <action> [options] [arguments]
-user add <new_username> <new_password> <new_password>
-user login <username> <password>`,
+	cmdRegistry.register("user", &cmdHandler{
+		cmdElement: cmdElement{
+			name:        "user",
+			description: "Create a new user, or log in",
+			arguments:   []string{"action"},
+			priority:    50,
+		},
+		callback: mdAct(handlerUser),
+		actions: []cmdElement{
+			{
+				name:      "add",
+				arguments: []string{"new_username", "new_password", "retype password"},
+			},
+			{
+				name:      "login",
+				arguments: []string{"username", "password"},
+			},
+		},
 	})
 
 	cliState.CommandRegistry = cmdRegistry

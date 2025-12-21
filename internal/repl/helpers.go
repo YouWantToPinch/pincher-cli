@@ -40,3 +40,14 @@ func cleanInput(text string) []string {
 func nDashes(n int) string {
 	return strings.Repeat("-", n)
 }
+
+// returns the first cmdElement with the given name
+func findCMDElementWithName(elements []cmdElement, name string) (*cmdElement, bool) {
+	for i := range elements {
+		el := &elements[i]
+		if el.name == name {
+			return el, true
+		}
+	}
+	return nil, false
+}
