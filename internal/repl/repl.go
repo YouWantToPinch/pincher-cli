@@ -5,6 +5,7 @@ package repl
 import (
 	"bufio"
 	"fmt"
+	"log/slog"
 	"os"
 
 	"github.com/YouWantToPinch/pincher-cli/internal/client"
@@ -12,6 +13,8 @@ import (
 )
 
 type State struct {
+	DoneChan        *chan bool
+	Logger          *Logger
 	Config          *config.Config
 	Client          *client.Client
 	CommandRegistry *commandRegistry
@@ -122,7 +125,11 @@ func StartRepl(cliState *State) {
 			}
 			err := cmdRegistry.run(cliState, input)
 			if err != nil {
-				fmt.Println(err.Error())
+				if err.Error() == "HIJACK:EXIT" {
+					break
+				}
+				slog.Error(err.Error())
+				fmt.Println("ERROR: " + err.Error())
 			}
 		}
 	}

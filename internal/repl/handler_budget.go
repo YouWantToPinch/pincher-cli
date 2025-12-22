@@ -19,10 +19,10 @@ func handlerBudget(s *State, c *handlerContext) error {
 			// return handleBudgetView(s, c)
 			fallthrough
 		default:
-			return fmt.Errorf("ERROR: action not implemented")
+			return fmt.Errorf("action not implemented")
 		}
 	} else {
-		return fmt.Errorf("ERROR: action was not saved to context")
+		return fmt.Errorf("action was not saved to context")
 	}
 }
 
@@ -34,14 +34,14 @@ func handleBudgetAdd(s *State, c *handlerContext) error {
 
 	budgetCreated, err := s.Client.CreateBudget(name, notes)
 	if err != nil {
-		return fmt.Errorf("ERROR: %s", err)
+		return err
 	}
 	if budgetCreated {
 		fmt.Println("Budget " + name + " successfully created as user: " + s.Client.LoggedInUser.Username + ".")
 		fmt.Println("See it with: `budget view`")
 		return nil
 	} else {
-		return fmt.Errorf("ERROR: budget could not be created")
+		return fmt.Errorf("budget could not be created")
 	}
 }
 
@@ -62,7 +62,7 @@ func handleBudgetList(s *State, c *handlerContext) error {
 
 	budgets, err := s.Client.GetBudgets(roleQuery)
 	if err != nil {
-		return fmt.Errorf("ERROR: %s", err)
+		return err
 	}
 	if len(budgets) == 0 {
 		fmt.Printf("No memberships found in query from user %s. \n", s.Client.LoggedInUser.Username)

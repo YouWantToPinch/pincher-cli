@@ -2,7 +2,6 @@ package repl
 
 import (
 	"fmt"
-	"os"
 	"sort"
 )
 
@@ -30,8 +29,16 @@ func middlewareValidateAction(next HandlerFunc) HandlerFunc {
 
 func handlerExit(s *State, c *handlerContext) error {
 	fmt.Println("Closing Pincher-CLI program...")
-	os.Exit(0)
-	return nil
+	*s.DoneChan <- true
+	// NOTE: No actual error. This handler hijacks the error handling within
+	// the repl to tell it that it should stop any looping.
+	// The reason this is implemented is because without it, the loop will
+	// still run and print out the REPL input prompt while waiting on
+	// main() to close out the program.
+	// TODO: find a more elegant way of doing this.
+	// os.Exit() CAN'T be the solution, as the deferred Quit() function
+	// under main.go would then not be called.
+	return fmt.Errorf("HIJACK:EXIT")
 }
 
 // handlerHelp attempts to output the most relevant information possible to the user.

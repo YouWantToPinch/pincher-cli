@@ -16,10 +16,10 @@ func handlerConfig(s *State, c *handlerContext) error {
 		case "load":
 			return handleConfigLoad(s, c)
 		default:
-			return fmt.Errorf("ERROR: action not implemented")
+			return fmt.Errorf("action not implemented")
 		}
 	} else {
-		return fmt.Errorf("ERROR: action was not saved to context")
+		return fmt.Errorf("action was not saved to context")
 	}
 }
 
@@ -54,7 +54,7 @@ func handleConfigEdit(s *State, c *handlerContext) error {
 
 func handleConfigLoad(s *State, c *handlerContext) error {
 	var err error
-	userConfig, err := config.Read()
+	userConfig, err := config.ReadFromFile("cli.conf")
 	if err != nil {
 		s.Config = &userConfig
 		return fmt.Errorf("trouble loading config: %s", err.Error())
