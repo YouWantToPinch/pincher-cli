@@ -1,23 +1,15 @@
 package client
 
 import (
-	// "encoding/json"
-	// "fmt"
-	// "io"
 	"fmt"
 	"net/http"
 )
-
-type resourceNotes struct {
-	Name  string `json:"name"`
-	Notes string `json:"notes"`
-}
 
 // CREATE
 
 func (c *Client) CreateBudget(name, notes string) (success bool, error error) {
 	url := c.API() + "/budgets"
-	payload := resourceNotes{
+	payload := Meta{
 		Name:  name,
 		Notes: notes,
 	}

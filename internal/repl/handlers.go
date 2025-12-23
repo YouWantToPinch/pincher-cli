@@ -12,11 +12,11 @@ func middlewareValidateAction(next HandlerFunc) HandlerFunc {
 		var err error
 		action, _ := c.args.pfx()
 		if action == "" {
-			err = fmt.Errorf("ERROR: no action specified")
+			err = fmt.Errorf("no action specified")
 			s.CommandRegistry.handlers[c.cmd.name].help()
 			return err
 		} else if _, found := findCMDElementWithName(s.CommandRegistry.handlers[c.cmd.name].actions, action); !found {
-			err = fmt.Errorf("ERROR: invalid action for command '%s': %s", c.cmd.name, action)
+			err = fmt.Errorf("invalid action for command '%s': %s", c.cmd.name, action)
 			s.CommandRegistry.handlers[c.cmd.name].help()
 			return err
 		}

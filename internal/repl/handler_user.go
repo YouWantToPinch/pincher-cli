@@ -78,7 +78,7 @@ func registerResourceCommands(s *State) error {
 		cmdElement: cmdElement{
 			name:        "budget",
 			description: "Manage " + s.Client.LoggedInUser.Username + "'s budgets",
-			priority:    100,
+			priority:    190,
 		},
 		callback: middlewareValidateAction(handlerBudget),
 		actions: []cmdElement{
@@ -104,8 +104,80 @@ func registerResourceCommands(s *State) error {
 				},
 			},
 			{
-				name:      "view",
-				arguments: []string{"budget_name"},
+				name:        "view",
+				description: "specify a budget to interact with using other commands",
+				arguments:   []string{"budget_name"},
+			},
+		},
+	})
+	s.CommandRegistry.register("account", &cmdHandler{
+		cmdElement: cmdElement{
+			name:        "account",
+			description: "Manage " + s.Client.ViewedBudget.Name + " accounts",
+			priority:    180,
+		},
+		callback: middlewareValidateAction(handlerAccount),
+		actions: []cmdElement{
+			{
+				name:        "add",
+				description: "Add a new account to budget",
+				arguments:   []string{"name", "account_type"},
+				options: []cmdElement{
+					{
+						name:        "notes",
+						description: "give the new account some notes",
+						arguments:   []string{"notes_value"},
+					},
+				},
+			},
+			{
+				name:      "update",
+				arguments: []string{"name"},
+				options: []cmdElement{
+					{
+						name:        "name",
+						description: "rewrite account name",
+						arguments:   []string{"new_name"},
+					},
+					{
+						name:        "notes",
+						description: "rewrite account notes",
+						arguments:   []string{"new_notes"},
+					},
+					{
+						name:        "type",
+						description: "choose different account type",
+						arguments:   []string{"new_type"},
+					},
+				},
+			},
+			{
+				name:        "restore",
+				description: "restore a soft-deleted account",
+				arguments:   []string{"account_name"},
+			},
+			{
+				name:        "list",
+				description: "see a list of all accounts belonging to budget",
+				options: []cmdElement{
+					{
+						name:        "include",
+						description: "Include accounts usually excluded with qualities like: 'deleted'",
+						arguments:   []string{"quality"},
+					},
+				},
+			},
+			{
+				name:        "delete",
+				description: "Delete an account",
+				arguments:   []string{"account_name"},
+				options: []cmdElement{
+					{
+						name:         "hard",
+						description:  "as opposed to a reversible soft deletion (default)",
+						useShorthand: true,
+					},
+				},
 			},
 		},
 	})

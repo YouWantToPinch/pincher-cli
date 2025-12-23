@@ -1,5 +1,5 @@
 package client
 
 const (
-	defaultBaseUrl = "http://localhost:8080"
+	defaultBaseURL = "http://localhost:8080"
 )

@@ -1,9 +1,6 @@
 package client
 
 import (
-	// "encoding/json"
-	// "fmt"
-	// "io"
 	"fmt"
 	"net/http"
 )
