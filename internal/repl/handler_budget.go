@@ -16,8 +16,7 @@ func handlerBudget(s *State, c *handlerContext) error {
 		case "list":
 			return handleBudgetList(s, c)
 		case "view":
-			// return handleBudgetView(s, c)
-			fallthrough
+			return handleBudgetView(s, c)
 		default:
 			return fmt.Errorf("action not implemented")
 		}
@@ -45,6 +44,31 @@ func handleBudgetAdd(s *State, c *handlerContext) error {
 	}
 }
 
+func findBudgetWithName(name string, budgets []client.Budget) (*client.Budget, error) {
+	for _, budget := range budgets {
+		if name == budget.Name {
+			return &budget, nil
+		}
+	}
+	return nil, fmt.Errorf("no budgets found in cache with provided name")
+}
+
+func handleBudgetView(s *State, c *handlerContext) error {
+	name, _ := c.args.pfx()
+
+	budget, err := findBudgetWithName(name, s.Client.BudgetCache)
+	if err != nil {
+		return err
+	}
+
+	// store a COPY so that we don't get issues when the cache might change.
+	// when the logic is overtaken by the work to be done on the pinchercache package,
+	// this may look different.
+	s.Client.ViewedBudget = *budget
+	fmt.Printf("Now viewing budget: %s\n", budget.Name)
+	return nil
+}
+
 func handleBudgetList(s *State, c *handlerContext) error {
 	c.args.trackOptArgs(&c.cmd, "role")
 	roleQuery, _ := c.args.pfx()
@@ -68,6 +92,8 @@ func handleBudgetList(s *State, c *handlerContext) error {
 		fmt.Printf("No memberships found in query from user %s. \n", s.Client.LoggedInUser.Username)
 		return nil
 	}
+	s.Client.BudgetCache = budgets
+
 	fmt.Printf("%s's budget memberships: \n", s.Client.LoggedInUser.Username)
 	sort.Slice(budgets, func(i, j int) bool {
 		return budgets[i].Name < budgets[j].Name

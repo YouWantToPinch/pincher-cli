@@ -18,8 +18,10 @@ type userInfo struct {
 
 type Client struct {
 	cache        pcache.Cache
+	BudgetCache  []Budget // TODO: use the actual cache; this is just temporary
 	httpClient   http.Client
 	LoggedInUser userInfo
+	ViewedBudget Budget
 	BaseURL      string
 }
 
@@ -30,7 +32,7 @@ func (c *Client) API() string {
 func NewClient(timeout, cacheInterval time.Duration, baseURL string) Client {
 	var url string
 	if baseURL == "" {
-		url = defaultBaseUrl
+		url = defaultBaseURL
 	} else {
 		url = baseURL
 	}
