@@ -166,6 +166,7 @@ func (a *argTracker) init(cmd *command) {
 func (a *argTracker) trackOptArgs(cmd *command, option string) {
 	optArgsAddressable := cmd.opts[option]
 	a.optArgs = &optArgsAddressable
+	a.optArgIndex = 0
 }
 
 // reset internal indeces
