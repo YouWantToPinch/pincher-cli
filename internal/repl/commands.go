@@ -27,26 +27,28 @@ func (c *command) parse(handler *cmdHandler, input string) error {
 		if strings.HasPrefix(cmdFields[i], "-") {
 			// return error if we encounter an option while still parsing another one
 			if parsingOption != "" {
-				return fmt.Errorf("ERROR: command could not be parsed; missing positional argument(s) for option: '--%s'", parsingOption)
+				return fmt.Errorf("command could not be parsed; missing positional argument(s) for option: '--%s'", parsingOption)
 			}
 			// find out if the handler takes this option
 			userOpt := strings.TrimLeft(cmdFields[i], "-")
 			foundMatch := false
 			for _, opt := range parsingOptions {
-				// fmt.Println("Checking: " + opt.word + " against " + userOpt) // DEBUG
-				foundMatch = (opt.name == userOpt || opt.letter() == userOpt)
+				// slog.Debug("Comparing: " + opt.name + " against " + userOpt)
+				foundMatch = (opt.name == userOpt || ((opt.letter() == userOpt) && opt.useShorthand))
 				if foundMatch {
 					c.opts[opt.name] = []string{}
 					if opt.argCount() > 0 {
 						parsingOption = opt.name
 						argCountNeeded = opt.argCount()
+					} else {
+						c.opts[opt.name] = append(c.opts[opt.name], "SET")
 					}
 					break
 				}
 			}
 			// return error if this option is not taken by the handler
 			if !foundMatch {
-				return fmt.Errorf("ERROR: command includes unexpected option '%s'", cmdFields[i])
+				return fmt.Errorf("command includes unexpected option '%s'", cmdFields[i])
 			}
 		} else {
 			if parsingOption == "" {
@@ -68,7 +70,7 @@ func (c *command) parse(handler *cmdHandler, input string) error {
 		}
 	}
 	if argCountNeeded > 0 {
-		return fmt.Errorf("ERROR: command could not be parsed; missing positional argument(s) for option: '--%s'", parsingOption)
+		return fmt.Errorf("command could not be parsed; missing positional argument(s) for option: '--%s'", parsingOption)
 	}
 	return nil
 }
@@ -91,6 +93,8 @@ type cmdElement struct {
 	// Options that this cmdElement accepts.
 	// Should go UNUSED in cases where cmdElement IS an option, for obvious reasons.
 	options []cmdElement
+	// whether or not this element is an option that may be treated as a flag
+	useShorthand bool
 }
 
 func (e *cmdElement) usage(withOptions bool) string {
