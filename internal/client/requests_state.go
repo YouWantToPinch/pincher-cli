@@ -10,7 +10,7 @@ import (
 func (c *Client) GetServerReady() (bool, error) {
 	url := c.API() + "/healthz"
 
-	resp, err := c.doRequest(http.MethodGet, url, "", nil, nil)
+	resp, err := c.Get(url, "", nil)
 	if err != nil {
 		return false, err
 	}

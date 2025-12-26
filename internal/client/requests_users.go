@@ -19,7 +19,7 @@ func (c *Client) CreateUser(username, password string) (success bool, error erro
 		Password: password,
 	}
 
-	resp, err := c.doRequest(http.MethodPost, url, "", payload, nil)
+	resp, err := c.Post(url, "", payload, nil)
 	if err != nil {
 		return false, err
 	}
@@ -42,7 +42,7 @@ func (c *Client) LoginUser(username, password string) (User, error) {
 	}
 
 	var user User
-	resp, err := c.doRequest(http.MethodPost, url, "", payload, &user)
+	resp, err := c.Post(url, "", payload, &user)
 	if err != nil {
 		return User{}, err
 	}

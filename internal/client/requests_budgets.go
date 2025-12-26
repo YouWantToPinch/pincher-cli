@@ -9,12 +9,13 @@ import (
 
 func (c *Client) CreateBudget(name, notes string) (success bool, error error) {
 	url := c.API() + "/budgets"
+
 	payload := Meta{
 		Name:  name,
 		Notes: notes,
 	}
 
-	resp, err := c.doRequest(http.MethodPost, url, c.LoggedInUser.JSONWebToken, payload, nil)
+	resp, err := c.Post(url, c.LoggedInUser.JSONWebToken, payload, nil)
 	if err != nil {
 		return false, err
 	}
@@ -35,9 +36,11 @@ func (c *Client) GetBudgets(urlQuery string) ([]Budget, error) {
 	}
 
 	var budgets budgetContainer
-	resp, err := c.doRequest(http.MethodGet, url, c.LoggedInUser.JSONWebToken, nil, &budgets)
+	resp, err := c.Get(url, c.LoggedInUser.JSONWebToken, &budgets)
 	if err != nil {
 		return nil, err
+	} else if resp == nil {
+		return budgets.Budgets, nil
 	}
 
 	switch resp.StatusCode {

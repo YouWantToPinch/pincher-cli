@@ -21,6 +21,8 @@ func (c *Cache) Add(key string, value []byte) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	// slog.Debug("Adding key %s with value %s\n", key, string(value))
+
 	c.cachedEntries[key] = cacheEntry{
 		createdAt: time.Now().UTC(),
 		data:      value,
@@ -51,11 +53,19 @@ func (c *Cache) reapLoop() {
 func (c *Cache) reap() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
 	for key, val := range c.cachedEntries {
 		if time.Since(val.createdAt) > c.interval {
 			delete(c.cachedEntries, key)
 		}
 	}
+}
+
+func (c *Cache) Delete(key string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	delete(c.cachedEntries, key)
 }
 
 func NewCache(interval time.Duration) Cache {

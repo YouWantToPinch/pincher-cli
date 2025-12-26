@@ -23,7 +23,7 @@ func (c *Client) CreateAccount(name, notes, accountType string) (success bool, e
 		AccountType: accountType,
 	}
 
-	resp, err := c.doRequest(http.MethodPost, url, c.LoggedInUser.JSONWebToken, payload, nil)
+	resp, err := c.Post(url, c.LoggedInUser.JSONWebToken, payload, nil)
 	if err != nil {
 		return false, err
 	}
@@ -44,9 +44,11 @@ func (c *Client) GetAccounts(urlQuery string) ([]Account, error) {
 	}
 
 	var accounts accountContainer
-	resp, err := c.doRequest(http.MethodGet, url, c.LoggedInUser.JSONWebToken, nil, &accounts)
+	resp, err := c.Get(url, c.LoggedInUser.JSONWebToken, &accounts)
 	if err != nil {
 		return nil, err
+	} else if resp == nil {
+		return accounts.Accounts, nil
 	}
 
 	switch resp.StatusCode {
@@ -84,7 +86,7 @@ func (c *Client) UpdateAccount(currentName, name, notes, accountType string) err
 		AccountType: accountType,
 	}
 
-	resp, err := c.doRequest(http.MethodPut, url, c.LoggedInUser.JSONWebToken, payload, nil)
+	resp, err := c.Put(url, c.LoggedInUser.JSONWebToken, payload)
 	if err != nil {
 		return err
 	}
@@ -105,7 +107,7 @@ func (c *Client) RestoreAccount(name string) error {
 	// otherwise use name, budgetID to get the account with given name
 	url := c.API() + "/budgets/" + c.ViewedBudget.ID.String() + "/accounts/" + "dd1098eb-1a3e-4f2c-a8b5-3ac79e93ec9c" // + accountID
 
-	resp, err := c.doRequest(http.MethodPatch, url, c.LoggedInUser.JSONWebToken, nil, nil)
+	resp, err := c.Patch(url, c.LoggedInUser.JSONWebToken, nil)
 	if err != nil {
 		return err
 	}
@@ -136,7 +138,7 @@ func (c *Client) DeleteAccount(name, deleteHard string) error {
 		DeleteHard: deleteHard == "SET",
 	}
 
-	resp, err := c.doRequest(http.MethodDelete, url, c.LoggedInUser.JSONWebToken, payload, nil)
+	resp, err := c.Delete(url, c.LoggedInUser.JSONWebToken, payload)
 	if err != nil {
 		return err
 	}

@@ -2,9 +2,54 @@ package client
 
 import (
 	"encoding/json"
-	"io"
+	"fmt"
+	"log/slog"
 	"net/http"
 )
+
+// Get wrapper for doRequest
+func (c *Client) Get(url, token string, out any) (*http.Response, error) {
+	if val, ok := c.cache.Get(url); ok {
+		slog.Info("retrieving requested data from cache", slog.String("url", url))
+		err := json.Unmarshal(val, out)
+		if err != nil {
+			return nil, err
+		}
+		return nil, nil
+	}
+
+	resp, err := c.doRequest(http.MethodGet, url, token, nil, out)
+	if err == nil && out != nil {
+		data, cacheErr := json.Marshal(out)
+		if cacheErr != nil {
+			slog.Error(fmt.Sprintf("could not cache response data: %s", cacheErr))
+		} else {
+			c.cache.Add(url, data)
+		}
+	}
+
+	return resp, err
+}
+
+// Post wrapper for doRequest
+func (c *Client) Post(url, token string, payload, out any) (*http.Response, error) {
+	return c.doRequest(http.MethodPost, url, token, payload, out)
+}
+
+// Put wrapper for doRequest
+func (c *Client) Put(url, token string, payload any) (*http.Response, error) {
+	return c.doRequest(http.MethodPut, url, token, payload, nil)
+}
+
+// Patch wrapper for doRequest
+func (c *Client) Patch(url, token string, payload any) (*http.Response, error) {
+	return c.doRequest(http.MethodPatch, url, token, payload, nil)
+}
+
+// Delete wrapper for doRequest
+func (c *Client) Delete(url, token string, payload any) (*http.Response, error) {
+	return c.doRequest(http.MethodDelete, url, token, payload, nil)
+}
 
 func (c *Client) doRequest(method, url, token string, payload, out any) (*http.Response, error) {
 	req, err := c.MakeRequest(method, url, token, payload)
@@ -25,36 +70,10 @@ func (c *Client) doRequest(method, url, token string, payload, out any) (*http.R
 		}
 	}
 
+	// delete existing cache for url, as the resource has been changed
+	if method != http.MethodGet {
+		c.cache.Delete(url)
+	}
+
 	return resp, nil
-}
-
-func marshal[T any](item T) ([]byte, error) {
-	data, err := json.Marshal(item)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
-}
-
-func decodeResponse[T any](r *http.Response) (T, error) {
-	var v T
-	err := json.NewDecoder(r.Body).Decode(&v)
-	return v, err
-}
-
-func unmarshal[T any](r *http.Response) (T, error) {
-	var v T
-	var err error
-
-	jsonData, err := io.ReadAll(r.Body)
-	if err != nil {
-		return v, err
-	}
-
-	err = json.Unmarshal(jsonData, &v)
-	if err != nil {
-		return v, err
-	}
-
-	return v, nil
 }

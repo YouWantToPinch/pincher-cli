@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	pcache "github.com/YouWantToPinch/pincher-cli/internal/pinchercache"
+	cache "github.com/YouWantToPinch/pincher-cli/internal/cache"
 )
 
 type userInfo struct {
@@ -17,7 +17,7 @@ type userInfo struct {
 }
 
 type Client struct {
-	cache        pcache.Cache
+	cache        cache.Cache
 	BudgetCache  []Budget // TODO: use the actual cache; this is just temporary
 	httpClient   http.Client
 	LoggedInUser userInfo
@@ -37,7 +37,7 @@ func NewClient(timeout, cacheInterval time.Duration, baseURL string) Client {
 		url = baseURL
 	}
 	return Client{
-		cache: pcache.NewCache(cacheInterval),
+		cache: cache.NewCache(cacheInterval),
 		httpClient: http.Client{
 			Timeout: timeout,
 		},
