@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 )
 
 // Get wrapper for doRequest
@@ -71,9 +72,35 @@ func (c *Client) doRequest(method, url, token string, payload, out any) (*http.R
 	}
 
 	// delete existing cache for url, as the resource has been changed
-	if method != http.MethodGet {
+	switch method {
+	case http.MethodPost:
 		c.cache.Delete(url)
+	case http.MethodPut:
+		fallthrough
+	case http.MethodDelete:
+		path, err := getURLResourcePath(url)
+		if err != nil {
+			slog.Error("could not delete key from url entry cache", slog.String("key", url))
+		}
+		c.cache.Delete(path)
 	}
 
 	return resp, nil
+}
+
+// getUrlResourcePath trims ONE trailing instance of "/..."
+// from a string with at least one "/".
+// It is made for the purpose of trimming a trailing resource ID
+// from the end of a URL in order to get its parent path.
+// This is useful if you want to clear a cache of this resource
+// type so as to avoid cache inconsistency.
+func getURLResourcePath(url string) (string, error) {
+	// Remove the last segment of the path
+	segments := strings.Split(url, "/")
+	if len(segments) > 1 {
+		url = strings.Join(segments[:len(segments)-1], "/")
+		return url, nil
+	} else {
+		return "", fmt.Errorf("input is not a url")
+	}
 }
