@@ -47,12 +47,21 @@ func StartRepl(cliState *State) {
 		},
 		callback: handlerHelp,
 	})
+	cmdRegistry.register("clear", &cmdHandler{
+		cmdElement: cmdElement{
+			name:        "help",
+			description: "clear the terminal",
+			arguments:   []string{"command"},
+			priority:    2,
+		},
+		callback: handlerClear,
+	})
 	cmdRegistry.register("config", &cmdHandler{
 		cmdElement: cmdElement{
 			name:        "config",
 			description: "Add, Load, or Save a local user configuration for the Pincher-CLI",
 			arguments:   []string{"action"},
-			priority:    2,
+			priority:    10,
 		},
 		actions: []cmdElement{
 			{
@@ -70,7 +79,7 @@ func StartRepl(cliState *State) {
 		cmdElement: cmdElement{
 			name:        "log",
 			description: "see Pincher-CLI logs",
-			priority:    3,
+			priority:    15,
 		},
 		callback: handlerLog,
 	})
@@ -78,7 +87,7 @@ func StartRepl(cliState *State) {
 		cmdElement: cmdElement{
 			name:        "connect",
 			description: "Connect to a remote or local database",
-			priority:    4,
+			priority:    20,
 		},
 		callback: handlerConnect,
 	})
@@ -86,7 +95,7 @@ func StartRepl(cliState *State) {
 		cmdElement: cmdElement{
 			name:        "ready",
 			description: "Check server readiness",
-			priority:    5,
+			priority:    25,
 		},
 		callback: handlerReady,
 	})

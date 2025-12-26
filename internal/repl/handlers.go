@@ -2,6 +2,8 @@ package repl
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
 	"sort"
 )
 
@@ -39,6 +41,16 @@ func handlerExit(s *State, c *handlerContext) error {
 	// os.Exit() CAN'T be the solution, as the deferred Quit() function
 	// under main.go would then not be called.
 	return fmt.Errorf("HIJACK:EXIT")
+}
+
+func handlerClear(s *State, c *handlerContext) error {
+	cmd := exec.Command("clear")
+	cmd.Stdout = os.Stdout
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // handlerHelp attempts to output the most relevant information possible to the user.
