@@ -30,21 +30,25 @@ func TestCleanInput(t *testing.T) {
 			input:    "heLlO",
 			expected: []string{"hello"},
 		},
+		{
+			input:    `account add "My Checking Account" "on-budget" --notes "The checking account I use."`,
+			expected: []string{"account", "add", "My Checking Account", "on-budget", "--notes", "The checking account I use."},
+		},
 	}
 
 	for _, c := range cases {
 		actual := cleanInput(c.input)
 		if len(actual) != len(c.expected) {
-			t.Errorf("ERROR: input vs expected are of unequal lengths")
+			t.Errorf("input vs expected are of unequal lengths")
 			t.Fail()
 		}
 		for i := range actual {
-			word := actual[i]
-			expectedWord := c.expected[i]
-			if word != expectedWord {
-				t.Errorf("ERROR: input word is unequal to expected word")
-				fmt.Println("expected: ", expectedWord)
-				fmt.Println("actual: ", word)
+			phrase := actual[i]
+			expectedPhrase := c.expected[i]
+			if phrase != expectedPhrase {
+				t.Errorf("input word is unequal to expected phrase")
+				fmt.Println("expected: ", expectedPhrase)
+				fmt.Println("actual: ", phrase)
 
 			}
 		}
