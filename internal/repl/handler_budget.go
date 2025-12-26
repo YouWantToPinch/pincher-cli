@@ -56,7 +56,12 @@ func findBudgetWithName(name string, budgets []client.Budget) (*client.Budget, e
 func handleBudgetView(s *State, c *handlerContext) error {
 	name, _ := c.args.pfx()
 
-	budget, err := findBudgetWithName(name, s.Client.BudgetCache)
+	budgets, err := s.Client.GetBudgets("")
+	if err != nil {
+		return fmt.Errorf("could not view specified budget: %s", err.Error())
+	}
+
+	budget, err := findBudgetWithName(name, budgets)
 	if err != nil {
 		return err
 	}
@@ -92,7 +97,6 @@ func handleBudgetList(s *State, c *handlerContext) error {
 		fmt.Printf("No memberships found in query from user %s. \n", s.Client.LoggedInUser.Username)
 		return nil
 	}
-	s.Client.BudgetCache = budgets
 
 	fmt.Printf("%s's budget memberships: \n", s.Client.LoggedInUser.Username)
 	sort.Slice(budgets, func(i, j int) bool {

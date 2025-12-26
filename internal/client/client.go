@@ -18,7 +18,6 @@ type userInfo struct {
 
 type Client struct {
 	cache        cache.Cache
-	BudgetCache  []Budget // TODO: use the actual cache; this is just temporary
 	httpClient   http.Client
 	LoggedInUser userInfo
 	ViewedBudget Budget
