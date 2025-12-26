@@ -44,15 +44,6 @@ func handleBudgetAdd(s *State, c *handlerContext) error {
 	}
 }
 
-func findBudgetWithName(name string, budgets []client.Budget) (*client.Budget, error) {
-	for _, budget := range budgets {
-		if name == budget.Name {
-			return &budget, nil
-		}
-	}
-	return nil, fmt.Errorf("no budgets found in cache with provided name")
-}
-
 func handleBudgetView(s *State, c *handlerContext) error {
 	name, _ := c.args.pfx()
 
@@ -61,7 +52,7 @@ func handleBudgetView(s *State, c *handlerContext) error {
 		return fmt.Errorf("could not view specified budget: %s", err.Error())
 	}
 
-	budget, err := findBudgetWithName(name, budgets)
+	budget, err := findBudgetByName(name, budgets)
 	if err != nil {
 		return err
 	}

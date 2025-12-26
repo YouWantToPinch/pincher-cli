@@ -2,7 +2,6 @@ package repl
 
 import (
 	"fmt"
-	"log/slog"
 	"sort"
 	"strings"
 
@@ -91,16 +90,33 @@ func handleAccountList(s *State, c *handlerContext) error {
 
 func handleAccountUpdate(s *State, c *handlerContext) error {
 	accountName, _ := c.args.pfx()
-	c.args.trackOptArgs(&c.cmd, "name")
-	newName, _ := c.args.pfx()
-	c.args.trackOptArgs(&c.cmd, "type")
-	newAccountType, _ := c.args.pfx()
-	c.args.trackOptArgs(&c.cmd, "notes")
-	newNotes, _ := c.args.pfx()
-	slog.Debug("newNotes: " + newNotes)
-	slog.Debug("newNotes arg0: " + c.cmd.opts["notes"][0])
 
-	err := s.Client.UpdateAccount(accountName, newName, newNotes, newAccountType)
+	accounts, err := s.Client.GetAccounts("")
+	if err != nil {
+		return err
+	}
+	account, err := findAccountByName(accountName, accounts)
+	if err != nil {
+		return err
+	}
+
+	c.args.trackOptArgs(&c.cmd, "name")
+	payloadName, err := c.args.pfx()
+	if err != nil {
+		payloadName = account.Name
+	}
+	c.args.trackOptArgs(&c.cmd, "type")
+	payloadAccountType, err := c.args.pfx()
+	if err != nil {
+		payloadAccountType = account.AccountType
+	}
+	c.args.trackOptArgs(&c.cmd, "notes")
+	payloadNotes, err := c.args.pfx()
+	if err != nil {
+		payloadNotes = account.Notes
+	}
+
+	err = s.Client.UpdateAccount(account.ID.String(), payloadName, payloadNotes, payloadAccountType)
 	if err != nil {
 		return err
 	}
@@ -110,9 +126,17 @@ func handleAccountUpdate(s *State, c *handlerContext) error {
 
 func handleAccountRestore(s *State, c *handlerContext) error {
 	accountName, _ := c.args.pfx()
-	c.args.trackOptArgs(&c.cmd, "name")
 
-	err := s.Client.RestoreAccount(accountName)
+	accounts, err := s.Client.GetAccounts("")
+	if err != nil {
+		return err
+	}
+	account, err := findAccountByName(accountName, accounts)
+	if err != nil {
+		return err
+	}
+
+	err = s.Client.RestoreAccount(account.ID.String(), accountName)
 	if err != nil {
 		return err
 	}
@@ -127,7 +151,16 @@ func handleAccountDelete(s *State, c *handlerContext) error {
 	c.args.trackOptArgs(&c.cmd, "hard")
 	flagDeleteHard, _ := c.args.pfx()
 
-	err := s.Client.DeleteAccount(name, flagDeleteHard)
+	accounts, err := s.Client.GetAccounts("")
+	if err != nil {
+		return err
+	}
+	account, err := findAccountByName(name, accounts)
+	if err != nil {
+		return err
+	}
+
+	err = s.Client.DeleteAccount(account.ID.String(), name, flagDeleteHard)
 	if err != nil {
 		return err
 	}
