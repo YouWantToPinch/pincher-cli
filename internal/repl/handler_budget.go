@@ -66,9 +66,8 @@ func handleBudgetView(s *State, c *handlerContext) error {
 		return err
 	}
 
-	// store a COPY so that we don't get issues when the cache might change.
-	// when the logic is overtaken by the work to be done on the pinchercache package,
-	// this may look different.
+	// NOTE: We store a COPY here rather than a ptr,
+	// as the cache by nature may change at a moment's notice
 	s.Client.ViewedBudget = *budget
 	fmt.Printf("Now viewing budget: %s\n", budget.Name)
 	return nil

@@ -59,7 +59,6 @@ func (c *Client) MakeRequest(method, path, token string, body any) (*http.Reques
 	if err != nil {
 		return nil, err
 	}
-	// TODO: Handle error, log to a local directory
 	req.Header.Set("Content-Type", "application/json")
 
 	if token != "" {
