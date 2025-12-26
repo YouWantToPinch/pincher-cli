@@ -41,7 +41,7 @@ func nDashes(n int) string {
 	return strings.Repeat("-", n)
 }
 
-// returns the first cmdElement with the given name
+// returns the first cmdElement with the given name from a slice of cmdElements
 func findCMDElementWithName(elements []cmdElement, name string) (*cmdElement, bool) {
 	for i := range elements {
 		el := &elements[i]

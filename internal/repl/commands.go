@@ -5,7 +5,9 @@ import (
 	"strings"
 )
 
-// command represents a user-attempted input
+// ================ PARSING USER INPUT ==================
+
+// command represents a submission by a user through the CLI.
 type command struct {
 	name string
 	// positional arguments that a handler may expect
@@ -75,6 +77,8 @@ func (c *command) parse(handler *cmdHandler, input string) error {
 	return nil
 }
 
+// ============== COMMAND ELEMENTS =================
+
 // cmdElement is the building block of the command infrastructure.
 // It may represent any of:
 //
@@ -127,29 +131,13 @@ func (e *cmdElement) letter() string {
 
 type HandlerFunc func(*State, *handlerContext) error
 
-// cmdHandler represents a command which can be run.
-type cmdHandler struct {
-	cmdElement
-	actions  []cmdElement
-	callback HandlerFunc
-	//
-	//
-	// Handlers more integral to the base functioning of the CLI,
-	// such as 'exit', 'help', and 'config', reserve values 0-99.
-	//
-	// Handlers more relevant after a login, such as 'list',
-	// reserve values over 99.
-	//
-	// The further away a command gets from relevance to the state of
-	// the CLI at startup, the lower priority it ought to be given.
-	priority int
-}
-
 type handlerContext struct {
 	cmd       command
 	args      argTracker
 	ctxValues map[string]string
 }
+
+// ========== ARGUMENT TRACKING =============
 
 // argTracker is an iterator that progressively provides handlers with
 // command argument OR option argument values
@@ -201,6 +189,24 @@ func (a *argTracker) pfx() (string, error) {
 	return (*args)[current], nil
 }
 
+// cmdHandler represents a command which can be run.
+type cmdHandler struct {
+	cmdElement
+	actions  []cmdElement
+	callback HandlerFunc
+	//
+	//
+	// Handlers more integral to the base functioning of the CLI,
+	// such as 'exit', 'help', and 'config', reserve values 0-99.
+	//
+	// Handlers more relevant after a login, such as 'list',
+	// reserve values over 99.
+	//
+	// The further away a command gets from relevance to the state of
+	// the CLI at startup, the lower priority it ought to be given.
+	priority int
+}
+
 func (c *cmdHandler) help() {
 	fmt.Println("COMMAND: " + c.name)
 	fmt.Println(c.description)
@@ -216,6 +222,11 @@ func (c *cmdHandler) help() {
 	fmt.Println()
 }
 
+// ========== REGISTRY =============
+
+// a commandRegistry tracks any number of commands that a user
+// has available to use. Some commands may require prerequisite
+// actions before they are registered.
 type commandRegistry struct {
 	handlers map[string]*cmdHandler
 }
