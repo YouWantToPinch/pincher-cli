@@ -8,22 +8,34 @@ import (
 	"path/filepath"
 )
 
-// get the path of a specified file under the application "logs" directory
-func GetLogPath(filename string) (string, error) {
-	homeDir, err := os.UserHomeDir()
+type userDirFunc func() (string, error)
+
+// GetFilePath gets the path of a specified file under the specified base user directory.
+// Pincher aims to adhere to XDG Base Directory Specification.
+// For the given each base directory, GetConfigPath will look within
+// the ordered subdirectories as specified for the file.
+func getFilePath(fn userDirFunc, subdirs []string, filename string) (string, error) {
+	userBaseDir, err := fn()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(homeDir, ".local", "share", "pincher", "logs", filename), nil
+	path := filepath.Join(append([]string{userBaseDir}, subdirs...)...)
+	return filepath.Join(path, filename), nil
 }
 
-// get the path of a specified file under the application ".config/pincher" directory
-func GetConfigPath(filename string) (string, error) {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(homeDir, ".config", "pincher", filename), nil
+// GetConfigFilepath returns the path of a specific config file under the application's config directory.
+func GetConfigFilepath(filename string) (string, error) {
+	return getFilePath(os.UserConfigDir, []string{"pincher"}, filename)
+}
+
+// GetLogFilepath returns the path of a specific log file under the application's "logs" directory.
+func GetLogFilepath(filename string) (string, error) {
+	return getFilePath(os.UserHomeDir, []string{".local", "share", "pincher", "logs"}, filename)
+}
+
+// GetCacheFilepath returns the path of a specific cache file under the application's cache directory.
+func GetCacheFilepath(filename string) (string, error) {
+	return getFilePath(os.UserCacheDir, []string{"pincher"}, filename)
 }
 
 // WriteAsJSON writes a given struct with JSON tags

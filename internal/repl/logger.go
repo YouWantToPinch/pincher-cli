@@ -22,7 +22,7 @@ func (l *Logger) getCurrentLog() string {
 }
 
 func (l *Logger) New(level slog.Level) error {
-	path, _ := file.GetLogPath(l.getCurrentLog())
+	path, _ := file.GetLogFilepath(l.getCurrentLog())
 
 	err := os.MkdirAll(filepath.Dir(path), 0o755)
 	if err != nil {
@@ -50,7 +50,7 @@ func (l *Logger) Close() error {
 			return fmt.Errorf("could not get file info for log: %s", err.Error())
 		}
 		if fileInfo.Size() == 0 {
-			path, _ := file.GetLogPath(l.getCurrentLog())
+			path, _ := file.GetLogFilepath(l.getCurrentLog())
 
 			if err := os.Remove(path); err != nil {
 				return fmt.Errorf("could not remove log file: %s", err.Error())

@@ -27,7 +27,7 @@ func (c *Config) New(dbURL, username string) error {
 }
 
 func ReadFromFile(filepath string) (Config, error) {
-	confPath, err := file.GetConfigPath("cli.conf")
+	confPath, err := file.GetConfigFilepath("cli.conf")
 	if err != nil {
 		return Config{}, err
 	}
@@ -46,7 +46,7 @@ func ReadFromFile(filepath string) (Config, error) {
 }
 
 func (c *Config) WriteToFile() error {
-	path, err := file.GetConfigPath("cli.conf")
+	path, err := file.GetConfigFilepath("cli.conf")
 	if err != nil {
 		return err
 	}
