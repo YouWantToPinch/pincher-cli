@@ -23,3 +23,12 @@ func findAccountByName(name string, accounts []client.Account) (*client.Account,
 	}
 	return nil, fmt.Errorf("no accounts found in cache with provided name")
 }
+
+func findGroupByName(name string, groups []client.Group) (*client.Group, error) {
+	for _, group := range groups {
+		if name == group.Name {
+			return &group, nil
+		}
+	}
+	return nil, fmt.Errorf("no groups found in cache with provided name")
+}

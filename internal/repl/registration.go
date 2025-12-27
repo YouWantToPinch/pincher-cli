@@ -153,6 +153,8 @@ func registerBudgetCommand(s *State, preregister bool) {
 }
 
 func registerResourceCommands(s *State, preregister bool) {
+	mdAct := middlewareValidateAction
+
 	handlers := []*cmdHandler{
 		{
 			cmdElement: cmdElement{
@@ -161,7 +163,7 @@ func registerResourceCommands(s *State, preregister bool) {
 				priority:    180,
 			},
 			nonRegMsg: "first view a budget to see its accounts",
-			callback:  middlewareValidateAction(handlerAccount),
+			callback:  mdAct(handlerAccount),
 			actions: []cmdElement{
 				{
 					name:        "add",
@@ -206,9 +208,10 @@ func registerResourceCommands(s *State, preregister bool) {
 					description: "see a list of all accounts belonging to budget",
 					options: []cmdElement{
 						{
-							name:        "include",
-							description: "Include accounts usually excluded with qualities like: 'deleted'",
-							arguments:   []string{"quality"},
+							name:         "include",
+							description:  "Include accounts usually excluded with qualities like: 'deleted'",
+							arguments:    []string{"quality"},
+							useShorthand: true,
 						},
 					},
 				},
@@ -223,6 +226,54 @@ func registerResourceCommands(s *State, preregister bool) {
 							useShorthand: true,
 						},
 					},
+				},
+			},
+		},
+		{
+			cmdElement: cmdElement{
+				name:        "group",
+				description: "Manage " + s.Client.ViewedBudget.Name + " groups",
+				priority:    180,
+			},
+			nonRegMsg: "first view a budget to see its groups",
+			callback:  mdAct(handlerGroup),
+			actions: []cmdElement{
+				{
+					name:        "add",
+					description: "Add a new group to budget",
+					arguments:   []string{"name"},
+					options: []cmdElement{
+						{
+							name:        "notes",
+							description: "give the new group some notes",
+							arguments:   []string{"notes_value"},
+						},
+					},
+				},
+				{
+					name:      "update",
+					arguments: []string{"name"},
+					options: []cmdElement{
+						{
+							name:        "name",
+							description: "rewrite group name",
+							arguments:   []string{"new_name"},
+						},
+						{
+							name:        "notes",
+							description: "rewrite group notes",
+							arguments:   []string{"new_notes"},
+						},
+					},
+				},
+				{
+					name:        "list",
+					description: "see a list of all groups belonging to budget",
+				},
+				{
+					name:        "delete",
+					description: "Delete a group",
+					arguments:   []string{"group_name"},
 				},
 			},
 		},

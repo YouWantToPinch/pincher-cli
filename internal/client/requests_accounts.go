@@ -82,7 +82,7 @@ func (c *Client) UpdateAccount(accountID, name, notes, accountType string) error
 	}
 
 	switch resp.StatusCode {
-	case http.StatusNoContent:
+	case http.StatusOK:
 		return nil
 	case http.StatusNotFound:
 		return fmt.Errorf("resource not found")
