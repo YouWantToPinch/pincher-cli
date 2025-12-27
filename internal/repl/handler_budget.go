@@ -60,6 +60,7 @@ func handleBudgetView(s *State, c *handlerContext) error {
 	// NOTE: We store a COPY here rather than a ptr,
 	// as the cache by nature may change at a moment's notice
 	s.Client.ViewedBudget = *budget
+	registerResourceCommands(s, false)
 	fmt.Printf("Now viewing budget: %s\n", budget.Name)
 	return nil
 }

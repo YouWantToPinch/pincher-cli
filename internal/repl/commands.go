@@ -2,6 +2,7 @@ package repl
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 )
 
@@ -192,8 +193,9 @@ func (a *argTracker) pfx() (string, error) {
 // cmdHandler represents a command which can be run.
 type cmdHandler struct {
 	cmdElement
-	actions  []cmdElement
-	callback HandlerFunc
+	nonRegMsg string
+	actions   []cmdElement
+	callback  HandlerFunc
 	//
 	//
 	// Handlers more integral to the base functioning of the CLI,
@@ -229,6 +231,14 @@ func (c *cmdHandler) help() {
 // actions before they are registered.
 type commandRegistry struct {
 	handlers map[string]*cmdHandler
+	// preregistration of commands allows for users to predictably
+	// know what commands are in theory POSSIBLE to execute within
+	// the CLI, without yet registering them for use.
+	// It means users can get output letting them know that the
+	// command they entered isn't 'unknown', but that executing it
+	// successfully is still dependent on some other action happening first,
+	// such as logging in.
+	preregistered map[string]bool
 }
 
 func (c *commandRegistry) run(s *State, input string) error {
@@ -237,9 +247,12 @@ func (c *commandRegistry) run(s *State, input string) error {
 		opts: map[string][]string{},
 	}
 
-	handler, ok := c.handlers[cmd.name]
-	if !ok {
+	// run the command only if it is FULLY registered
+	handler, registered := c.handlers[cmd.name]
+	if !registered {
 		return fmt.Errorf("unknown command '%s'", cmd.name)
+	} else if _, preregistered := c.preregistered[cmd.name]; preregistered {
+		return fmt.Errorf("cannot execute command '%s': %s", cmd.name, c.handlers[cmd.name].nonRegMsg)
 	}
 
 	err := cmd.parse(handler, input)
@@ -257,12 +270,20 @@ func (c *commandRegistry) run(s *State, input string) error {
 	return handler.callback(s, context)
 }
 
-func (c *commandRegistry) register(name string, handler *cmdHandler) {
-	_, ok := c.handlers[name]
-	if ok {
-		fmt.Printf("ERROR: Command '%s' already exists in command registry\n", name)
+func (c *commandRegistry) register(name string, handler *cmdHandler, preregister bool) {
+	_, registered := c.handlers[name]
+	if registered {
+		// if the command is not fully registered, make it so
+		_, preregistered := c.preregistered[name]
+		if preregistered {
+			delete(c.preregistered, name)
+		}
+		slog.Error("attempted registration of command to handler, but is already registered", slog.String("command", name))
 	}
 	c.handlers[name] = handler
+	if preregister {
+		c.preregistered[name] = preregister
+	}
 }
 
 func (c *commandRegistry) exists(name string) (*cmdHandler, bool) {
@@ -273,10 +294,14 @@ func (c *commandRegistry) exists(name string) (*cmdHandler, bool) {
 	return nil, false
 }
 
-func (c *commandRegistry) GetRegisteredHandlers() []cmdHandler {
+func (c *commandRegistry) GetRegisteredHandlers(verbose bool) []cmdHandler {
 	handlers := make([]cmdHandler, 0, len(c.handlers))
-	for _, handler := range c.handlers {
-		handlers = append(handlers, *handler)
+	for cmdName, handler := range c.handlers {
+		if verbose {
+			handlers = append(handlers, *handler)
+		} else if _, preregistered := c.preregistered[cmdName]; !preregistered {
+			handlers = append(handlers, *handler)
+		}
 	}
 	return handlers
 }

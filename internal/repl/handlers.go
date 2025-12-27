@@ -73,7 +73,9 @@ func handlerHelp(s *State, c *handlerContext) error {
 	if handler, exists := s.CommandRegistry.exists("help"); exists {
 		handler.help()
 		fmt.Println("AVAILABLE COMMANDS: ")
-		registered := s.CommandRegistry.GetRegisteredHandlers()
+		c.args.trackOptArgs(&c.cmd, "verbose")
+		verbose, _ := c.args.pfx()
+		registered := s.CommandRegistry.GetRegisteredHandlers(verbose == "SET")
 		sort.Slice(registered, func(i, j int) bool {
 			return registered[i].priority < registered[j].priority
 		})

@@ -1,0 +1,232 @@
+package repl
+
+func batchRegisterCommands(r *commandRegistry, handlers []*cmdHandler, preregister bool) {
+	for _, handler := range handlers {
+		r.register(handler.name, handler, preregister)
+	}
+}
+
+func registerBaseCommands(s *State, preregister bool) {
+	mdAct := middlewareValidateAction
+
+	handlers := []*cmdHandler{
+		{
+			cmdElement: cmdElement{
+				name:        "exit",
+				description: "exit the program",
+				priority:    0,
+			},
+			callback: handlerExit,
+		},
+		{
+			cmdElement: cmdElement{
+				name:        "help",
+				description: "See usage of another command",
+				arguments:   []string{"command"},
+				priority:    1,
+				options: []cmdElement{
+					{
+						name:         "verbose",
+						description:  "show commands not available for use in the current CLI context",
+						useShorthand: true,
+					},
+				},
+			},
+			callback: handlerHelp,
+		},
+		{
+			cmdElement: cmdElement{
+				name:        "clear",
+				description: "clear the terminal",
+				arguments:   []string{"command"},
+				priority:    2,
+			},
+			callback: handlerClear,
+		},
+		{
+			cmdElement: cmdElement{
+				name:        "config",
+				description: "Add, Load, or Save a local user configuration for the Pincher-CLI",
+				arguments:   []string{"action"},
+				priority:    10,
+			},
+			actions: []cmdElement{
+				{
+					name:        "edit",
+					description: "edit current user configuration",
+				},
+				{
+					name:        "load",
+					description: "load user configuration from the local machine",
+				},
+			},
+			callback: mdAct(handlerConfig),
+		},
+		{
+			cmdElement: cmdElement{
+				name:        "log",
+				description: "see Pincher-CLI logs",
+				priority:    15,
+			},
+			callback: handlerLog,
+		},
+		{
+			cmdElement: cmdElement{
+				name:        "connect",
+				description: "Connect to a remote or local database",
+				priority:    20,
+			},
+			callback: handlerConnect,
+		},
+		{
+			cmdElement: cmdElement{
+				name:        "ready",
+				description: "Get server readiness",
+				priority:    25,
+			},
+			callback: handlerReady,
+		},
+		{
+			cmdElement: cmdElement{
+				name:        "user",
+				description: "Create a new user, or log in",
+				arguments:   []string{"action"},
+				priority:    50,
+			},
+			callback: mdAct(handlerUser),
+			actions: []cmdElement{
+				{
+					name:      "add",
+					arguments: []string{"new_username", "new_password", "retype password"},
+				},
+				{
+					name:      "login",
+					arguments: []string{"username", "password"},
+				},
+			},
+		},
+	}
+
+	batchRegisterCommands(s.CommandRegistry, handlers, preregister)
+}
+
+func registerBudgetCommand(s *State, preregister bool) {
+	handler := &cmdHandler{
+		cmdElement: cmdElement{
+			name:        "budget",
+			description: "Manage " + s.Client.LoggedInUser.Username + "'s budgets",
+			priority:    190,
+		},
+		nonRegMsg: "login required",
+		callback:  middlewareValidateAction(handlerBudget),
+		actions: []cmdElement{
+			{
+				name:      "add",
+				arguments: []string{"name"},
+				options: []cmdElement{
+					{
+						name:        "notes",
+						description: "Give your budget some notes",
+						arguments:   []string{"notes_value"},
+					},
+				},
+			},
+			{
+				name: "list",
+				options: []cmdElement{
+					{
+						name:        "role",
+						description: "Filter results by user role. Can be ADMIN, MANAGER, CONTRIBUTOR, or VIEWER.",
+						arguments:   []string{"role_title"},
+					},
+				},
+			},
+			{
+				name:        "view",
+				description: "specify a budget to interact with using other commands",
+				arguments:   []string{"budget_name"},
+			},
+		},
+	}
+
+	s.CommandRegistry.register("budget", handler, preregister)
+}
+
+func registerResourceCommands(s *State, preregister bool) {
+	handlers := []*cmdHandler{
+		{
+			cmdElement: cmdElement{
+				name:        "account",
+				description: "Manage " + s.Client.ViewedBudget.Name + " accounts",
+				priority:    180,
+			},
+			nonRegMsg: "first view a budget to see its accounts",
+			callback:  middlewareValidateAction(handlerAccount),
+			actions: []cmdElement{
+				{
+					name:        "add",
+					description: "Add a new account to budget",
+					arguments:   []string{"name", "account_type"},
+					options: []cmdElement{
+						{
+							name:        "notes",
+							description: "give the new account some notes",
+							arguments:   []string{"notes_value"},
+						},
+					},
+				},
+				{
+					name:      "update",
+					arguments: []string{"name"},
+					options: []cmdElement{
+						{
+							name:        "name",
+							description: "rewrite account name",
+							arguments:   []string{"new_name"},
+						},
+						{
+							name:        "notes",
+							description: "rewrite account notes",
+							arguments:   []string{"new_notes"},
+						},
+						{
+							name:        "type",
+							description: "choose different account type",
+							arguments:   []string{"new_type"},
+						},
+					},
+				},
+				{
+					name:        "restore",
+					description: "restore a soft-deleted account",
+					arguments:   []string{"account_name"},
+				},
+				{
+					name:        "list",
+					description: "see a list of all accounts belonging to budget",
+					options: []cmdElement{
+						{
+							name:        "include",
+							description: "Include accounts usually excluded with qualities like: 'deleted'",
+							arguments:   []string{"quality"},
+						},
+					},
+				},
+				{
+					name:        "delete",
+					description: "Delete an account",
+					arguments:   []string{"account_name"},
+					options: []cmdElement{
+						{
+							name:         "hard",
+							description:  "as opposed to a reversible soft deletion (default)",
+							useShorthand: true,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	batchRegisterCommands(s.CommandRegistry, handlers, preregister)
+}
