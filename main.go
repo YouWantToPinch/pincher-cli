@@ -22,12 +22,12 @@ func main() {
 	done := make(chan bool)
 
 	cliState := &repl.State{DoneChan: &done}
-	cfg, err := config.ReadFromFile("cli.conf")
+	cfg, err := config.ReadFromFile()
 	if err != nil {
 		fmt.Printf("CONFIG ERROR: %s\n", err.Error())
 		fmt.Println("(Does a config file exist?)")
 	}
-	cliState.Config = &cfg
+	cliState.Config = cfg
 
 	cliState.Logger = &repl.Logger{}
 	err = cliState.Logger.New(slog.LevelInfo)

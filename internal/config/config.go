@@ -26,22 +26,17 @@ func (c *Config) New(dbURL, username string) error {
 	return nil
 }
 
-func ReadFromFile(filepath string) (Config, error) {
+func ReadFromFile() (*Config, error) {
 	confPath, err := file.GetConfigFilepath("cli.conf")
 	if err != nil {
-		return Config{}, err
+		return nil, err
 	}
 
-	data, err := os.ReadFile(confPath)
+	config, err := file.ReadJSONFromFile[Config](confPath)
 	if err != nil {
-		return Config{}, err
+		return nil, err
 	}
 
-	var config Config
-	err = json.Unmarshal(data, &config)
-	if err != nil {
-		return Config{}, err
-	}
 	return config, nil
 }
 

@@ -54,12 +54,12 @@ func handleConfigEdit(s *State, c *handlerContext) error {
 
 func handleConfigLoad(s *State, c *handlerContext) error {
 	var err error
-	userConfig, err := config.ReadFromFile("cli.conf")
+	userConfig, err := config.ReadFromFile()
 	if err != nil {
-		s.Config = &userConfig
+		s.Config = userConfig
 		return fmt.Errorf("trouble loading config: %s", err.Error())
 	}
-	s.Config = &userConfig
+	s.Config = userConfig
 	fmt.Println("Loaded configuration settings.")
 	return nil
 }
