@@ -11,14 +11,18 @@ type Meta struct {
 	Notes string `json:"notes"`
 }
 
+type UserInfo struct {
+	User
+	Token        string `json:"token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
 type User struct {
 	ID             uuid.UUID `json:"id"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
 	Username       string    `json:"username"`
-	HashedPassword string    `json:"hashed_password"`
-	Token          string    `json:"token"`
-	RefreshToken   string    `json:"refresh_token"`
+	HashedPassword string    `json:"-"`
 }
 
 type BudgetMembership struct {
@@ -39,7 +43,7 @@ type Group struct {
 	ID        uuid.UUID `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
-	BudgetID  uuid.UUID `json:"user_id"`
+	BudgetID  uuid.UUID `json:"budget_id"`
 	Meta
 }
 
@@ -47,7 +51,7 @@ type Category struct {
 	ID        uuid.UUID     `json:"id"`
 	CreatedAt time.Time     `json:"created_at"`
 	UpdatedAt time.Time     `json:"updated_at"`
-	BudgetID  uuid.UUID     `json:"user_id"`
+	BudgetID  uuid.UUID     `json:"budget_id"`
 	GroupID   uuid.NullUUID `json:"group_id"`
 	Meta
 }

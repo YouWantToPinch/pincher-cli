@@ -13,6 +13,7 @@ import (
 
 type userInfo struct {
 	JSONWebToken string
+	RefreshToken string
 	Username     string
 	ID           string
 }

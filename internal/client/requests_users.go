@@ -34,24 +34,24 @@ func (c *Client) CreateUser(username, password string) (success bool, error erro
 	}
 }
 
-func (c *Client) LoginUser(username, password string) (User, error) {
+func (c *Client) LoginUser(username, password string) (*UserInfo, error) {
 	url := c.API() + "/login"
 	payload := userCredentials{
 		Username: username,
 		Password: password,
 	}
 
-	var user User
+	var user UserInfo
 	resp, err := c.Post(url, "", payload, &user)
 	if err != nil {
-		return User{}, err
+		return nil, err
 	}
 
 	switch resp.StatusCode {
 	case http.StatusOK:
-		return user, nil
+		return &user, nil
 	default:
-		return User{}, fmt.Errorf("failed to log in as user")
+		return nil, fmt.Errorf("failed to log in as user")
 	}
 }
 
