@@ -40,13 +40,19 @@ func GetCacheFilepath(filename string) (string, error) {
 
 // WriteAsJSON writes a given struct with JSON tags
 // as JSON to a specified filepath
-func WriteAsJSON(dataStruct any, filepath string) error {
+func WriteAsJSON(dataStruct any, filePath string) error {
 	jsonData, err := json.MarshalIndent(dataStruct, "", " \t")
 	if err != nil {
 		return err
 	}
 
-	err = os.WriteFile(filepath, jsonData, 0o666)
+	dir := filepath.Dir(filePath)
+	err = os.MkdirAll(dir, 0o755)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(filePath, jsonData, 0o666)
 	if err != nil {
 		return err
 	}
