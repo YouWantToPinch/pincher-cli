@@ -20,30 +20,32 @@ type command struct {
 func (c *command) parse(handler *cmdHandler, input string) error {
 	cmdFields := cleanInput(input)
 	c.name = cmdFields[0]
-	var parsingOptions []cmdElement
-	parsingOptions = handler.options
-	parsingOption := ""
-	argCountNeeded := 0
+	// var parsingOptions []cmdElement
+	// parsingOptions = handler.options
+	var parsingOption *cmdElement
+	optArgCountNeeded := 0
+	var actionElement *cmdElement
 
 	for i := 1; i < len(cmdFields); i++ {
 		// have we encountered an option?
-		if strings.HasPrefix(cmdFields[i], "-") {
+		if strings.HasPrefix(cmdFields[i], "--") || (strings.HasPrefix(cmdFields[i], "-") && len(cmdFields[i]) == 2) {
 			// return error if we encounter an option while still parsing another one
-			if parsingOption != "" {
-				return fmt.Errorf("command could not be parsed; missing positional argument(s) for option: '--%s'", parsingOption)
+			if parsingOption != nil {
+				return fmt.Errorf("command could not be parsed; missing positional argument(s) for option [%s]: <%s>", parsingOption.name, parsingOption.arguments[len(c.opts[parsingOption.name])])
 			}
 			// find out if the handler takes this option
 			userOpt := strings.TrimLeft(cmdFields[i], "-")
 			foundMatch := false
-			for _, opt := range parsingOptions {
+			for _, opt := range handler.options {
 				// slog.Debug("Comparing: " + opt.name + " against " + userOpt)
 				foundMatch = (opt.name == userOpt || ((opt.letter() == userOpt) && opt.useShorthand))
 				if foundMatch {
 					c.opts[opt.name] = []string{}
 					if opt.argCount() > 0 {
-						parsingOption = opt.name
-						argCountNeeded = opt.argCount()
+						parsingOption = &opt
+						optArgCountNeeded = opt.argCount()
 					} else {
+						// if the option is valid, but takes no arguments, it must be a flag
 						c.opts[opt.name] = append(c.opts[opt.name], "SET")
 					}
 					break
@@ -54,26 +56,36 @@ func (c *command) parse(handler *cmdHandler, input string) error {
 				return fmt.Errorf("command includes unexpected option '%s'", cmdFields[i])
 			}
 		} else {
-			if parsingOption == "" {
-				// not parsing an option; include in arguments
+			if parsingOption == nil {
+				// not parsing an option; include in command argument stack
 				c.args = append(c.args, cmdFields[i])
 				// check whether or not we are past the point of parsing command options,
 				// and onto the opportunity of parsing action options
 				if el, found := findCMDElementWithName(handler.actions, cmdFields[i]); found {
-					parsingOptions = el.options
+					actionElement = el
+					handler.options = el.options
 				}
 			} else {
-				// parsing a option; include in option's own argument stack
-				c.opts[parsingOption] = append(c.opts[parsingOption], cmdFields[i])
-				argCountNeeded -= 1
-				if argCountNeeded == 0 {
-					parsingOption = ""
+				// parsing an option; include in option's own argument stack
+				c.opts[parsingOption.name] = append(c.opts[parsingOption.name], cmdFields[i])
+				optArgCountNeeded -= 1
+				if optArgCountNeeded == 0 {
+					parsingOption = nil
 				}
 			}
 		}
 	}
-	if argCountNeeded > 0 {
-		return fmt.Errorf("command could not be parsed; missing positional argument(s) for option: '--%s'", parsingOption)
+	//
+	if optArgCountNeeded > 0 {
+		return fmt.Errorf("command could not be parsed; missing positional argument(s) for option [%s]: <%s>", parsingOption.name, parsingOption.arguments[len(c.opts[parsingOption.name])])
+	}
+	// if a command action was specified...
+	if actionElement != nil {
+		// check that the user has included all necessary arguments
+		expectedArgs := append(handler.arguments, actionElement.arguments...)
+		if len(c.args) < len(expectedArgs) {
+			return fmt.Errorf("command could not be parsed; missing positional argument: <%s>", expectedArgs[len(c.args)])
+		}
 	}
 	return nil
 }

@@ -20,18 +20,9 @@ func handlerUser(s *State, c *handlerContext) error {
 }
 
 func handleUserAdd(s *State, c *handlerContext) error {
-	username, err := c.args.pfx()
-	if err != nil {
-		return fmt.Errorf("missing argument for command: <username>")
-	}
-	password, err := c.args.pfx()
-	if err != nil {
-		return fmt.Errorf("missing argument for command: <password>")
-	}
-	retypedPassword, err := c.args.pfx()
-	if err != nil {
-		return fmt.Errorf("missing argument for command: <retyped password>")
-	}
+	username, _ := c.args.pfx()
+	password, _ := c.args.pfx()
+	retypedPassword, _ := c.args.pfx()
 
 	if password != retypedPassword {
 		return fmt.Errorf("password fields did not match")
@@ -50,19 +41,14 @@ func handleUserAdd(s *State, c *handlerContext) error {
 }
 
 func handleUserLogin(s *State, c *handlerContext) error {
-	username, err := c.args.pfx()
-	if err != nil {
-		return fmt.Errorf("missing argument for command: <username>")
-	}
-	password, err := c.args.pfx()
-	if err != nil {
-		return fmt.Errorf("missing argument for command: <password>")
-	}
+	username, _ := c.args.pfx()
+	password, _ := c.args.pfx()
 
 	user, err := s.Client.LoginUser(username, password)
 	if err != nil {
 		return err
 	}
+
 	s.Client.LoggedInUser.JSONWebToken = user.Token
 	s.Client.LoggedInUser.Username = user.Username
 	registerBudgetCommand(s, false)
