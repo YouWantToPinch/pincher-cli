@@ -2,6 +2,7 @@ package repl
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
 	"sort"
@@ -30,6 +31,12 @@ func middlewareValidateAction(next HandlerFunc) HandlerFunc {
 // =========== HANDLERS =============
 
 func handlerExit(s *State, c *handlerContext) error {
+	err := s.SaveCache()
+	if err != nil {
+		// whether or not cache is saved should have no effect on exit
+		slog.Error(err.Error())
+		fmt.Println(err.Error())
+	}
 	fmt.Println("Closing Pincher-CLI program...")
 	*s.DoneChan <- true
 	// NOTE: No actual error. This handler hijacks the error handling within

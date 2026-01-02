@@ -7,18 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-
-	"github.com/YouWantToPinch/pincher-cli/internal/client"
-	"github.com/YouWantToPinch/pincher-cli/internal/config"
 )
-
-type State struct {
-	DoneChan        *chan bool
-	Logger          *Logger
-	Config          *config.Config
-	Client          *client.Client
-	CommandRegistry *commandRegistry
-}
 
 func StartRepl(cliState *State) {
 	if cliState == nil {

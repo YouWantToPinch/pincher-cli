@@ -19,7 +19,7 @@ type userInfo struct {
 }
 
 type Client struct {
-	cache        cache.Cache
+	Cache        cache.Cache
 	httpClient   http.Client
 	LoggedInUser userInfo
 	ViewedBudget Budget
@@ -38,7 +38,7 @@ func NewClient(timeout, cacheInterval time.Duration, baseURL string) Client {
 		url = baseURL
 	}
 	return Client{
-		cache: cache.NewCache(cacheInterval),
+		Cache: cache.NewCache(cacheInterval),
 		httpClient: http.Client{
 			Timeout: timeout,
 		},

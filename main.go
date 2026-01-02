@@ -39,6 +39,12 @@ func main() {
 	client := client.NewClient(time.Second*10, time.Minute*5, cliState.Config.BaseURL)
 	cliState.Client = &client
 
+	err = cliState.LoadCache()
+	if err != nil {
+		fmt.Printf("CACHE ERROR: %s\n", err.Error())
+		fmt.Println("(Does a cache file exist?)")
+	}
+
 	// run the repl until it is closed from within
 	go func() {
 		repl.StartRepl(cliState)

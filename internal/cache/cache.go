@@ -7,25 +7,30 @@ import (
 )
 
 type cacheEntry struct {
-	createdAt time.Time // time entry was created
-	data      []byte    // raw data we're caching
+	CreatedAt time.Time `json:"created_at"`
+	Data      []byte    `json:"data"`
 }
 
 type Cache struct {
-	cachedEntries map[string]cacheEntry
+	CachedEntries map[string]cacheEntry `json:"cached_entries"`
 	interval      time.Duration
 	mu            *sync.Mutex
+}
+
+func (c *Cache) Set(entries map[string]cacheEntry) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.CachedEntries = entries
 }
 
 func (c *Cache) Add(key string, value []byte) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	// slog.Debug("Adding key %s with value %s\n", key, string(value))
-
-	c.cachedEntries[key] = cacheEntry{
-		createdAt: time.Now().UTC(),
-		data:      value,
+	c.CachedEntries[key] = cacheEntry{
+		CreatedAt: time.Now().UTC(),
+		Data:      value,
 	}
 }
 
@@ -33,12 +38,12 @@ func (c *Cache) Get(key string) (entryData []byte, found bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	val, ok := c.cachedEntries[key]
+	val, ok := c.CachedEntries[key]
 	if !ok {
 		return nil, false
 	}
 
-	return val.data, true
+	return val.Data, true
 }
 
 func (c *Cache) reapLoop() {
@@ -54,9 +59,9 @@ func (c *Cache) reap() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	for key, val := range c.cachedEntries {
-		if time.Since(val.createdAt) > c.interval {
-			delete(c.cachedEntries, key)
+	for key, val := range c.CachedEntries {
+		if time.Since(val.CreatedAt) > c.interval {
+			delete(c.CachedEntries, key)
 		}
 	}
 }
@@ -65,12 +70,12 @@ func (c *Cache) Delete(key string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	delete(c.cachedEntries, key)
+	delete(c.CachedEntries, key)
 }
 
 func NewCache(interval time.Duration) Cache {
 	cache := Cache{
-		cachedEntries: make(map[string]cacheEntry),
+		CachedEntries: make(map[string]cacheEntry),
 		interval:      interval,
 		mu:            &sync.Mutex{},
 	}

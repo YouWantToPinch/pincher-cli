@@ -10,7 +10,7 @@ import (
 
 // Get wrapper for doRequest
 func (c *Client) Get(url, token string, out any) (*http.Response, error) {
-	if val, ok := c.cache.Get(url); ok {
+	if val, ok := c.Cache.Get(url); ok {
 		slog.Info("retrieving requested data from cache", slog.String("url", url))
 		err := json.Unmarshal(val, out)
 		if err != nil {
@@ -25,7 +25,7 @@ func (c *Client) Get(url, token string, out any) (*http.Response, error) {
 		if cacheErr != nil {
 			slog.Error(fmt.Sprintf("could not cache response data: %s", cacheErr))
 		} else {
-			c.cache.Add(url, data)
+			c.Cache.Add(url, data)
 		}
 	}
 
@@ -74,7 +74,7 @@ func (c *Client) doRequest(method, url, token string, payload, out any) (*http.R
 	// delete existing cache for url, as the resource has been changed
 	switch method {
 	case http.MethodPost:
-		c.cache.Delete(url)
+		c.Cache.Delete(url)
 	case http.MethodPut:
 		fallthrough
 	case http.MethodDelete:
@@ -82,7 +82,7 @@ func (c *Client) doRequest(method, url, token string, payload, out any) (*http.R
 		if err != nil {
 			slog.Error("could not delete key from url entry cache", slog.String("key", url))
 		}
-		c.cache.Delete(path)
+		c.Cache.Delete(path)
 	}
 
 	return resp, nil
