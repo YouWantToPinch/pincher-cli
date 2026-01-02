@@ -14,6 +14,7 @@ import (
 type userInfo struct {
 	JSONWebToken string
 	Username     string
+	ID           string
 }
 
 type Client struct {

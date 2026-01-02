@@ -11,6 +11,11 @@ func handlerUser(s *State, c *handlerContext) error {
 			return handleUserAdd(s, c)
 		case "login":
 			return handleUserLogin(s, c)
+		case "update":
+			return handleUserUpdate(s, c)
+		case "delete":
+			// return handleUserDelete(s, c)
+			fallthrough
 		default:
 			return fmt.Errorf("action not implemented")
 		}
@@ -49,9 +54,38 @@ func handleUserLogin(s *State, c *handlerContext) error {
 		return err
 	}
 
+	s.Client.LoggedInUser.ID = user.ID.String()
 	s.Client.LoggedInUser.JSONWebToken = user.Token
 	s.Client.LoggedInUser.Username = user.Username
 	registerBudgetCommand(s, false)
 	fmt.Printf("Logged in as %s, using new access token: %s\n", user.Username, user.Token)
+	return nil
+}
+
+func handleUserUpdate(s *State, c *handlerContext) error {
+	username, _ := c.args.pfx()
+	password, _ := c.args.pfx()
+	c.args.trackOptArgs(&c.cmd, "username")
+	newUsername, err := c.args.pfx()
+	if err != nil {
+		newUsername = username
+	}
+	c.args.trackOptArgs(&c.cmd, "password")
+	newPassword, err := c.args.pfx()
+	if err != nil {
+		newPassword = password
+	} else {
+		retypedNewPassword, _ := c.args.pfx()
+		if newPassword != retypedNewPassword {
+			return fmt.Errorf("fields for new password did not match")
+		}
+	}
+
+	err = s.Client.UpdateUser(newUsername, newPassword)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("User updated with new information")
 	return nil
 }

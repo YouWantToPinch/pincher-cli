@@ -103,6 +103,20 @@ func registerBaseCommands(s *State, preregister bool) {
 					name:      "login",
 					arguments: []string{"username", "password"},
 				},
+				{
+					name:      "update",
+					arguments: []string{"username", "password"},
+					options: []cmdElement{
+						{
+							name:      "username",
+							arguments: []string{"new_value"},
+						},
+						{
+							name:      "password",
+							arguments: []string{"new_value", "retyped_value"},
+						},
+					},
+				},
 			},
 		},
 	}

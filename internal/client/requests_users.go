@@ -54,3 +54,31 @@ func (c *Client) LoginUser(username, password string) (User, error) {
 		return User{}, fmt.Errorf("failed to log in as user")
 	}
 }
+
+func (c *Client) UpdateUser(username, password string) error {
+	url := c.API() + "/users"
+
+	type rqSchema struct {
+		Password string `json:"password"`
+		Username string `json:"username"`
+	}
+
+	payload := rqSchema{
+		Password: password,
+		Username: username,
+	}
+
+	resp, err := c.Put(url, c.LoggedInUser.JSONWebToken, payload)
+	if err != nil {
+		return err
+	}
+
+	switch resp.StatusCode {
+	case http.StatusOK:
+		return nil
+	case http.StatusNotFound:
+		return fmt.Errorf("resource not found")
+	default:
+		return fmt.Errorf("failed to update user")
+	}
+}
