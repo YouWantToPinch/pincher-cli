@@ -58,3 +58,17 @@ func WriteAsJSON(dataStruct any, filePath string) error {
 	}
 	return nil
 }
+
+func ReadJSONFromFile[T any](filepath string) (*T, error) {
+	data, err := os.ReadFile(filepath)
+	if err != nil {
+		return nil, err
+	}
+
+	var t T
+	err = json.Unmarshal(data, &t)
+	if err != nil {
+		return nil, err
+	}
+	return &t, nil
+}
