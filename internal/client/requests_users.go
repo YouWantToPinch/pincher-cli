@@ -55,6 +55,8 @@ func (c *Client) LoginUser(username, password string) (*UserInfo, error) {
 	}
 }
 
+// UPDATE
+
 func (c *Client) UpdateUser(username, password string) error {
 	url := c.API() + "/users"
 
@@ -80,5 +82,27 @@ func (c *Client) UpdateUser(username, password string) error {
 		return fmt.Errorf("resource not found")
 	default:
 		return fmt.Errorf("failed to update user")
+	}
+}
+
+// DELETE
+
+func (c *Client) DeleteUser(username, password string) error {
+	url := c.API() + "/users"
+	payload := userCredentials{
+		Username: username,
+		Password: password,
+	}
+
+	resp, err := c.Delete(url, c.LoggedInUser.Token, payload)
+	if err != nil {
+		return fmt.Errorf("failed to delete user: %w", err)
+	}
+
+	switch resp.StatusCode {
+	case http.StatusNoContent:
+		return nil
+	default:
+		return fmt.Errorf("failed to delete user")
 	}
 }

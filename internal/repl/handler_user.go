@@ -14,8 +14,7 @@ func handlerUser(s *State, c *handlerContext) error {
 		case "update":
 			return handleUserUpdate(s, c)
 		case "delete":
-			// return handleUserDelete(s, c)
-			fallthrough
+			return handleUserDelete(s, c)
 		default:
 			return fmt.Errorf("action not implemented")
 		}
@@ -87,5 +86,22 @@ func handleUserUpdate(s *State, c *handlerContext) error {
 	}
 
 	fmt.Println("User updated with new information")
+	return nil
+}
+
+func handleUserDelete(s *State, c *handlerContext) error {
+	username, _ := c.args.pfx()
+	password, _ := c.args.pfx()
+	retypedPassword, _ := c.args.pfx()
+
+	if password != retypedPassword {
+		return fmt.Errorf("password fields did not match")
+	}
+	err := s.Client.DeleteUser(username, password)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("User " + username + " successfully deleted.")
 	return nil
 }

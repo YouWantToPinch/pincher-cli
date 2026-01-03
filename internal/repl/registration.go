@@ -96,26 +96,36 @@ func registerBaseCommands(s *State, preregister bool) {
 			callback: mdAct(handlerUser),
 			actions: []cmdElement{
 				{
-					name:      "add",
-					arguments: []string{"new_username", "new_password", "retype password"},
+					name:        "add",
+					description: "create a new user",
+					arguments:   []string{"new_username", "new_password", "retype_password"},
 				},
 				{
-					name:      "login",
-					arguments: []string{"username", "password"},
+					name:        "login",
+					description: "log in as an existing user",
+					arguments:   []string{"username", "password"},
 				},
 				{
-					name:      "update",
-					arguments: []string{"username", "password"},
+					name:        "update",
+					description: "update credentials of the logged-in user",
+					arguments:   []string{"username", "password"},
 					options: []cmdElement{
 						{
-							name:      "username",
-							arguments: []string{"new_value"},
+							name:        "username",
+							description: "set a new username for the user",
+							arguments:   []string{"new_value"},
 						},
 						{
-							name:      "password",
-							arguments: []string{"new_value", "retyped_value"},
+							name:        "password",
+							description: "set a new password for the user",
+							arguments:   []string{"new_value", "retyped_value"},
 						},
 					},
+				},
+				{
+					name:        "delete",
+					description: "delete the logged-in user by first entering its credentials",
+					arguments:   []string{"username", "password", "retype_password"},
 				},
 			},
 		},
