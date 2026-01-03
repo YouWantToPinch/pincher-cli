@@ -100,12 +100,6 @@ func handlerLog(s *State, c *handlerContext) error {
 	return fmt.Errorf("ERROR: Command not implemented")
 }
 
-func handlerConnect(s *State, c *handlerContext) error {
-	s.Client.BaseURL = s.Config.BaseURL
-	fmt.Println("Set URL from config: " + s.Config.BaseURL)
-	return nil
-}
-
 func handlerReady(s *State, c *handlerContext) error {
 	isReady, err := s.Client.GetServerReady()
 	if err != nil {

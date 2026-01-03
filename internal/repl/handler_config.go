@@ -56,10 +56,13 @@ func handleConfigLoad(s *State, c *handlerContext) error {
 	var err error
 	userConfig, err := config.ReadFromFile()
 	if err != nil {
-		s.Config = userConfig
-		return fmt.Errorf("trouble loading config: %s", err.Error())
+		return fmt.Errorf("trouble loading config: %w", err)
 	}
 	s.Config = userConfig
+	if s.Client.BaseURL != s.Config.BaseURL {
+		s.Client.BaseURL = s.Config.BaseURL
+		fmt.Println("Set URL from config: " + s.Config.BaseURL)
+	}
 	fmt.Println("Loaded configuration settings.")
 	return nil
 }

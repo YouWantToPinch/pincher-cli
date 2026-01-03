@@ -71,14 +71,6 @@ func registerBaseCommands(s *State, preregister bool) {
 		},
 		{
 			cmdElement: cmdElement{
-				name:        "connect",
-				description: "Connect to a remote or local database",
-				priority:    20,
-			},
-			callback: handlerConnect,
-		},
-		{
-			cmdElement: cmdElement{
 				name:        "ready",
 				description: "Get server readiness",
 				priority:    25,
