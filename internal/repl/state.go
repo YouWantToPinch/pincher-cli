@@ -32,6 +32,20 @@ func (s *State) LoadCache() error {
 	}
 
 	s.Client.Cache.Set(loadedCache.CachedEntries)
+
+	if s.Config.StayLoggedIn {
+		data, found := s.Client.Cache.Get("logged_in_user")
+		if !found {
+			return fmt.Errorf("failed to load cache: %w", err)
+		}
+		var test client.UserInfo
+		err := json.Unmarshal(data, &test)
+		if err != nil {
+			return fmt.Errorf("failed to load cache: %w", err)
+		}
+		s.Client.LoggedInUser = test
+	}
+
 	return nil
 }
 

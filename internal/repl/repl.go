@@ -21,7 +21,14 @@ func StartRepl(cliState *State) {
 	cliState.CommandRegistry = cmdRegistry
 
 	registerBaseCommands(cliState, false)
-	registerBudgetCommand(cliState, true)
+
+	// register commands that require login if a session still exists
+	if cliState.Config.StayLoggedIn && cliState.Client.LoggedInUser.RefreshToken != "" {
+		registerBudgetCommand(cliState, false)
+	} else {
+		cliState.Client.LogoutUser()
+		registerBudgetCommand(cliState, true)
+	}
 	registerResourceCommands(cliState, true)
 
 	scanner := bufio.NewScanner(os.Stdin)

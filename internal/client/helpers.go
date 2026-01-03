@@ -6,6 +6,9 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // Get wrapper for doRequest
@@ -52,15 +55,64 @@ func (c *Client) Delete(url, token string, payload any) (*http.Response, error) 
 	return c.doRequest(http.MethodDelete, url, token, payload, nil)
 }
 
-func (c *Client) doRequest(method, url, token string, payload, out any) (*http.Response, error) {
-	req, err := c.MakeRequest(method, url, token, payload)
+func isTokenExpired(tokenString string) (bool, error) {
+	token, _, err := jwt.NewParser().ParseUnverified(tokenString, jwt.MapClaims{})
 	if err != nil {
-		return nil, err
+		return false, err
 	}
 
-	resp, err := c.httpClient.Do(req)
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return false, fmt.Errorf("invalid claims")
+	}
+
+	exp, err := claims.GetExpirationTime()
 	if err != nil {
-		return resp, err
+		return false, err
+	}
+
+	return exp.Before(time.Now()), nil
+}
+
+func (c *Client) doRequest(method, url, token string, payload, out any) (*http.Response, error) {
+	var req *http.Request
+	var resp *http.Response
+	var err error
+	retry := true
+	for {
+		// try to make the new request.
+		req, err = c.MakeRequest(method, url, token, payload)
+		if err != nil {
+			return nil, err
+		}
+
+		// try to send the request.
+		resp, err = c.httpClient.Do(req)
+		if err != nil {
+			return resp, err
+		}
+		if resp.StatusCode != http.StatusUnauthorized {
+			break
+		} else if retry {
+			// If the access token is not expired, that wasn't the issue.
+			// Break out with the 401.
+			tokenExpired, err := isTokenExpired(token)
+			if !tokenExpired && err == nil {
+				break
+			}
+			// Try to get a new access token if it is invalid or we got an error.
+			accessToken, err := c.GetAccessToken(c.LoggedInUser.RefreshToken)
+			if err != nil {
+				// If the refresh token is invalid, try to revoke it and,
+				// after clearing cache of the current user session, return any error.
+				err = c.RevokeRefreshToken(c.LoggedInUser.RefreshToken)
+				c.LogoutUser()
+				return nil, err
+			}
+			c.LoggedInUser.Token = accessToken
+			token = c.LoggedInUser.Token
+			retry = false
+		}
 	}
 	defer resp.Body.Close()
 

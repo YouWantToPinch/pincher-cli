@@ -4,6 +4,7 @@ go 1.24.3
 
 require (
 	github.com/charmbracelet/bubbletea v1.3.10
+	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/uuid v1.6.0
 )
 

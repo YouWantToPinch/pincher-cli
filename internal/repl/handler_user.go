@@ -54,10 +54,9 @@ func handleUserLogin(s *State, c *handlerContext) error {
 		return err
 	}
 
-	s.Client.LoggedInUser.ID = user.ID.String()
-	s.Client.LoggedInUser.JSONWebToken = user.Token
+	s.Client.LoggedInUser.Token = user.Token
 	s.Client.LoggedInUser.RefreshToken = user.RefreshToken
-	s.Client.LoggedInUser.Username = user.Username
+	s.Client.LoggedInUser.User = user.User
 	registerBudgetCommand(s, false)
 	fmt.Printf("LOGGED IN as user: %s\n", user.Username)
 	return nil
