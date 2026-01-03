@@ -87,7 +87,7 @@ func (c *Client) UpdateGroup(groupID, name, notes string) error {
 	}
 }
 
-func (c *Client) DeleteGroup(groupID, name, deleteHard string) error {
+func (c *Client) DeleteGroup(groupID, name string) error {
 	url := c.API() + "/budgets/" + c.ViewedBudget.ID.String() + "/groups/" + groupID
 
 	resp, err := c.Delete(url, c.LoggedInUser.Token, nil)
@@ -100,8 +100,6 @@ func (c *Client) DeleteGroup(groupID, name, deleteHard string) error {
 		return nil
 	case http.StatusNotFound:
 		return fmt.Errorf("resource not found")
-	case http.StatusBadRequest:
-		return fmt.Errorf("bad request (has group been soft-deleted first?)")
 	default:
 		return fmt.Errorf("failed to retrieve budget groups")
 	}

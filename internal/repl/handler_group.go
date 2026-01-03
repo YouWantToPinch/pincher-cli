@@ -118,8 +118,6 @@ func handleGroupUpdate(s *State, c *handlerContext) error {
 
 func handleGroupDelete(s *State, c *handlerContext) error {
 	name, _ := c.args.pfx()
-	c.args.trackOptArgs(&c.cmd, "hard")
-	flagDeleteHard, _ := c.args.pfx()
 
 	groups, err := s.Client.GetGroups("")
 	if err != nil {
@@ -130,7 +128,7 @@ func handleGroupDelete(s *State, c *handlerContext) error {
 		return err
 	}
 
-	err = s.Client.DeleteGroup(group.ID.String(), name, flagDeleteHard)
+	err = s.Client.DeleteGroup(group.ID.String(), name)
 	if err != nil {
 		return err
 	}
