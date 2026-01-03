@@ -94,10 +94,12 @@ func (c *Client) doRequest(method, url, token string, payload, out any) (*http.R
 		if resp.StatusCode != http.StatusUnauthorized {
 			break
 		} else if retry {
-			// If the access token is not expired, that wasn't the issue.
-			// Break out with the 401.
 			tokenExpired, err := isTokenExpired(token)
-			if !tokenExpired && err == nil {
+			if token == "" || (!tokenExpired && err == nil) || (strings.Contains(url, "/refresh") || strings.Contains(url, "revoke")) {
+				// If the token is empty or otherwise note needed, that isn't an issue;
+				// If the access token is not expired, that isn't an issue;
+				// We also need to avoid infinite calls to get/revoke refresh tokens;
+				// Break out with the 401.
 				break
 			}
 			// Try to get a new access token if it is invalid or we got an error.
