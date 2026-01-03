@@ -140,8 +140,6 @@ func handleAccountRestore(s *State, c *handlerContext) error {
 	if err != nil {
 		return err
 	}
-	// TODO: the response contains a confirmation message we can use.
-	// Pull from that instead of repeating the message in this Println function.
 	fmt.Println("Account restored")
 	return nil
 }
