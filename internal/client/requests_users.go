@@ -68,7 +68,7 @@ func (c *Client) UpdateUser(username, password string) error {
 		Username: username,
 	}
 
-	resp, err := c.Put(url, c.LoggedInUser.JSONWebToken, payload)
+	resp, err := c.Put(url, c.LoggedInUser.Token, payload)
 	if err != nil {
 		return err
 	}

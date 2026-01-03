@@ -20,7 +20,7 @@ func (c *Client) CreateGroup(name, notes string) (success bool, error error) {
 		},
 	}
 
-	resp, err := c.Post(url, c.LoggedInUser.JSONWebToken, payload, nil)
+	resp, err := c.Post(url, c.LoggedInUser.Token, payload, nil)
 	if err != nil {
 		return false, err
 	}
@@ -41,7 +41,7 @@ func (c *Client) GetGroups(urlQuery string) ([]Group, error) {
 	}
 
 	var groups groupContainer
-	resp, err := c.Get(url, c.LoggedInUser.JSONWebToken, &groups)
+	resp, err := c.Get(url, c.LoggedInUser.Token, &groups)
 	if err != nil {
 		return nil, err
 	} else if resp == nil {
@@ -72,7 +72,7 @@ func (c *Client) UpdateGroup(groupID, name, notes string) error {
 		},
 	}
 
-	resp, err := c.Put(url, c.LoggedInUser.JSONWebToken, payload)
+	resp, err := c.Put(url, c.LoggedInUser.Token, payload)
 	if err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func (c *Client) UpdateGroup(groupID, name, notes string) error {
 func (c *Client) DeleteGroup(groupID, name, deleteHard string) error {
 	url := c.API() + "/budgets/" + c.ViewedBudget.ID.String() + "/groups/" + groupID
 
-	resp, err := c.Delete(url, c.LoggedInUser.JSONWebToken, nil)
+	resp, err := c.Delete(url, c.LoggedInUser.Token, nil)
 	if err != nil {
 		return err
 	}

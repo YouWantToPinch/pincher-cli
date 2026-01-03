@@ -11,19 +11,18 @@ import (
 	cache "github.com/YouWantToPinch/pincher-cli/internal/cache"
 )
 
-type userInfo struct {
-	JSONWebToken string
-	RefreshToken string
-	Username     string
-	ID           string
-}
-
 type Client struct {
 	Cache        cache.Cache
 	httpClient   http.Client
-	LoggedInUser userInfo
+	LoggedInUser UserInfo
 	ViewedBudget Budget
 	BaseURL      string
+}
+
+// LogoutUser clears the client of its LoggedInUser values.
+// It does NOT call the api/revoke endpoint!
+func (c *Client) LogoutUser() {
+	c.LoggedInUser = UserInfo{}
 }
 
 func (c *Client) API() string {
