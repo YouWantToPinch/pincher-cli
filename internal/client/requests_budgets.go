@@ -52,3 +52,50 @@ func (c *Client) GetBudgets(urlQuery string) ([]Budget, error) {
 		return nil, fmt.Errorf("failed to retrieve user budgets")
 	}
 }
+
+func (c *Client) UpdateBudget(budgetID, name, notes string) error {
+	url := c.API() + "/budgets/" + budgetID
+
+	type rqSchema struct {
+		Meta
+	}
+
+	payload := rqSchema{
+		Meta: Meta{
+			Name:  name,
+			Notes: notes,
+		},
+	}
+
+	resp, err := c.Put(url, c.LoggedInUser.Token, payload)
+	if err != nil {
+		return err
+	}
+
+	switch resp.StatusCode {
+	case http.StatusOK:
+		return nil
+	case http.StatusNotFound:
+		return fmt.Errorf("resource not found")
+	default:
+		return fmt.Errorf("failed to retrieve budgets")
+	}
+}
+
+func (c *Client) DeleteBudget(budgetID, name string) error {
+	url := c.API() + "/budgets/" + budgetID
+
+	resp, err := c.Delete(url, c.LoggedInUser.Token, nil)
+	if err != nil {
+		return err
+	}
+
+	switch resp.StatusCode {
+	case http.StatusNoContent:
+		return nil
+	case http.StatusNotFound:
+		return fmt.Errorf("resource not found")
+	default:
+		return fmt.Errorf("failed to retrieve budgets")
+	}
+}

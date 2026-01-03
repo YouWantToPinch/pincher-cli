@@ -170,6 +170,28 @@ func registerBudgetCommand(s *State, preregister bool) {
 				description: "specify a budget to interact with using other commands",
 				arguments:   []string{"budget_name"},
 			},
+			{
+				name:        "update",
+				description: "update budget information, IE name, notes",
+				arguments:   []string{"name"},
+				options: []cmdElement{
+					{
+						name:        "name",
+						description: "Update budget name",
+						arguments:   []string{"name_value"},
+					},
+					{
+						name:        "notes",
+						description: "Update budget name",
+						arguments:   []string{"notes_value"},
+					},
+				},
+			},
+			{
+				name:        "delete",
+				description: "delete an existing budget by name",
+				arguments:   []string{"budget_name"},
+			},
 		},
 	}
 

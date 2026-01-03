@@ -17,6 +17,10 @@ func handlerBudget(s *State, c *handlerContext) error {
 			return handleBudgetList(s, c)
 		case "view":
 			return handleBudgetView(s, c)
+		case "update":
+			return handleBudgetUpdate(s, c)
+		case "delete":
+			return handleBudgetDelete(s, c)
 		default:
 			return fmt.Errorf("action not implemented")
 		}
@@ -102,5 +106,56 @@ func handleBudgetList(s *State, c *handlerContext) error {
 		fmt.Printf("  %-*s  %-*s   %s\n", maxLenName, budget.Name, uuidLength, budget.ID, budget.Notes)
 	}
 
+	return nil
+}
+
+func handleBudgetUpdate(s *State, c *handlerContext) error {
+	budgetName, _ := c.args.pfx()
+
+	budgets, err := s.Client.GetBudgets("")
+	if err != nil {
+		return err
+	}
+	budget, err := findBudgetByName(budgetName, budgets)
+	if err != nil {
+		return err
+	}
+
+	c.args.trackOptArgs(&c.cmd, "name")
+	payloadName, err := c.args.pfx()
+	if err != nil {
+		payloadName = budget.Name
+	}
+	c.args.trackOptArgs(&c.cmd, "notes")
+	payloadNotes, err := c.args.pfx()
+	if err != nil {
+		payloadNotes = budget.Notes
+	}
+
+	err = s.Client.UpdateBudget(budget.ID.String(), payloadName, payloadNotes)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Budget info updated with new information")
+	return nil
+}
+
+func handleBudgetDelete(s *State, c *handlerContext) error {
+	name, _ := c.args.pfx()
+
+	budgets, err := s.Client.GetBudgets("")
+	if err != nil {
+		return err
+	}
+	budget, err := findBudgetByName(name, budgets)
+	if err != nil {
+		return err
+	}
+
+	err = s.Client.DeleteBudget(budget.ID.String(), name)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Budget deleted.")
 	return nil
 }
