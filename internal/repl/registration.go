@@ -21,13 +21,13 @@ func registerBaseCommands(s *State, preregister bool) {
 		{
 			cmdElement: cmdElement{
 				name:        "help",
-				description: "See usage of another command",
+				description: "See usage of another command.",
 				arguments:   []string{"command"},
 				priority:    1,
 				options: []cmdElement{
 					{
 						name:         "verbose",
-						description:  "show commands not available for use in the current CLI context",
+						description:  "show unregistered commands (those not available for use in the current CLI context)",
 						useShorthand: true,
 					},
 				},
@@ -38,7 +38,6 @@ func registerBaseCommands(s *State, preregister bool) {
 			cmdElement: cmdElement{
 				name:        "clear",
 				description: "clear the terminal",
-				arguments:   []string{"command"},
 				priority:    2,
 			},
 			callback: handlerClear,
@@ -138,7 +137,8 @@ func registerBudgetCommand(s *State, preregister bool) {
 	handler := &cmdHandler{
 		cmdElement: cmdElement{
 			name:        "budget",
-			description: "Manage " + s.Client.LoggedInUser.Username + "'s budgets",
+			description: "Manage budgets associated with user '" + s.Client.LoggedInUser.Username + "'",
+			arguments:   []string{"action"},
 			priority:    190,
 		},
 		nonRegMsg: "login required",
@@ -205,7 +205,8 @@ func registerResourceCommands(s *State, preregister bool) {
 		{
 			cmdElement: cmdElement{
 				name:        "account",
-				description: "Manage " + s.Client.ViewedBudget.Name + " accounts",
+				arguments:   []string{"action"},
+				description: "Manage accounts under budget '" + s.Client.ViewedBudget.Name + "'",
 				priority:    180,
 			},
 			nonRegMsg: "first view a budget to see its accounts",
@@ -224,8 +225,9 @@ func registerResourceCommands(s *State, preregister bool) {
 					},
 				},
 				{
-					name:      "update",
-					arguments: []string{"name"},
+					name:        "update",
+					description: "update information on account by name",
+					arguments:   []string{"name"},
 					options: []cmdElement{
 						{
 							name:        "name",
@@ -278,7 +280,8 @@ func registerResourceCommands(s *State, preregister bool) {
 		{
 			cmdElement: cmdElement{
 				name:        "group",
-				description: "Manage " + s.Client.ViewedBudget.Name + " groups",
+				arguments:   []string{"action"},
+				description: "Manage groups under budget '" + s.Client.ViewedBudget.Name + "'",
 				priority:    180,
 			},
 			nonRegMsg: "first view a budget to see its groups",
@@ -297,8 +300,9 @@ func registerResourceCommands(s *State, preregister bool) {
 					},
 				},
 				{
-					name:      "update",
-					arguments: []string{"name"},
+					name:        "update",
+					description: "update information on a group by name",
+					arguments:   []string{"name"},
 					options: []cmdElement{
 						{
 							name:        "name",
