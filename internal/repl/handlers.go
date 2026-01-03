@@ -96,10 +96,6 @@ func handlerHelp(s *State, c *handlerContext) error {
 	return fmt.Errorf("ERROR: Could not get help for command: 'help'")
 }
 
-func handlerLog(s *State, c *handlerContext) error {
-	return fmt.Errorf("ERROR: Command not implemented")
-}
-
 func handlerReady(s *State, c *handlerContext) error {
 	isReady, err := s.Client.GetServerReady()
 	if err != nil {

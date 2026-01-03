@@ -63,17 +63,9 @@ func registerBaseCommands(s *State, preregister bool) {
 		},
 		{
 			cmdElement: cmdElement{
-				name:        "log",
-				description: "see Pincher-CLI logs",
-				priority:    15,
-			},
-			callback: handlerLog,
-		},
-		{
-			cmdElement: cmdElement{
 				name:        "ready",
 				description: "Get server readiness",
-				priority:    25,
+				priority:    20,
 			},
 			callback: handlerReady,
 		},
