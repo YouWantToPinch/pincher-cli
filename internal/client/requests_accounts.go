@@ -113,12 +113,10 @@ func (c *Client) DeleteAccount(accountID, name, deleteHard string) error {
 	url := c.API() + "/budgets/" + c.ViewedBudget.ID.String() + "/accounts/" + accountID
 
 	type rqSchema struct {
-		Name       string `json:"name"`
-		DeleteHard bool   `json:"delete_hard"`
+		DeleteHard bool `json:"delete_hard"`
 	}
 
 	payload := rqSchema{
-		Name:       name,
 		DeleteHard: deleteHard == "SET",
 	}
 
