@@ -82,7 +82,7 @@ func (c *Client) UpdateAccount(accountID, name, notes, accountType string) error
 	}
 
 	switch resp.StatusCode {
-	case http.StatusOK:
+	case http.StatusNoContent:
 		return nil
 	case http.StatusNotFound:
 		return fmt.Errorf("resource not found")
@@ -126,6 +126,8 @@ func (c *Client) DeleteAccount(accountID, name, deleteHard string) error {
 	}
 
 	switch resp.StatusCode {
+	case http.StatusOK:
+		fallthrough
 	case http.StatusNoContent:
 		return nil
 	case http.StatusNotFound:

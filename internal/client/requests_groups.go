@@ -78,7 +78,7 @@ func (c *Client) UpdateGroup(groupID, name, notes string) error {
 	}
 
 	switch resp.StatusCode {
-	case http.StatusOK:
+	case http.StatusNoContent:
 		return nil
 	case http.StatusNotFound:
 		return fmt.Errorf("resource not found")
