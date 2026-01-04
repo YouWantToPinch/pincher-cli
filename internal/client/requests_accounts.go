@@ -107,7 +107,7 @@ func (c *Client) RestoreAccount(accountID, name string) error {
 	}
 }
 
-func (c *Client) DeleteAccount(accountID, name, deleteHard string) error {
+func (c *Client) DeleteAccount(accountID, deleteHard string) error {
 	url := c.API() + "/budgets/" + c.ViewedBudget.ID.String() + "/accounts/" + accountID
 
 	type rqSchema struct {

@@ -85,7 +85,7 @@ func (c *Client) UpdateGroup(groupID, name, notes string) error {
 	}
 }
 
-func (c *Client) DeleteGroup(groupID, name string) error {
+func (c *Client) DeleteGroup(groupID string) error {
 	url := c.API() + "/budgets/" + c.ViewedBudget.ID.String() + "/groups/" + groupID
 
 	resp, err := c.Delete(url, c.LoggedInUser.Token, nil)

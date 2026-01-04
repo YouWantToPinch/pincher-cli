@@ -80,7 +80,7 @@ func (c *Client) UpdateBudget(budgetID, name, notes string) error {
 	}
 }
 
-func (c *Client) DeleteBudget(budgetID, name string) error {
+func (c *Client) DeleteBudget(budgetID string) error {
 	url := c.API() + "/budgets/" + budgetID
 
 	resp, err := c.Delete(url, c.LoggedInUser.Token, nil)

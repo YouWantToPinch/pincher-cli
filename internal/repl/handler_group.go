@@ -128,7 +128,7 @@ func handleGroupDelete(s *State, c *handlerContext) error {
 		return err
 	}
 
-	err = s.Client.DeleteGroup(group.ID.String(), name)
+	err = s.Client.DeleteGroup(group.ID.String())
 	if err != nil {
 		return err
 	}

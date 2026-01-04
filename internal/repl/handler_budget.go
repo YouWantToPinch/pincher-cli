@@ -152,7 +152,7 @@ func handleBudgetDelete(s *State, c *handlerContext) error {
 		return err
 	}
 
-	err = s.Client.DeleteBudget(budget.ID.String(), name)
+	err = s.Client.DeleteBudget(budget.ID.String())
 	if err != nil {
 		return err
 	}

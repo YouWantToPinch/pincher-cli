@@ -158,7 +158,7 @@ func handleAccountDelete(s *State, c *handlerContext) error {
 		return err
 	}
 
-	err = s.Client.DeleteAccount(account.ID.String(), name, flagDeleteHard)
+	err = s.Client.DeleteAccount(account.ID.String(), flagDeleteHard)
 	if err != nil {
 		return err
 	}
