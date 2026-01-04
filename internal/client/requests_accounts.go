@@ -63,7 +63,7 @@ func (c *Client) UpdateAccount(accountID, name, notes, accountType string) error
 
 	type rqSchema struct {
 		Meta
-		AccountType string `json:"account_id"`
+		AccountType string `json:"account_type"`
 	}
 
 	payload := rqSchema{
