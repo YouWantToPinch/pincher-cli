@@ -123,7 +123,7 @@ func registerBudgetCommand(s *State, preregister bool) {
 			name:        "budget",
 			description: "Manage budgets associated with user '" + s.Client.LoggedInUser.Username + "'",
 			arguments:   []string{"action"},
-			priority:    190,
+			priority:    100,
 		},
 		nonRegMsg: "login required",
 		callback:  middlewareValidateAction(handlerBudget),
@@ -191,7 +191,7 @@ func registerResourceCommands(s *State, preregister bool) {
 				name:        "account",
 				arguments:   []string{"action"},
 				description: "Manage accounts under budget '" + s.Client.ViewedBudget.Name + "'",
-				priority:    180,
+				priority:    210,
 			},
 			nonRegMsg: "first view a budget to see its accounts",
 			callback:  mdAct(handlerAccount),
@@ -263,10 +263,80 @@ func registerResourceCommands(s *State, preregister bool) {
 		},
 		{
 			cmdElement: cmdElement{
+				name:        "category",
+				arguments:   []string{"action"},
+				description: "Manage spending categories under budget '" + s.Client.ViewedBudget.Name + "'",
+				priority:    220,
+			},
+			nonRegMsg: "first view a budget to see its categories",
+			callback:  mdAct(handlerCategory),
+			actions: []cmdElement{
+				{
+					name:        "add",
+					description: "Add a new category to budget",
+					arguments:   []string{"name"},
+					options: []cmdElement{
+						{
+							name:        "notes",
+							description: "give the new category some notes",
+							arguments:   []string{"notes_value"},
+						},
+						{
+							name:         "group",
+							description:  "assign the category to a group",
+							arguments:    []string{"group_name"},
+							useShorthand: true,
+						},
+					},
+				},
+				{
+					name:        "update",
+					description: "update information on a category by name",
+					arguments:   []string{"name"},
+					options: []cmdElement{
+						{
+							name:        "name",
+							description: "rewrite category name",
+							arguments:   []string{"new_name"},
+						},
+						{
+							name:        "notes",
+							description: "rewrite category notes",
+							arguments:   []string{"new_notes"},
+						},
+						{
+							name:         "group",
+							description:  "assign the category to a group",
+							arguments:    []string{"group_name"},
+							useShorthand: true,
+						},
+					},
+				},
+				{
+					name:        "list",
+					description: "list all categories belonging to budget",
+					options: []cmdElement{
+						{
+							name:         "group",
+							description:  "list only categories grouped by given name",
+							arguments:    []string{"group_name"},
+							useShorthand: true,
+						},
+					},
+				},
+				{
+					name:        "delete",
+					description: "Delete a category",
+					arguments:   []string{"category_name"},
+				},
+			},
+		},
+		{
+			cmdElement: cmdElement{
 				name:        "group",
 				arguments:   []string{"action"},
-				description: "Manage groups under budget '" + s.Client.ViewedBudget.Name + "'",
-				priority:    180,
+				description: "Manage category groups under budget '" + s.Client.ViewedBudget.Name + "'",
+				priority:    230,
 			},
 			nonRegMsg: "first view a budget to see its groups",
 			callback:  mdAct(handlerGroup),

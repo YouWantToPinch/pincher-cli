@@ -12,7 +12,7 @@ func findBudgetByName(name string, budgets []client.Budget) (*client.Budget, err
 			return &budget, nil
 		}
 	}
-	return nil, fmt.Errorf("no budgets found in cache with provided name")
+	return nil, fmt.Errorf("no budgets found with provided name")
 }
 
 func findAccountByName(name string, accounts []client.Account) (*client.Account, error) {
@@ -21,7 +21,7 @@ func findAccountByName(name string, accounts []client.Account) (*client.Account,
 			return &account, nil
 		}
 	}
-	return nil, fmt.Errorf("no accounts found in cache with provided name")
+	return nil, fmt.Errorf("no accounts found with provided name")
 }
 
 func findGroupByName(name string, groups []client.Group) (*client.Group, error) {
@@ -30,5 +30,14 @@ func findGroupByName(name string, groups []client.Group) (*client.Group, error) 
 			return &group, nil
 		}
 	}
-	return nil, fmt.Errorf("no groups found in cache with provided name")
+	return nil, fmt.Errorf("no groups found with provided name")
+}
+
+func findCategoryByName(name string, categories []client.Category) (*client.Category, error) {
+	for _, category := range categories {
+		if name == category.Name {
+			return &category, nil
+		}
+	}
+	return nil, fmt.Errorf("no categories found with provided name")
 }
