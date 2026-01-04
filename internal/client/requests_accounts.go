@@ -127,8 +127,10 @@ func (c *Client) DeleteAccount(accountID, name, deleteHard string) error {
 
 	switch resp.StatusCode {
 	case http.StatusOK:
-		fallthrough
+		fmt.Println("Account deleted. It may be restored, or permanently deleted.")
+		return nil
 	case http.StatusNoContent:
+		fmt.Println("Account deleted. It cannot be restored.")
 		return nil
 	case http.StatusNotFound:
 		return fmt.Errorf("resource not found")

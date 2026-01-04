@@ -127,7 +127,7 @@ func handleAccountUpdate(s *State, c *handlerContext) error {
 func handleAccountRestore(s *State, c *handlerContext) error {
 	accountName, _ := c.args.pfx()
 
-	accounts, err := s.Client.GetAccounts("")
+	accounts, err := s.Client.GetAccounts("?include=deleted")
 	if err != nil {
 		return err
 	}
@@ -149,7 +149,7 @@ func handleAccountDelete(s *State, c *handlerContext) error {
 	c.args.trackOptArgs(&c.cmd, "hard")
 	flagDeleteHard, _ := c.args.pfx()
 
-	accounts, err := s.Client.GetAccounts("")
+	accounts, err := s.Client.GetAccounts("?include=deleted")
 	if err != nil {
 		return err
 	}
@@ -162,6 +162,5 @@ func handleAccountDelete(s *State, c *handlerContext) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("Account deleted.")
 	return nil
 }

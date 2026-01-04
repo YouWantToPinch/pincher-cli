@@ -53,7 +53,7 @@ func handleBudgetView(s *State, c *handlerContext) error {
 
 	budgets, err := s.Client.GetBudgets("")
 	if err != nil {
-		return fmt.Errorf("could not view specified budget: %s", err.Error())
+		return fmt.Errorf("could not view specified budget: %w", err)
 	}
 
 	budget, err := findBudgetByName(name, budgets)

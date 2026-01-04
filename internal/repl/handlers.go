@@ -93,13 +93,13 @@ func handlerHelp(s *State, c *handlerContext) error {
 
 		return nil
 	}
-	return fmt.Errorf("ERROR: Could not get help for command: 'help'")
+	return fmt.Errorf("could not get help for command: 'help'")
 }
 
 func handlerReady(s *State, c *handlerContext) error {
 	isReady, err := s.Client.GetServerReady()
 	if err != nil {
-		return fmt.Errorf("ERROR: Server could not be reached; %s", err)
+		return fmt.Errorf("server could not be reached; %w", err)
 	}
 	if isReady {
 		fmt.Println("Server is ready!")

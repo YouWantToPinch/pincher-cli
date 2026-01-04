@@ -2,6 +2,7 @@
 package cache
 
 import (
+	"strings"
 	"sync"
 	"time"
 )
@@ -71,6 +72,20 @@ func (c *Cache) Delete(key string) {
 	defer c.mu.Unlock()
 
 	delete(c.CachedEntries, key)
+}
+
+// DeleteAllStartsWith removes all cached entries whose
+// key starts with the given prefix.
+// This can be used to invalidate all entries related
+// to a resource that may have had an instance updated or removed.
+func (c *Cache) DeleteAllStartsWith(prefix string) {
+	c.mu.Lock()
+	for key := range c.CachedEntries {
+		if strings.HasPrefix(key, prefix) {
+			delete(c.CachedEntries, key)
+		}
+	}
+	defer c.mu.Unlock()
 }
 
 func NewCache(interval time.Duration) Cache {

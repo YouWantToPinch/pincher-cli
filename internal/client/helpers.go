@@ -14,7 +14,7 @@ import (
 // Get wrapper for doRequest
 func (c *Client) Get(url, token string, out any) (*http.Response, error) {
 	if val, ok := c.Cache.Get(url); ok {
-		slog.Info("retrieving requested data from cache", slog.String("url", url))
+		slog.Info("retrieving requested data from cache", slog.String("URL", url))
 		err := json.Unmarshal(val, out)
 		if err != nil {
 			return nil, err
@@ -96,7 +96,7 @@ func (c *Client) doRequest(method, url, token string, payload, out any) (*http.R
 		} else if retry {
 			tokenExpired, err := isTokenExpired(token)
 			if token == "" || (!tokenExpired && err == nil) || (strings.Contains(url, "/refresh") || strings.Contains(url, "revoke")) {
-				// If the token is empty or otherwise note needed, that isn't an issue;
+				// If the token is empty or otherwise not needed, that isn't an issue;
 				// If the access token is not expired, that isn't an issue;
 				// We also need to avoid infinite calls to get/revoke refresh tokens;
 				// Break out with the 401.
@@ -128,15 +128,17 @@ func (c *Client) doRequest(method, url, token string, payload, out any) (*http.R
 	// delete existing cache for url, as the resource has been changed
 	switch method {
 	case http.MethodPost:
-		c.Cache.Delete(url)
+		c.Cache.DeleteAllStartsWith(url)
 	case http.MethodPut:
 		fallthrough
 	case http.MethodDelete:
 		path, err := getURLResourcePath(url)
 		if err != nil {
-			slog.Error("could not delete key from url entry cache", slog.String("key", url))
+			slog.Error("could not delete keys with url prefix from cache", slog.String("prefix", url))
+		} else {
+			// delete all probable cache of this resource
+			c.Cache.DeleteAllStartsWith(path)
 		}
-		c.Cache.Delete(path)
 	}
 
 	return resp, nil
