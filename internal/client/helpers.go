@@ -75,45 +75,45 @@ func isTokenExpired(tokenString string) (bool, error) {
 }
 
 func (c *Client) doRequest(method, url, token string, payload, out any) (*http.Response, error) {
-	var req *http.Request
+	// try to make the new request.
+	req, err := c.MakeRequest(method, url, token, payload)
+	if err != nil {
+		return nil, err
+	}
+
 	var resp *http.Response
-	var err error
-	retry := true
+	shouldRetry := !strings.Contains(url, "/refresh") && !strings.Contains(url, "/revoke") // avoid infinite loop
 	for {
-		// try to make the new request.
-		req, err = c.MakeRequest(method, url, token, payload)
+		// try to send the request.
+		resp, err = c.httpClient.Do(req)
 		if err != nil {
 			return nil, err
 		}
 
-		// try to send the request.
-		resp, err = c.httpClient.Do(req)
-		if err != nil {
-			return resp, err
-		}
-		if resp.StatusCode != http.StatusUnauthorized {
+		// If the server responds with a 401 (unauthorized) code,
+		// we need to check whether or not it concerns an expired token.
+		tokenExpired, err := isTokenExpired(token)
+
+		// if it isn't a 401, we don't care to retry with a new access token
+		if resp.StatusCode != http.StatusUnauthorized ||
+			// if no token was required for the request, we don't care
+			token == "" ||
+			// if the token is not expired, the 401 has nothing to do with tokens
+			(!tokenExpired && err == nil) {
 			break
-		} else if retry {
-			tokenExpired, err := isTokenExpired(token)
-			if token == "" || (!tokenExpired && err == nil) || (strings.Contains(url, "/refresh") || strings.Contains(url, "revoke")) {
-				// If the token is empty or otherwise not needed, that isn't an issue;
-				// If the access token is not expired, that isn't an issue;
-				// We also need to avoid infinite calls to get/revoke refresh tokens;
-				// Break out with the 401.
-				break
-			}
+		} else if shouldRetry {
+
 			// Try to get a new access token if it is invalid or we got an error.
-			accessToken, err := c.GetAccessToken(c.LoggedInUser.RefreshToken)
+			// If that's not possible, log out the user, as their session must therefore be invalid.
+			err = c.NewTokenOrLogout()
 			if err != nil {
-				// If the refresh token is invalid, try to revoke it and,
-				// after clearing cache of the current user session, return any error.
-				err = c.RevokeRefreshToken(c.LoggedInUser.RefreshToken)
-				c.LogoutUser()
+				// an error return here means we've been logged out
 				return nil, err
 			}
-			c.LoggedInUser.Token = accessToken
 			token = c.LoggedInUser.Token
-			retry = false
+			shouldRetry = false
+		} else {
+			break
 		}
 	}
 	defer resp.Body.Close()
@@ -159,4 +159,27 @@ func getURLResourcePath(url string) (string, error) {
 	} else {
 		return "", fmt.Errorf("input is not a url")
 	}
+}
+
+// NewTokenOrLogout attempts to get a new access token from the server
+// using the refresh token stored in the current session.
+// If successful, the new access token is stored into session.
+// If an access token can not be retrieved, the refresh token is
+// revoked and the user is logged out of the client.
+func (c *Client) NewTokenOrLogout() error {
+	accessToken, err := c.GetAccessToken(c.LoggedInUser.RefreshToken)
+	if err != nil {
+		// If the refresh token is invalid, try to revoke it and,
+		// after clearing cache of the current user session, return the error.
+		revokeErr := c.RevokeRefreshToken(c.LoggedInUser.RefreshToken)
+		c.ClearUserSession()
+		revokeResult := "success"
+		if revokeErr != nil {
+			revokeResult = "failure"
+		}
+		slog.Info("Failed to get new access token. Attempted to revoke refresh token with result: " + revokeResult)
+		return err
+	}
+	c.LoggedInUser.Token = accessToken
+	return nil
 }

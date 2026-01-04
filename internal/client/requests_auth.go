@@ -8,14 +8,18 @@ import (
 func (c *Client) GetAccessToken(refreshToken string) (string, error) {
 	url := c.API() + "/refresh"
 
-	var accessToken string
+	type rspSchema struct {
+		NewAccessToken string `json:"token"`
+	}
+
+	var accessToken rspSchema
 	resp, err := c.Post(url, refreshToken, nil, &accessToken)
 	if err != nil {
 		return "", err
 	}
 	switch resp.StatusCode {
 	case http.StatusOK:
-		return accessToken, nil
+		return accessToken.NewAccessToken, nil
 	case http.StatusBadRequest:
 		fallthrough
 	case http.StatusUnauthorized:

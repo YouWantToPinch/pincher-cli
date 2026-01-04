@@ -14,6 +14,11 @@ func StartRepl(cliState *State) {
 		panic("StartRepl: cliState is nil")
 	}
 
+	err := cliState.Client.NewTokenOrLogout()
+	if err != nil {
+		slog.Info("logged out expired user session from cache")
+	}
+
 	cmdRegistry := &commandRegistry{
 		handlers:      make(map[string]*cmdHandler),
 		preregistered: make(map[string]bool),
@@ -26,7 +31,6 @@ func StartRepl(cliState *State) {
 	if cliState.Config.StayLoggedIn && cliState.Client.LoggedInUser.RefreshToken != "" {
 		registerBudgetCommand(cliState, false)
 	} else {
-		cliState.Client.LogoutUser()
 		registerBudgetCommand(cliState, true)
 	}
 	registerResourceCommands(cliState, true)

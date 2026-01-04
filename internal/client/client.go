@@ -19,10 +19,13 @@ type Client struct {
 	BaseURL      string
 }
 
-// LogoutUser clears the client of its LoggedInUser values.
-// It does NOT call the api/revoke endpoint!
-func (c *Client) LogoutUser() {
+// ClearUserSession clears the client and its cache of their LoggedInUser values.
+// The operation is purely for client-side purposes,
+// and should be called with any request made to the "...api/revoke" endpoint.
+func (c *Client) ClearUserSession() {
 	c.LoggedInUser = UserInfo{}
+	c.Cache.Delete("logged_in_user")
+	// TODO: deregister login-dependent commands here
 }
 
 func (c *Client) API() string {

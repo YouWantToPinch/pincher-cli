@@ -24,6 +24,7 @@ func MaxOfStrings(s []string) int {
 
 func cleanInput(text string) []string {
 	fields := []string{}
+	text = strings.TrimSpace(text)
 	split := strings.Split(text, `"`)
 	for i, substr := range split {
 		if i%2 == 0 {
