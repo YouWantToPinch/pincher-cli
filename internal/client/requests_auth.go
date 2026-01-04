@@ -28,7 +28,7 @@ func (c *Client) GetAccessToken(refreshToken string) (string, error) {
 func (c *Client) RevokeRefreshToken(refreshToken string) error {
 	url := c.API() + "/revoke"
 
-	resp, err := c.Post(url, "", nil, nil)
+	resp, err := c.Post(url, refreshToken, nil, nil)
 	if err != nil {
 		return err
 	}
