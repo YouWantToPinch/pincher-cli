@@ -36,16 +36,16 @@ func handleAccountAdd(s *State, c *handlerContext) error {
 	c.args.trackOptArgs(&c.cmd, "notes")
 	notes, _ := c.args.pfx()
 
-	budgetCreated, err := s.Client.CreateAccount(name, notes, accountType)
+	accountCreated, err := s.Client.CreateAccount(name, notes, accountType)
 	if err != nil {
 		return err
 	}
-	if budgetCreated {
+	if accountCreated {
 		fmt.Println("Account " + name + " successfully created as user: " + s.Client.LoggedInUser.Username + ".")
 		fmt.Println("See it with: `account list`")
 		return nil
 	} else {
-		return fmt.Errorf("budget could not be created")
+		return fmt.Errorf("account could not be created")
 	}
 }
 

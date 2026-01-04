@@ -33,16 +33,16 @@ func handleGroupAdd(s *State, c *handlerContext) error {
 	c.args.trackOptArgs(&c.cmd, "notes")
 	notes, _ := c.args.pfx()
 
-	budgetCreated, err := s.Client.CreateGroup(name, notes)
+	groupCreated, err := s.Client.CreateGroup(name, notes)
 	if err != nil {
 		return err
 	}
-	if budgetCreated {
+	if groupCreated {
 		fmt.Println("Group " + name + " successfully created as user: " + s.Client.LoggedInUser.Username + ".")
 		fmt.Println("See it with: `group list`")
 		return nil
 	} else {
-		return fmt.Errorf("budget could not be created")
+		return fmt.Errorf("group could not be created")
 	}
 }
 
