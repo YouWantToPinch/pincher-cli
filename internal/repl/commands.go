@@ -238,6 +238,14 @@ func (c *cmdHandler) help() {
 
 // ========== REGISTRY =============
 
+type registrationStatus int
+
+const (
+	NotRegistered registrationStatus = iota
+	Preregistered
+	Registered
+)
+
 // a commandRegistry tracks any number of commands that a user
 // has available to use. Some commands may require prerequisite
 // actions before they are registered.
@@ -250,7 +258,7 @@ type commandRegistry struct {
 	// command they entered isn't 'unknown', but that executing it
 	// successfully is still dependent on some other action happening first,
 	// such as logging in.
-	preregistered map[string]bool
+	registry map[string]registrationStatus
 }
 
 func (c *commandRegistry) run(s *State, input string) error {
@@ -259,12 +267,25 @@ func (c *commandRegistry) run(s *State, input string) error {
 		opts: map[string][]string{},
 	}
 
-	// run the command only if it is FULLY registered
-	handler, registered := c.handlers[cmd.name]
+	// run the command only if it is fully registered
+	status, registered := c.registry[cmd.name]
 	if !registered {
 		return fmt.Errorf("unknown command '%s'", cmd.name)
-	} else if _, preregistered := c.preregistered[cmd.name]; preregistered {
+	}
+	switch status {
+	case Preregistered:
 		return fmt.Errorf("cannot execute command '%s': %s", cmd.name, c.handlers[cmd.name].nonRegMsg)
+	case NotRegistered:
+		fallthrough
+	default:
+		return fmt.Errorf("unknown command '%s'", cmd.name)
+	case Registered:
+		// command is registered for use, so it may be run
+	}
+
+	handler, registered := c.handlers[cmd.name]
+	if !registered {
+		return fmt.Errorf("command found in registry, but without any handler")
 	}
 
 	err := cmd.parse(handler, input)
@@ -282,19 +303,48 @@ func (c *commandRegistry) run(s *State, input string) error {
 	return handler.callback(s, context)
 }
 
-func (c *commandRegistry) register(name string, handler *cmdHandler, preregister bool) {
-	_, registered := c.handlers[name]
-	if registered {
-		// if the command is not fully registered, make it so
-		_, preregistered := c.preregistered[name]
-		if preregistered {
-			delete(c.preregistered, name)
-		}
-		slog.Error("attempted registration of command to handler, but is already registered", slog.String("command", name))
+// preregister establishes the existence of a command and its handler.
+func (c *commandRegistry) preregister(handler *cmdHandler) {
+	if handler == nil {
+		slog.Error("denied preregistration of invalid handler")
+		return
 	}
-	c.handlers[name] = handler
-	if preregister {
-		c.preregistered[name] = preregister
+	if handler.name == "" {
+		slog.Error("denied preregistration of command without name")
+		return
+	}
+	cmdName := handler.name
+
+	_, registered := c.registry[cmdName]
+	if !registered {
+		c.handlers[cmdName] = handler
+		c.registry[cmdName] = Preregistered
+	} else {
+		slog.Warn("attempted preregistration of command with handler, but is already preregistered", slog.String("command", cmdName))
+	}
+}
+
+// register makes a preregistered command and its handlers available for use.
+func (c *commandRegistry) register(cmdName string) {
+	status, registered := c.registry[cmdName]
+	if registered {
+		switch status {
+		case Preregistered:
+			c.registry[cmdName] = Registered
+		case Registered:
+			slog.Warn("attempted registration of command for use, but is already registered", slog.String("command", cmdName))
+		}
+	}
+}
+
+func (c *commandRegistry) batchRegistration(handlers []*cmdHandler, newStatus registrationStatus) {
+	for _, handler := range handlers {
+		switch newStatus {
+		case Preregistered:
+			c.preregister(handler)
+		case Registered:
+			c.register(handler.name)
+		}
 	}
 }
 
@@ -306,13 +356,13 @@ func (c *commandRegistry) exists(name string) (*cmdHandler, bool) {
 	return nil, false
 }
 
-func (c *commandRegistry) GetRegisteredHandlers(verbose bool) []cmdHandler {
-	handlers := make([]cmdHandler, 0, len(c.handlers))
+func (c *commandRegistry) GetRegisteredHandlers(verbose bool) []*cmdHandler {
+	handlers := make([]*cmdHandler, 0, len(c.handlers))
 	for cmdName, handler := range c.handlers {
 		if verbose {
-			handlers = append(handlers, *handler)
-		} else if _, preregistered := c.preregistered[cmdName]; !preregistered {
-			handlers = append(handlers, *handler)
+			handlers = append(handlers, handler)
+		} else if status, exists := c.registry[cmdName]; exists && (status == Registered) {
+			handlers = append(handlers, handler)
 		}
 	}
 	return handlers

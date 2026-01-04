@@ -86,7 +86,7 @@ func handlerHelp(s *State, c *handlerContext) error {
 		sort.Slice(registered, func(i, j int) bool {
 			return registered[i].priority < registered[j].priority
 		})
-		maxLen := MaxOfStrings(ExtractStrings(registered, func(c cmdHandler) string { return c.name }))
+		maxLen := MaxOfStrings(ExtractStrings(registered, func(c *cmdHandler) string { return c.name }))
 		for _, handler := range registered {
 			fmt.Printf("  %-*s  %s\n", maxLen, handler.name, handler.description)
 		}

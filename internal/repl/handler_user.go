@@ -56,7 +56,7 @@ func handleUserLogin(s *State, c *handlerContext) error {
 	s.Client.LoggedInUser.Token = user.Token
 	s.Client.LoggedInUser.RefreshToken = user.RefreshToken
 	s.Client.LoggedInUser.User = user.User
-	registerBudgetCommand(s, false)
+	s.CommandRegistry.register("budget")
 	fmt.Printf("LOGGED IN as user: %s\n", user.Username)
 	return nil
 }

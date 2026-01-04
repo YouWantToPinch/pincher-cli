@@ -20,20 +20,24 @@ func StartRepl(cliState *State) {
 	}
 
 	cmdRegistry := &commandRegistry{
-		handlers:      make(map[string]*cmdHandler),
-		preregistered: make(map[string]bool),
+		handlers: make(map[string]*cmdHandler),
+		registry: make(map[string]registrationStatus),
 	}
 	cliState.CommandRegistry = cmdRegistry
 
-	registerBaseCommands(cliState, false)
+	// preregister ALL commands
+	cmdRegistry.batchRegistration(makeBaseCommandHandlers(), Preregistered)
+	cmdRegistry.preregister(makeBudgetCommandHandler())
+	cmdRegistry.batchRegistration(makeResourceCommandHandlers(), Preregistered)
 
-	// register commands that require login if a session still exists
+	// register base commands
+
+	cmdRegistry.batchRegistration(makeBaseCommandHandlers(), Registered)
+
+	// fully register commands that require login if a session still exists
 	if cliState.Config.StayLoggedIn && cliState.Client.LoggedInUser.RefreshToken != "" {
-		registerBudgetCommand(cliState, false)
-	} else {
-		registerBudgetCommand(cliState, true)
+		cmdRegistry.register("budget")
 	}
-	registerResourceCommands(cliState, true)
 
 	scanner := bufio.NewScanner(os.Stdin)
 	fmt.Println("Welcome to the Pincher CLI!")

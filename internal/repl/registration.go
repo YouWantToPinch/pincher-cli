@@ -1,12 +1,6 @@
 package repl
 
-func batchRegisterCommands(r *commandRegistry, handlers []*cmdHandler, preregister bool) {
-	for _, handler := range handlers {
-		r.register(handler.name, handler, preregister)
-	}
-}
-
-func registerBaseCommands(s *State, preregister bool) {
+func makeBaseCommandHandlers() []*cmdHandler {
 	mdAct := middlewareValidateAction
 
 	handlers := []*cmdHandler{
@@ -114,14 +108,14 @@ func registerBaseCommands(s *State, preregister bool) {
 		},
 	}
 
-	batchRegisterCommands(s.CommandRegistry, handlers, preregister)
+	return handlers
 }
 
-func registerBudgetCommand(s *State, preregister bool) {
+func makeBudgetCommandHandler() *cmdHandler {
 	handler := &cmdHandler{
 		cmdElement: cmdElement{
 			name:        "budget",
-			description: "Manage budgets associated with user '" + s.Client.LoggedInUser.Username + "'",
+			description: "Manage budgets associated with logged-in user",
 			arguments:   []string{"action"},
 			priority:    100,
 		},
@@ -179,10 +173,10 @@ func registerBudgetCommand(s *State, preregister bool) {
 		},
 	}
 
-	s.CommandRegistry.register("budget", handler, preregister)
+	return handler
 }
 
-func registerResourceCommands(s *State, preregister bool) {
+func makeResourceCommandHandlers() []*cmdHandler {
 	mdAct := middlewareValidateAction
 
 	handlers := []*cmdHandler{
@@ -190,7 +184,7 @@ func registerResourceCommands(s *State, preregister bool) {
 			cmdElement: cmdElement{
 				name:        "account",
 				arguments:   []string{"action"},
-				description: "Manage accounts under budget '" + s.Client.ViewedBudget.Name + "'",
+				description: "Manage accounts under budget in view",
 				priority:    210,
 			},
 			nonRegMsg: "first view a budget to see its accounts",
@@ -265,7 +259,7 @@ func registerResourceCommands(s *State, preregister bool) {
 			cmdElement: cmdElement{
 				name:        "category",
 				arguments:   []string{"action"},
-				description: "Manage spending categories under budget '" + s.Client.ViewedBudget.Name + "'",
+				description: "Manage spending categories under budget in view",
 				priority:    220,
 			},
 			nonRegMsg: "first view a budget to see its categories",
@@ -335,7 +329,7 @@ func registerResourceCommands(s *State, preregister bool) {
 			cmdElement: cmdElement{
 				name:        "group",
 				arguments:   []string{"action"},
-				description: "Manage category groups under budget '" + s.Client.ViewedBudget.Name + "'",
+				description: "Manage category groups under budget in view",
 				priority:    230,
 			},
 			nonRegMsg: "first view a budget to see its groups",
@@ -383,5 +377,5 @@ func registerResourceCommands(s *State, preregister bool) {
 		},
 	}
 
-	batchRegisterCommands(s.CommandRegistry, handlers, preregister)
+	return handlers
 }
