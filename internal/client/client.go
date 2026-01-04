@@ -20,13 +20,18 @@ type Client struct {
 	BaseURL      string
 }
 
-// ClearUserSession clears the client and its cache of their LoggedInUser values.
-// The operation is purely for client-side purposes,
-// and should be called with any request made to the "...api/revoke" endpoint.
+// ClearUserSession attempts to revoke the refresh token in the current session,
+// and then clears the client and cache of its LoggedInUser values, before
+// then saving the cache to disk.
 func (c *Client) ClearUserSession() {
+	revokeErr := c.RevokeRefreshToken(c.LoggedInUser.RefreshToken)
+	revokeResult := "success"
+	if revokeErr != nil {
+		revokeResult = "failure"
+	}
+	slog.Info("Attempted to revoke refresh token with result: " + revokeResult)
 	c.LoggedInUser = UserInfo{}
-	c.Cache.Delete("logged_in_user")
-	// TODO: deregister login-dependent commands here
+	c.Cache.Clear()
 }
 
 func (c *Client) API() string {

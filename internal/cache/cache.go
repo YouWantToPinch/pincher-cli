@@ -93,6 +93,14 @@ func (c *Cache) DeleteAllStartsWith(prefix string) {
 	}
 }
 
+// Clear deletes all cached entries.
+func (c *Cache) Clear() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	clear(c.CachedEntries)
+}
+
 func NewCache(interval time.Duration) *Cache {
 	cache := Cache{
 		CachedEntries: make(map[string]cacheEntry),
