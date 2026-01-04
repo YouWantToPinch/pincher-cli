@@ -337,6 +337,21 @@ func (c *commandRegistry) register(cmdName string) {
 	}
 }
 
+// deregister looks for the command with the given name and,
+// if it exists in the registry, updates its status to Preregistered.
+func (c *commandRegistry) deregister(name string) {
+	status, registered := c.registry[name]
+	if registered {
+		switch status {
+		case Preregistered:
+			slog.Warn("attempted deregistration of command for use, but is already in a preregistered state", slog.String("command", name))
+		case Registered:
+			c.registry[name] = Preregistered
+			slog.Warn("attempted registration of command for use, but is already registered", slog.String("command", name))
+		}
+	}
+}
+
 func (c *commandRegistry) batchRegistration(handlers []*cmdHandler, newStatus registrationStatus) {
 	for _, handler := range handlers {
 		switch newStatus {
@@ -346,6 +361,18 @@ func (c *commandRegistry) batchRegistration(handlers []*cmdHandler, newStatus re
 			c.register(handler.name)
 		}
 	}
+}
+
+// deregisterNonBaseCommands deregisters all commands whose
+// registration is dependent upon prior actions, such as
+// logging in, or viewing a budget.
+func (c *commandRegistry) deregisterNonBaseCommands() {
+	for name, status := range c.registry {
+		if status == Registered {
+			c.deregister(name)
+		}
+	}
+	c.batchRegistration(makeBaseCommandHandlers(), Registered)
 }
 
 func (c *commandRegistry) exists(name string) (*cmdHandler, bool) {
