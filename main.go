@@ -24,7 +24,7 @@ func main() {
 	cliState := &repl.State{DoneChan: &done}
 	cfg, err := config.ReadFromFile()
 	if err != nil {
-		fmt.Printf("CONFIG ERROR: %s\n", err.Error())
+		fmt.Printf("CONFIG ERROR: %s\n", err)
 		fmt.Println("(Does a config file exist?)")
 	}
 	cliState.Config = cfg
@@ -41,7 +41,7 @@ func main() {
 
 	err = cliState.LoadCache()
 	if err != nil {
-		fmt.Printf("CACHE ERROR: %s\n", err.Error())
+		fmt.Printf("CACHE ERROR: %s\n", err)
 		fmt.Println("(Does a cache file exist?)")
 	}
 

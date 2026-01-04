@@ -12,7 +12,7 @@ import (
 )
 
 type Client struct {
-	Cache        cache.Cache
+	Cache        *cache.Cache
 	httpClient   http.Client
 	LoggedInUser UserInfo
 	ViewedBudget Budget

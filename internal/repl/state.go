@@ -38,12 +38,10 @@ func (s *State) LoadCache() error {
 		if !found {
 			return fmt.Errorf("failed to load cache: %w", err)
 		}
-		var test client.UserInfo
-		err := json.Unmarshal(data, &test)
+		err := json.Unmarshal(data, &s.Client.LoggedInUser)
 		if err != nil {
 			return fmt.Errorf("failed to load cache: %w", err)
 		}
-		s.Client.LoggedInUser = test
 	}
 
 	return nil
@@ -52,14 +50,13 @@ func (s *State) LoadCache() error {
 // SaveCache saves the current session to a local *.json file
 // under the pincher-cli cache directory.
 func (s *State) SaveCache() error {
-	// s.ReadCache()
 	if s.Config.StayLoggedIn {
 		s.Client.Cache.Delete("logged_in_user")
 		userBytes, err := json.Marshal(s.Client.LoggedInUser)
 		if err != nil {
 			return fmt.Errorf("failed to save cache: %w", err)
 		}
-		s.Client.Cache.Add("logged_in_user", userBytes)
+		s.Client.Cache.Add("logged_in_user", userBytes, true)
 	}
 
 	cachePath, err := file.GetCacheFilepath("cache.json")

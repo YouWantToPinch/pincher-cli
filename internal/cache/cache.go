@@ -2,6 +2,7 @@
 package cache
 
 import (
+	"maps"
 	"strings"
 	"sync"
 	"time"
@@ -10,6 +11,8 @@ import (
 type cacheEntry struct {
 	CreatedAt time.Time `json:"created_at"`
 	Data      []byte    `json:"data"`
+	// entry is protected from reaping
+	Protected bool `json:"protected"`
 }
 
 type Cache struct {
@@ -22,16 +25,17 @@ func (c *Cache) Set(entries map[string]cacheEntry) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.CachedEntries = entries
+	maps.Copy(c.CachedEntries, entries)
 }
 
-func (c *Cache) Add(key string, value []byte) {
+func (c *Cache) Add(key string, value []byte, protect bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	c.CachedEntries[key] = cacheEntry{
 		CreatedAt: time.Now().UTC(),
 		Data:      value,
+		Protected: protect,
 	}
 }
 
@@ -61,7 +65,7 @@ func (c *Cache) reap() {
 	defer c.mu.Unlock()
 
 	for key, val := range c.CachedEntries {
-		if time.Since(val.CreatedAt) > c.interval {
+		if !val.Protected && (time.Since(val.CreatedAt) > c.interval) {
 			delete(c.CachedEntries, key)
 		}
 	}
@@ -80,15 +84,16 @@ func (c *Cache) Delete(key string) {
 // to a resource that may have had an instance updated or removed.
 func (c *Cache) DeleteAllStartsWith(prefix string) {
 	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	for key := range c.CachedEntries {
 		if strings.HasPrefix(key, prefix) {
 			delete(c.CachedEntries, key)
 		}
 	}
-	defer c.mu.Unlock()
 }
 
-func NewCache(interval time.Duration) Cache {
+func NewCache(interval time.Duration) *Cache {
 	cache := Cache{
 		CachedEntries: make(map[string]cacheEntry),
 		interval:      interval,
@@ -97,5 +102,5 @@ func NewCache(interval time.Duration) Cache {
 
 	go cache.reapLoop()
 
-	return cache
+	return &cache
 }

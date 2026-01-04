@@ -28,7 +28,7 @@ func (c *Client) Get(url, token string, out any) (*http.Response, error) {
 		if cacheErr != nil {
 			slog.Error(fmt.Sprintf("could not cache response data: %s", cacheErr))
 		} else {
-			c.Cache.Add(url, data)
+			c.Cache.Add(url, data, false)
 		}
 	}
 
