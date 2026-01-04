@@ -10,8 +10,6 @@ type userCredentials struct {
 	Password string `json:"password"`
 }
 
-// CREATE
-
 func (c *Client) CreateUser(username, password string) (success bool, error error) {
 	url := c.API() + "/users"
 	payload := userCredentials{
@@ -55,8 +53,6 @@ func (c *Client) LoginUser(username, password string) (*UserInfo, error) {
 	}
 }
 
-// UPDATE
-
 func (c *Client) UpdateUser(username, password string) error {
 	url := c.API() + "/users"
 
@@ -84,8 +80,6 @@ func (c *Client) UpdateUser(username, password string) error {
 		return fmt.Errorf("failed to update user")
 	}
 }
-
-// DELETE
 
 func (c *Client) DeleteUser(username, password string) error {
 	url := c.API() + "/users"

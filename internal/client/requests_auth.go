@@ -5,8 +5,6 @@ import (
 	"net/http"
 )
 
-// CREATE
-
 func (c *Client) GetAccessToken(refreshToken string) (string, error) {
 	url := c.API() + "/refresh"
 
@@ -26,8 +24,6 @@ func (c *Client) GetAccessToken(refreshToken string) (string, error) {
 		return "", fmt.Errorf("failed to get new access token")
 	}
 }
-
-// DELETE
 
 func (c *Client) RevokeRefreshToken(refreshToken string) error {
 	url := c.API() + "/revoke"

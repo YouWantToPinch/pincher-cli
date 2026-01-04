@@ -5,8 +5,6 @@ import (
 	"net/http"
 )
 
-// CREATE
-
 func (c *Client) CreateGroup(name, notes string) (success bool, error error) {
 	type rqSchema struct {
 		Meta

@@ -5,8 +5,6 @@ import (
 	"net/http"
 )
 
-// CREATE
-
 func (c *Client) CreateBudget(name, notes string) (success bool, error error) {
 	url := c.API() + "/budgets"
 

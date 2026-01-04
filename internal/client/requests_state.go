@@ -4,8 +4,6 @@ import (
 	"net/http"
 )
 
-// Admin & State
-
 // GetServerReady reports back with a 200 Status Code
 func (c *Client) GetServerReady() (bool, error) {
 	url := c.API() + "/healthz"
