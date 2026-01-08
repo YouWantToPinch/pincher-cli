@@ -6,15 +6,23 @@ import (
 	"github.com/google/uuid"
 )
 
-type Meta struct {
-	Name  string `json:"name"`
-	Notes string `json:"notes"`
-}
+// ----------------------
+//  CLI-EXCLUSIVE TYPES
+// ----------------------
 
 type UserInfo struct {
 	User
 	Token        string `json:"token"`
 	RefreshToken string `json:"refresh_token"`
+}
+
+// ----------------------
+//  API COMPATIBILITY
+// ----------------------
+
+type Meta struct {
+	Name  string `json:"name"`
+	Notes string `json:"notes"`
 }
 
 type User struct {
@@ -23,12 +31,6 @@ type User struct {
 	UpdatedAt      time.Time `json:"updated_at"`
 	Username       string    `json:"username"`
 	HashedPassword string    `json:"-"`
-}
-
-type BudgetMembership struct {
-	BudgetID   uuid.UUID `json:"budget_id"`
-	UserID     uuid.UUID `json:"user_id"`
-	MemberRole string    `json:"member_role"`
 }
 
 type Budget struct {
@@ -48,11 +50,11 @@ type Group struct {
 }
 
 type Category struct {
-	ID        uuid.UUID     `json:"id"`
-	CreatedAt time.Time     `json:"created_at"`
-	UpdatedAt time.Time     `json:"updated_at"`
-	BudgetID  uuid.UUID     `json:"budget_id"`
-	GroupID   uuid.NullUUID `json:"group_id"`
+	ID        uuid.UUID  `json:"id"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
+	BudgetID  uuid.UUID  `json:"budget_id"`
+	GroupID   *uuid.UUID `json:"group_id"`
 	Meta
 }
 
@@ -81,27 +83,24 @@ type Transaction struct {
 }
 
 type TransactionSplit struct {
-	ID            uuid.UUID     `json:"id"`
-	TransactionID uuid.UUID     `json:"transaction_id"`
-	CategoryID    uuid.NullUUID `json:"category_id"`
-	Amount        int64         `json:"transaction_date"`
+	ID            uuid.UUID  `json:"id"`
+	TransactionID uuid.UUID  `json:"transaction_id"`
+	CategoryID    *uuid.UUID `json:"category_id"`
+	Amount        int64      `json:"amount"`
 }
 
-type TransactionView struct {
-	ID              uuid.UUID      `json:"id"`
-	CreatedAt       time.Time      `json:"created_at"`
-	UpdatedAt       time.Time      `json:"updated_at"`
-	BudgetID        uuid.UUID      `json:"budget_id"`
-	LoggerID        uuid.UUID      `json:"logger_id"`
-	AccountID       uuid.UUID      `json:"account_id"`
-	TransactionType string         `json:"transaction_type"`
-	TransactionDate time.Time      `json:"transaction_date"`
-	Payee           string         `json:"payee"`
-	PayeeID         uuid.UUID      `json:"payee_id"`
-	Notes           string         `json:"notes"`
-	Cleared         bool           `json:"is_cleared"`
-	TotalAmount     int64          `json:"total_amount"`
-	Splits          map[string]int `json:"splits"`
+type TransactionDetail struct {
+	ID              uuid.UUID        `json:"id"`
+	TransactionDate time.Time        `json:"transaction_date"`
+	TransactionType string           `json:"transaction_type"`
+	Notes           string           `json:"notes"`
+	PayeeName       string           `json:"payee_name"`
+	BudgetName      string           `json:"budget_name"`
+	AccountName     string           `json:"account_name"`
+	LoggerName      string           `json:"logger_name"`
+	TotalAmount     int64            `json:"total_amount"`
+	Splits          map[string]int64 `json:"splits"`
+	Cleared         bool             `json:"cleared"`
 }
 
 type Payee struct {
@@ -113,12 +112,11 @@ type Payee struct {
 }
 
 type CategoryReport struct {
-	MonthID    time.Time `json:"month_id"`
-	CategoryID uuid.UUID `json:"category_id"`
-	Name       string    `json:"category_name"`
-	Assigned   int64     `json:"assigned"`
-	Activity   int64     `json:"activity"`
-	Balance    int64     `json:"balance"`
+	MonthID  time.Time `json:"month_id"`
+	Name     string    `json:"category_name"`
+	Assigned int64     `json:"assigned"`
+	Activity int64     `json:"activity"`
+	Balance  int64     `json:"balance"`
 }
 
 type MonthReport struct {
