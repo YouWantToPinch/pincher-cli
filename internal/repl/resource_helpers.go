@@ -7,36 +7,36 @@ import (
 )
 
 func findBudgetByName(name string, budgets []client.Budget) (*client.Budget, error) {
-	for _, budget := range budgets {
-		if name == budget.Name {
-			return &budget, nil
+	for i := 0; i < len(budgets); i++ {
+		if name == budgets[i].Name {
+			return &budgets[i], nil
 		}
 	}
 	return nil, fmt.Errorf("no budgets found with provided name")
 }
 
 func findAccountByName(name string, accounts []client.Account) (*client.Account, error) {
-	for _, account := range accounts {
-		if name == account.Name {
-			return &account, nil
+	for i := 0; i < len(accounts); i++ {
+		if name == accounts[i].Name {
+			return &accounts[i], nil
 		}
 	}
 	return nil, fmt.Errorf("no accounts found with provided name")
 }
 
 func findGroupByName(name string, groups []client.Group) (*client.Group, error) {
-	for _, group := range groups {
-		if name == group.Name {
-			return &group, nil
+	for i := 0; i < len(groups); i++ {
+		if name == groups[i].Name {
+			return &groups[i], nil
 		}
 	}
 	return nil, fmt.Errorf("no groups found with provided name")
 }
 
 func findCategoryByName(name string, categories []client.Category) (*client.Category, error) {
-	for _, category := range categories {
-		if name == category.Name {
-			return &category, nil
+	for i := 0; i < len(categories); i++ {
+		if name == categories[i].Name {
+			return &categories[i], nil
 		}
 	}
 	return nil, fmt.Errorf("no categories found with provided name")

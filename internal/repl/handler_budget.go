@@ -61,7 +61,7 @@ func handleBudgetView(s *State, c *handlerContext) error {
 		return err
 	}
 
-	// NOTE: We store a COPY here rather than a ptr,
+	// NOTE: We store a VALUE rather than the ptr,
 	// as the cache by nature may change at a moment's notice
 	s.Client.ViewedBudget = *budget
 	s.CommandRegistry.batchRegistration(makeResourceCommandHandlers(), Registered)
