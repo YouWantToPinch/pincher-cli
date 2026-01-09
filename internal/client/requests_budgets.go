@@ -47,7 +47,7 @@ func (c *Client) GetBudgets(urlQuery string) ([]Budget, error) {
 	case http.StatusNotFound:
 		return nil, fmt.Errorf("resource not found")
 	default:
-		return nil, fmt.Errorf("failed to retrieve user budgets")
+		return nil, fmt.Errorf("failed to retrieve budgets")
 	}
 }
 
@@ -76,7 +76,7 @@ func (c *Client) UpdateBudget(budgetID, name, notes string) error {
 	case http.StatusNotFound:
 		return fmt.Errorf("resource not found")
 	default:
-		return fmt.Errorf("failed to retrieve budgets")
+		return fmt.Errorf("failed to update budget")
 	}
 }
 
@@ -94,6 +94,6 @@ func (c *Client) DeleteBudget(budgetID string) error {
 	case http.StatusNotFound:
 		return fmt.Errorf("resource not found")
 	default:
-		return fmt.Errorf("failed to retrieve budgets")
+		return fmt.Errorf("failed to delete budgets")
 	}
 }

@@ -70,16 +70,16 @@ func handleBudgetView(s *State, c *handlerContext) error {
 }
 
 func handleBudgetList(s *State, c *handlerContext) error {
-	c.args.trackOptArgs(&c.cmd, "role")
+	c.args.trackOptArgs(&c.cmd, "roles")
 	roleQuery, _ := c.args.pfx()
 
-	roles := cleanInput(roleQuery)
-	if len(roles) > 0 {
-		roleQuery = "?role="
+	if roleQuery != "" {
+		roles := cleanInput(roleQuery)
+		roleQuery = "?roles="
 		for i, role := range roles {
 			roleQuery += strings.ToUpper(role)
 			if i < len(roles)-1 {
-				roleQuery += "&"
+				roleQuery += ","
 			}
 		}
 	}

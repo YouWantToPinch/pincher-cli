@@ -137,7 +137,7 @@ func makeBudgetCommandHandler() *cmdHandler {
 				name: "list",
 				options: []cmdElement{
 					{
-						name:        "role",
+						name:        "roles",
 						description: "Filter results by user role. Can be ADMIN, MANAGER, CONTRIBUTOR, or VIEWER.",
 						arguments:   []string{"role_title"},
 					},
