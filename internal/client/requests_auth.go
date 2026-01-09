@@ -43,6 +43,9 @@ func (c *Client) RevokeRefreshToken() error {
 	if err != nil {
 		return err
 	}
+	// Whether or not the server has trouble revoking,
+	// we can at least forget it here in the CLI as well.
+	c.RefreshToken = ""
 	switch resp.StatusCode {
 	case http.StatusNoContent:
 		return nil

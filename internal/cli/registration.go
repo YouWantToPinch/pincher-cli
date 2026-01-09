@@ -100,6 +100,11 @@ func makeBaseCommandHandlers() []*cmdHandler {
 					},
 				},
 				{
+					name:        "logout",
+					description: "log out existing user",
+					arguments:   []string{},
+				},
+				{
 					name:        "delete",
 					description: "delete the logged-in user by first entering its credentials",
 					arguments:   []string{"username", "password", "retype_password"},

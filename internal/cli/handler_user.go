@@ -11,6 +11,8 @@ func handlerUser(s *State, c *handlerContext) error {
 			return handleUserAdd(s, c)
 		case "login":
 			return handleUserLogin(s, c)
+		case "logout":
+			return handleUserLogout(s, c)
 		case "update":
 			return handleUserUpdate(s, c)
 		case "delete":
@@ -56,6 +58,21 @@ func handleUserLogin(s *State, c *handlerContext) error {
 	s.Session.User = user
 	s.Session.OnLogin()
 	fmt.Printf("Logged in as user: %s\n", s.Session.Username)
+	return nil
+}
+
+func handleUserLogout(s *State, c *handlerContext) error {
+	if s.Client.RefreshToken == "" {
+		fmt.Println("No user logged in.")
+		return nil
+	}
+	err := s.Client.RevokeRefreshToken()
+	if err != nil {
+		return err
+	}
+	s.Session.OnLogout()
+
+	fmt.Println("User logged out.")
 	return nil
 }
 
