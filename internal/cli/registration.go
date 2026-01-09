@@ -10,7 +10,7 @@ func makeBaseCommandHandlers() []*cmdHandler {
 				description: "exit the program",
 				priority:    0,
 			},
-			callback: handlerExit,
+			callback: nil,
 		},
 		{
 			cmdElement: cmdElement{
@@ -81,6 +81,14 @@ func makeBaseCommandHandlers() []*cmdHandler {
 					name:        "login",
 					description: "log in as an existing user",
 					arguments:   []string{"username", "password"},
+					options: []cmdElement{
+						{
+							name:         "view-budget",
+							description:  "specify a budget to view on successful login",
+							arguments:    []string{"budget_name"},
+							useShorthand: true,
+						},
+					},
 				},
 				{
 					name:        "update",

@@ -20,24 +20,36 @@ func StartRepl(cliState *State) {
 		cliState.Session.OnLogin()
 	}
 
+	commandQueue := make(chan string, 32)
+	cliState.CmdQueue = commandQueue
+
 	scanner := bufio.NewScanner(os.Stdin)
-	fmt.Println("Welcome to the Pincher CLI!")
+	fmt.Println("Welcome to the REPL CLI!")
 	fmt.Println("Use 'help' for available commands.")
 	for {
 		fmt.Println("__________________")
-		fmt.Print("Pincher > ")
-		if scanner.Scan() {
-			input := scanner.Text()
-			if len(input) == 0 {
-				continue
+		fmt.Print("REPL > ")
+		if !scanner.Scan() {
+			break
+		}
+
+		input := scanner.Text()
+		if len(input) == 0 {
+			continue
+		}
+		cliState.CmdQueue <- input
+
+		for len(commandQueue) > 0 {
+			cmd := <-commandQueue
+			if cmd == "exit" {
+				fmt.Println("Exiting Pincher CLI Program...")
+				*cliState.DoneChan <- true
+				return
 			}
-			err := cliState.Session.CommandRegistry.run(cliState, input)
+			err := cliState.Session.CommandRegistry.run(cliState, cmd)
 			if err != nil {
-				if err.Error() == "HIJACK:EXIT" {
-					break
-				}
 				slog.Error(err.Error())
-				fmt.Println("ERROR: " + err.Error())
+				fmt.Println("ERROR:", err)
 			}
 		}
 	}

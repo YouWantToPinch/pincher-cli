@@ -53,6 +53,7 @@ type State struct {
 	Config   *config.Config
 	Client   *client.Client
 	Session  *cliSession
+	CmdQueue chan<- string
 }
 
 func (s *State) NewSession() {
