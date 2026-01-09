@@ -54,9 +54,17 @@ func main() {
 	}()
 
 	<-done
-
-	err = cliState.Client.SaveCacheFile()
-	if err != nil {
-		fmt.Printf("CACHE ERROR: %s\n", err)
+	if cliState.Config.StayLoggedIn {
+		cliState.Config.RefreshToken = cliState.Client.RefreshToken
+		err := cliState.Config.WriteToFile()
+		if err != nil {
+			fmt.Printf("CONFIG ERROR: %s\n", err)
+		}
+		err = cliState.Client.SaveCacheFile()
+		if err != nil {
+			fmt.Printf("CACHE ERROR: %s\n", err)
+		} else {
+			cliState.Config.RefreshToken = ""
+		}
 	}
 }
