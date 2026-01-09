@@ -1,4 +1,4 @@
-package repl
+package cli
 
 func makeBaseCommandHandlers() []*cmdHandler {
 	mdAct := middlewareValidateAction

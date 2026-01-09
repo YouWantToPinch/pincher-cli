@@ -1,4 +1,4 @@
-package repl
+package cli
 
 import (
 	"fmt"
@@ -40,7 +40,7 @@ func handleBudgetAdd(s *State, c *handlerContext) error {
 		return err
 	}
 	if budgetCreated {
-		fmt.Println("Budget " + name + " successfully created as user: " + s.Client.LoggedInUser.Username + ".")
+		fmt.Println("Budget " + name + " successfully created as user: " + s.Session.Username + ".")
 		fmt.Println("See it with: `budget view`")
 		return nil
 	} else {
@@ -64,7 +64,7 @@ func handleBudgetView(s *State, c *handlerContext) error {
 	// NOTE: We store a VALUE rather than the ptr,
 	// as the cache by nature may change at a moment's notice
 	s.Client.ViewedBudget = *budget
-	s.CommandRegistry.batchRegistration(makeResourceCommandHandlers(), Registered)
+	s.Session.OnViewBudget()
 	fmt.Printf("Now viewing budget: %s\n", budget.Name)
 	return nil
 }
@@ -89,11 +89,11 @@ func handleBudgetList(s *State, c *handlerContext) error {
 		return err
 	}
 	if len(budgets) == 0 {
-		fmt.Printf("No memberships found in query from user %s. \n", s.Client.LoggedInUser.Username)
+		fmt.Printf("No memberships found in query from user %s. \n", s.Session.Username)
 		return nil
 	}
 
-	fmt.Printf("%s's budget memberships: \n", s.Client.LoggedInUser.Username)
+	fmt.Printf("%s's budget memberships: \n", s.Session.Username)
 	sort.Slice(budgets, func(i, j int) bool {
 		return budgets[i].Name < budgets[j].Name
 	})

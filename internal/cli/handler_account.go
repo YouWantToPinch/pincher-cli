@@ -1,4 +1,4 @@
-package repl
+package cli
 
 import (
 	"fmt"
@@ -41,7 +41,7 @@ func handleAccountAdd(s *State, c *handlerContext) error {
 		return err
 	}
 	if accountCreated {
-		fmt.Println("Account " + name + " successfully created as user: " + s.Client.LoggedInUser.Username + ".")
+		fmt.Println("Account " + name + " successfully created as user: " + s.Session.Username + ".")
 		fmt.Println("See it with: `account list`")
 		return nil
 	} else {

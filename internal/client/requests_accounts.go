@@ -20,7 +20,7 @@ func (c *Client) CreateAccount(name, notes, accountType string) (success bool, e
 		AccountType: accountType,
 	}
 
-	resp, err := c.Post(url, c.LoggedInUser.Token, payload, nil)
+	resp, err := c.Post(url, c.token, payload, nil)
 	if err != nil {
 		return false, err
 	}
@@ -41,7 +41,7 @@ func (c *Client) GetAccounts(urlQuery string) ([]Account, error) {
 	}
 
 	var accounts accountContainer
-	resp, err := c.Get(url, c.LoggedInUser.Token, &accounts)
+	resp, err := c.Get(url, c.token, &accounts)
 	if err != nil {
 		return nil, err
 	} else if resp == nil {
@@ -74,7 +74,7 @@ func (c *Client) UpdateAccount(accountID, name, notes, accountType string) error
 		AccountType: accountType,
 	}
 
-	resp, err := c.Put(url, c.LoggedInUser.Token, payload)
+	resp, err := c.Put(url, c.token, payload)
 	if err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func (c *Client) UpdateAccount(accountID, name, notes, accountType string) error
 func (c *Client) RestoreAccount(accountID, name string) error {
 	url := c.API() + "/budgets/" + c.ViewedBudget.ID.String() + "/accounts/" + accountID
 
-	resp, err := c.Patch(url, c.LoggedInUser.Token, nil)
+	resp, err := c.Patch(url, c.token, nil)
 	if err != nil {
 		return err
 	}
@@ -118,7 +118,7 @@ func (c *Client) DeleteAccount(accountID, deleteHard string) error {
 		DeleteHard: deleteHard == "SET",
 	}
 
-	resp, err := c.Delete(url, c.LoggedInUser.Token, payload)
+	resp, err := c.Delete(url, c.token, payload)
 	if err != nil {
 		return err
 	}

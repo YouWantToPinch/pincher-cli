@@ -1,8 +1,7 @@
-package repl
+package cli
 
 import (
 	"fmt"
-	"log/slog"
 	"os"
 	"os/exec"
 	"sort"
@@ -16,11 +15,11 @@ func middlewareValidateAction(next HandlerFunc) HandlerFunc {
 		action, _ := c.args.pfx()
 		if action == "" {
 			err = fmt.Errorf("no action specified")
-			s.CommandRegistry.handlers[c.cmd.name].help()
+			s.Session.CommandRegistry.handlers[c.cmd.name].help()
 			return err
-		} else if _, found := findCMDElementWithName(s.CommandRegistry.handlers[c.cmd.name].actions, action); !found {
+		} else if _, found := findCMDElementWithName(s.Session.CommandRegistry.handlers[c.cmd.name].actions, action); !found {
 			err = fmt.Errorf("invalid action for command '%s': %s", c.cmd.name, action)
-			s.CommandRegistry.handlers[c.cmd.name].help()
+			s.Session.CommandRegistry.handlers[c.cmd.name].help()
 			return err
 		}
 		c.ctxValues["action"] = action
@@ -31,12 +30,6 @@ func middlewareValidateAction(next HandlerFunc) HandlerFunc {
 // =========== HANDLERS =============
 
 func handlerExit(s *State, c *handlerContext) error {
-	err := s.SaveCache()
-	if err != nil {
-		// whether or not cache is saved should have no effect on exit
-		slog.Error(err.Error())
-		fmt.Println(err.Error())
-	}
 	fmt.Println("Closing Pincher-CLI program...")
 	*s.DoneChan <- true
 	// NOTE: No actual error. This handler hijacks the error handling within
@@ -66,7 +59,7 @@ func handlerClear(s *State, c *handlerContext) error {
 // If asked for help with one of a command's actions, its exclusive cmdElement usage will be output.
 func handlerHelp(s *State, c *handlerContext) error {
 	commandInquiry, _ := c.args.pfx()
-	if handler, exists := s.CommandRegistry.exists(commandInquiry); exists {
+	if handler, exists := s.Session.CommandRegistry.exists(commandInquiry); exists {
 		actionInquiry, _ := c.args.pfx()
 		if actionInquiry != "" {
 			if cmdElement, found := findCMDElementWithName(handler.actions, actionInquiry); found {
@@ -77,12 +70,12 @@ func handlerHelp(s *State, c *handlerContext) error {
 		handler.help()
 		return nil
 	}
-	if handler, exists := s.CommandRegistry.exists("help"); exists {
+	if handler, exists := s.Session.CommandRegistry.exists("help"); exists {
 		handler.help()
 		fmt.Println("AVAILABLE COMMANDS: ")
 		c.args.trackOptArgs(&c.cmd, "verbose")
 		verbose, _ := c.args.pfx()
-		registered := s.CommandRegistry.GetRegisteredHandlers(verbose == "SET")
+		registered := s.Session.CommandRegistry.GetRegisteredHandlers(verbose == "SET")
 		sort.Slice(registered, func(i, j int) bool {
 			return registered[i].priority < registered[j].priority
 		})

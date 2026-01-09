@@ -1,4 +1,4 @@
-package repl
+package cli
 
 import (
 	"fmt"
@@ -38,7 +38,7 @@ func handleGroupAdd(s *State, c *handlerContext) error {
 		return err
 	}
 	if groupCreated {
-		fmt.Println("Group " + name + " successfully created as user: " + s.Client.LoggedInUser.Username + ".")
+		fmt.Println("Group " + name + " successfully created as user: " + s.Session.Username)
 		fmt.Println("See it with: `group list`")
 		return nil
 	} else {

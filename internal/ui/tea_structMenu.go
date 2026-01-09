@@ -1,6 +1,5 @@
-// Package tmodels provides custom bubbletea models
-// intended for the pincher-cli
-package tmodels
+// Package ui provides custom bubbletea models intended for the pincher-cli
+package ui
 
 import (
 	"errors"

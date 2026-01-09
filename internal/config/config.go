@@ -1,28 +1,37 @@
-// Package config handles interpretation of pincher-cli user configuration
+// Package config handles CLI settings and optionally stores refresh tokens
 package config
 
 import (
 	file "github.com/YouWantToPinch/pincher-cli/internal/filemgr"
 )
 
-type Config struct {
+type ConfigSettings struct {
 	BaseURL        string `json:"db_url"`
 	StayLoggedIn   bool   `json:"stay_logged_in"`
 	VimKeysEnabled bool   `json:"vim_keys_enabled"`
 }
 
-func (c *Config) New(dbURL, username string) error {
-	newCfg := Config{
+// Config represents a configuration specific to the local machine.
+type Config struct {
+	ConfigSettings
+	RefreshToken string `json:"refresh_token"`
+}
+
+func (c *Config) NewConfigFile(dbURL string) error {
+	c.SetDefaults(dbURL)
+	err := c.WriteToFile()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Config) SetDefaults(dbURL string) {
+	c.ConfigSettings = ConfigSettings{
 		BaseURL:        dbURL,
 		StayLoggedIn:   true,
 		VimKeysEnabled: true,
 	}
-	err := newCfg.WriteToFile()
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func ReadFromFile() (*Config, error) {

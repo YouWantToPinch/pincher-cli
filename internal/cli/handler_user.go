@@ -1,4 +1,4 @@
-package repl
+package cli
 
 import (
 	"fmt"
@@ -53,11 +53,9 @@ func handleUserLogin(s *State, c *handlerContext) error {
 		return err
 	}
 
-	s.Client.LoggedInUser.Token = user.Token
-	s.Client.LoggedInUser.RefreshToken = user.RefreshToken
-	s.Client.LoggedInUser.User = user.User
-	s.CommandRegistry.register("budget")
-	fmt.Printf("LOGGED IN as user: %s\n", user.Username)
+	s.Session.User = user
+	s.Session.OnLogin()
+	fmt.Printf("Logged in as user: %s\n", s.Session.Username)
 	return nil
 }
 

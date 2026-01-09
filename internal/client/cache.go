@@ -1,5 +1,4 @@
-// Package cache provides a cache for the pincher-cli
-package cache
+package client
 
 import (
 	"maps"

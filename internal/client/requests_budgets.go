@@ -13,7 +13,7 @@ func (c *Client) CreateBudget(name, notes string) (success bool, error error) {
 		Notes: notes,
 	}
 
-	resp, err := c.Post(url, c.LoggedInUser.Token, payload, nil)
+	resp, err := c.Post(url, c.token, payload, nil)
 	if err != nil {
 		return false, err
 	}
@@ -34,7 +34,7 @@ func (c *Client) GetBudgets(urlQuery string) ([]Budget, error) {
 	}
 
 	var budgets budgetContainer
-	resp, err := c.Get(url, c.LoggedInUser.Token, &budgets)
+	resp, err := c.Get(url, c.token, &budgets)
 	if err != nil {
 		return nil, err
 	} else if resp == nil {
@@ -65,7 +65,7 @@ func (c *Client) UpdateBudget(budgetID, name, notes string) error {
 		},
 	}
 
-	resp, err := c.Put(url, c.LoggedInUser.Token, payload)
+	resp, err := c.Put(url, c.token, payload)
 	if err != nil {
 		return err
 	}
@@ -83,7 +83,7 @@ func (c *Client) UpdateBudget(budgetID, name, notes string) error {
 func (c *Client) DeleteBudget(budgetID string) error {
 	url := c.API() + "/budgets/" + budgetID
 
-	resp, err := c.Delete(url, c.LoggedInUser.Token, nil)
+	resp, err := c.Delete(url, c.token, nil)
 	if err != nil {
 		return err
 	}

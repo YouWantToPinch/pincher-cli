@@ -1,4 +1,4 @@
-package repl
+package cli
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 )
 
 func findBudgetByName(name string, budgets []client.Budget) (*client.Budget, error) {
-	for i := 0; i < len(budgets); i++ {
+	for i := range len(budgets) {
 		if name == budgets[i].Name {
 			return &budgets[i], nil
 		}
@@ -16,7 +16,7 @@ func findBudgetByName(name string, budgets []client.Budget) (*client.Budget, err
 }
 
 func findAccountByName(name string, accounts []client.Account) (*client.Account, error) {
-	for i := 0; i < len(accounts); i++ {
+	for i := range len(accounts) {
 		if name == accounts[i].Name {
 			return &accounts[i], nil
 		}
@@ -25,7 +25,7 @@ func findAccountByName(name string, accounts []client.Account) (*client.Account,
 }
 
 func findGroupByName(name string, groups []client.Group) (*client.Group, error) {
-	for i := 0; i < len(groups); i++ {
+	for i := range len(groups) {
 		if name == groups[i].Name {
 			return &groups[i], nil
 		}
@@ -34,7 +34,7 @@ func findGroupByName(name string, groups []client.Group) (*client.Group, error) 
 }
 
 func findCategoryByName(name string, categories []client.Category) (*client.Category, error) {
-	for i := 0; i < len(categories); i++ {
+	for i := range len(categories) {
 		if name == categories[i].Name {
 			return &categories[i], nil
 		}

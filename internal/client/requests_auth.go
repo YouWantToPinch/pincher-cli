@@ -2,37 +2,44 @@ package client
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 )
 
-func (c *Client) GetAccessToken(refreshToken string) (string, error) {
+func (c *Client) GetAccessToken() (success bool, err error) {
 	url := c.API() + "/refresh"
 
 	type rspSchema struct {
 		NewAccessToken string `json:"token"`
 	}
 
-	var accessToken rspSchema
-	resp, err := c.Post(url, refreshToken, nil, &accessToken)
+	var token rspSchema
+	resp, err := c.Post(url, c.RefreshToken, nil, &token)
 	if err != nil {
-		return "", err
+		return false, err
 	}
 	switch resp.StatusCode {
 	case http.StatusOK:
-		return accessToken.NewAccessToken, nil
+		c.token = token.NewAccessToken
+		return true, nil
 	case http.StatusBadRequest:
 		fallthrough
 	case http.StatusUnauthorized:
 		fallthrough
 	default:
-		return "", fmt.Errorf("failed to get new access token")
+		return false, fmt.Errorf("could not get new access token")
 	}
 }
 
-func (c *Client) RevokeRefreshToken(refreshToken string) error {
+func (c *Client) RevokeRefreshToken() error {
+	if c.RefreshToken == "" {
+		slog.Warn("Client directed to revoke active refresh token, but found none to revoke.")
+		return nil
+	}
+
 	url := c.API() + "/revoke"
 
-	resp, err := c.Post(url, refreshToken, nil, nil)
+	resp, err := c.Post(url, c.RefreshToken, nil, nil)
 	if err != nil {
 		return err
 	}

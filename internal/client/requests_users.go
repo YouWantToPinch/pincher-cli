@@ -32,24 +32,34 @@ func (c *Client) CreateUser(username, password string) (success bool, error erro
 	}
 }
 
-func (c *Client) LoginUser(username, password string) (*UserInfo, error) {
+func (c *Client) LoginUser(username, password string) (User, error) {
 	url := c.API() + "/login"
 	payload := userCredentials{
 		Username: username,
 		Password: password,
 	}
 
-	var user UserInfo
-	resp, err := c.Post(url, "", payload, &user)
+	type rspSchema struct {
+		User
+		Token        string `json:"token"`
+		RefreshToken string `json:"refresh_token"`
+	}
+
+	var login rspSchema
+	resp, err := c.Post(url, "", payload, &login)
 	if err != nil {
-		return nil, err
+		return User{}, err
 	}
 
 	switch resp.StatusCode {
 	case http.StatusOK:
-		return &user, nil
+		c.token = login.Token
+		c.RefreshToken = login.RefreshToken
+		return login.User, nil
+	case http.StatusUnauthorized:
+		return User{}, fmt.Errorf("incorrect username or password")
 	default:
-		return nil, fmt.Errorf("failed to log in as user")
+		return User{}, fmt.Errorf("could not log in")
 	}
 }
 
@@ -66,7 +76,7 @@ func (c *Client) UpdateUser(username, password string) error {
 		Username: username,
 	}
 
-	resp, err := c.Put(url, c.LoggedInUser.Token, payload)
+	resp, err := c.Put(url, c.token, payload)
 	if err != nil {
 		return err
 	}
@@ -88,7 +98,7 @@ func (c *Client) DeleteUser(username, password string) error {
 		Password: password,
 	}
 
-	resp, err := c.Delete(url, c.LoggedInUser.Token, payload)
+	resp, err := c.Delete(url, c.token, payload)
 	if err != nil {
 		return fmt.Errorf("failed to delete user: %w", err)
 	}

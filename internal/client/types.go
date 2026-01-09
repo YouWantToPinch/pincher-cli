@@ -10,12 +10,6 @@ import (
 //  CLI-EXCLUSIVE TYPES
 // ----------------------
 
-type UserInfo struct {
-	User
-	Token        string `json:"token"`
-	RefreshToken string `json:"refresh_token"`
-}
-
 // ----------------------
 //  API COMPATIBILITY
 // ----------------------

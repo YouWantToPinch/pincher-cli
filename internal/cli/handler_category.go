@@ -1,4 +1,4 @@
-package repl
+package cli
 
 import (
 	"fmt"
@@ -52,7 +52,7 @@ func handleCategoryAdd(s *State, c *handlerContext) error {
 		return err
 	}
 	if categoryCreated {
-		fmt.Println("Category " + name + " successfully created as user: " + s.Client.LoggedInUser.Username + ".")
+		fmt.Println("Category " + name + " successfully created as user: " + s.Session.Username)
 		fmt.Println("See it with: `category list`")
 		return nil
 	} else {

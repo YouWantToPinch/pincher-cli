@@ -1,10 +1,10 @@
-package repl
+package cli
 
 import (
 	"fmt"
 
 	"github.com/YouWantToPinch/pincher-cli/internal/config"
-	"github.com/YouWantToPinch/pincher-cli/internal/tmodels"
+	"github.com/YouWantToPinch/pincher-cli/internal/ui"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -25,23 +25,23 @@ func handlerConfig(s *State, c *handlerContext) error {
 
 func handleConfigEdit(s *State, c *handlerContext) error {
 	fmt.Println("Edit your local configuration: ")
-	newConfig := *s.Config
-	tmodel, err := tmodels.InitialTModelStructMenu(&newConfig, nil, true)
+	newConfig := s.Config.ConfigSettings
+	configEditMenu, err := ui.InitialTModelStructMenu(&newConfig, []string{"RefreshToken"}, true)
 	if err != nil {
 		return err
 	}
-	p := tea.NewProgram(tmodel)
+	p := tea.NewProgram(configEditMenu)
 	if entry, err := p.Run(); err != nil {
 		return err
 	} else {
-		if entry.(tmodels.TModelStructMenu).QuitWithCancel {
+		if entry.(ui.TModelStructMenu).QuitWithCancel {
 			fmt.Printf("Canceled user configuration changes.\n")
 		} else {
-			err = entry.(tmodels.TModelStructMenu).ParseStruct(&newConfig)
+			err = entry.(ui.TModelStructMenu).ParseStruct(&newConfig)
 			if err != nil {
 				return err
 			}
-			s.Config = &newConfig
+			s.Config.ConfigSettings = newConfig
 			err := s.Config.WriteToFile()
 			if err != nil {
 				return err
