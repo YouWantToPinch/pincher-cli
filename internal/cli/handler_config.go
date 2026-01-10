@@ -24,9 +24,12 @@ func handlerConfig(s *State, c *handlerContext) error {
 }
 
 func handleConfigEdit(s *State, c *handlerContext) error {
-	fmt.Println("Edit your local configuration: ")
+	customMenuSettings := &ui.MenuSettings{}
+	customMenuSettings.Init()
+	customMenuSettings.Header = "Edit your local configuration: "
+
 	newConfig := s.Config.ConfigSettings
-	configEditMenu, err := ui.InitialTModelStructMenu(&newConfig, []string{"RefreshToken"}, true)
+	configEditMenu, err := ui.InitialTModelStructMenu(&newConfig, []string{"RefreshToken"}, true, customMenuSettings)
 	if err != nil {
 		return err
 	}

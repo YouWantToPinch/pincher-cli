@@ -6,9 +6,9 @@ import (
 )
 
 type ConfigSettings struct {
-	BaseURL        string `json:"db_url"`
-	StayLoggedIn   bool   `json:"stay_logged_in"`
-	VimKeysEnabled bool   `json:"vim_keys_enabled"`
+	BaseURL        string `json:"db_url" smname:"Database URL"`
+	StayLoggedIn   bool   `json:"stay_logged_in" smname:"Stay Logged In" smdes:"Keep a login session alive on exit."`
+	VimKeysEnabled bool   `json:"vim_keys_enabled" smname:"Vim Keys Enabled" menudes:"Use vim keys to navigate CLI menus."`
 }
 
 // Config represents a configuration specific to the local machine.

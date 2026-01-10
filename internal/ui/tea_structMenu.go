@@ -11,6 +11,14 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+type MenuSettings struct {
+	NavCursorChar  string // cursor during navigation
+	EditCursorChar string // cursor during edit
+	IBeamChar      string // character shown right of text during edit
+	TabAfterEntry  bool   // whether or not to jump to the next field after tabAfterEntry
+	Header         string // message to display above the struct menu
+}
+
 // TModelStructMenu is a bubbletea model that can be used to expose
 // primitive struct fields to end users for input,
 // as if they were elements of a menu.
@@ -22,9 +30,20 @@ type TModelStructMenu struct {
 	structType     reflect.Type
 	structFields   map[string]any // field values
 	QuitWithCancel bool           // can be used to communicate whether changes ought be saved
+	Settings       MenuSettings
+}
 
-	// MENU SETTINGS
-	tabAfterEntry bool // whether or not to jump to the next field after entry
+// Init initializes the menu settings with default values.
+// When using custom settings, this should be called first,
+// before then overriding specific default values with
+// those desired.
+func (m *MenuSettings) Init() {
+	*m = MenuSettings{
+		IBeamChar:      "|",
+		NavCursorChar:  "> ",
+		EditCursorChar: ">>",
+		TabAfterEntry:  true,
+	}
 }
 
 // incrCursor increases the field index the user is focused on
@@ -59,7 +78,10 @@ func (m *TModelStructMenu) setCursorFieldValue(value any) {
 	m.setFieldValueAtIndex(m.cursor, value)
 }
 
-func InitialTModelStructMenu(structObj any, fieldList []string, asBlacklist bool) (TModelStructMenu, error) {
+// InitialTModelStructMenu creates a new struct menu from the given parameters.
+// If customSettings are not provided, the menu will fall back to defaults.
+// If using custom menu settings, first initialize them with the setDefaults() method.
+func InitialTModelStructMenu(structObj any, fieldList []string, asBlacklist bool, customSettings *MenuSettings) (TModelStructMenu, error) {
 	// if fieldList is empty, all fields are exposed to users; otherwise, it is used as a whitelist.
 	// if bool parameter 'asBlacklist' is 'true', the fieldList is used as a blacklist instead of a whitelist.
 	t := reflect.TypeOf(structObj)
@@ -75,11 +97,16 @@ func InitialTModelStructMenu(structObj any, fieldList []string, asBlacklist bool
 		return TModelStructMenu{}, nil
 	}
 	newModel := TModelStructMenu{
-		tabAfterEntry:  true,
 		isEditingValue: false,
 		structType:     t,
 		structFields:   make(map[string]any),
 		QuitWithCancel: false,
+	}
+
+	if customSettings != nil {
+		newModel.Settings = *customSettings
+	} else {
+		newModel.Settings.Init()
 	}
 
 	for i := 0; i < t.NumField(); i++ {
@@ -185,7 +212,7 @@ func (m TModelStructMenu) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// toggle edit mode on field if 'enter' key was pressed
 		if msg.String() == "enter" {
 			m.isEditingValue = !(m.isEditingValue)
-			if m.tabAfterEntry && !m.isEditingValue {
+			if m.Settings.TabAfterEntry && !m.isEditingValue {
 				m.decrCursor()
 			}
 		} else if msg.Type == tea.KeyBackspace {
@@ -304,8 +331,12 @@ func (m TModelStructMenu) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m TModelStructMenu) View() string {
-	// The header
-	s := "Set values for the following:\n\n"
+	var s string
+	// Add the header, if it exists
+	if m.Settings.Header != "" {
+		s = m.Settings.Header + "\n\n"
+	}
+	s += "\n"
 
 	// for formatting, get longest field name
 	maxFieldName := 0
@@ -322,9 +353,9 @@ func (m TModelStructMenu) View() string {
 		cursor := "  " // no cursor
 		if m.cursor == i {
 			if m.isEditingValue {
-				cursor = ">>"
+				cursor = m.Settings.EditCursorChar
 			} else {
-				cursor = "> "
+				cursor = m.Settings.NavCursorChar
 			}
 		}
 
