@@ -15,13 +15,16 @@ import (
 // primitive struct fields to end users for input,
 // as if they were elements of a menu.
 type TModelStructMenu struct {
-	fields []string // fields which can be edited; populated dynamically
-	cursor int      // which field our cursor is pointing at
-	// tracks state of field editing
-	isEditingValue bool
+	// MENU STATE
+	fields         []string // fields which can be edited; populated dynamically
+	cursor         int      // which field our cursor is pointing at
+	isEditingValue bool     // tracks state of field editing
 	structType     reflect.Type
 	structFields   map[string]any // field values
 	QuitWithCancel bool           // can be used to communicate whether changes ought be saved
+
+	// MENU SETTINGS
+	tabAfterEntry bool // whether or not to jump to the next field after entry
 }
 
 // incrCursor increases the field index the user is focused on
@@ -72,6 +75,7 @@ func InitialTModelStructMenu(structObj any, fieldList []string, asBlacklist bool
 		return TModelStructMenu{}, nil
 	}
 	newModel := TModelStructMenu{
+		tabAfterEntry:  true,
 		isEditingValue: false,
 		structType:     t,
 		structFields:   make(map[string]any),
@@ -181,6 +185,9 @@ func (m TModelStructMenu) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// toggle edit mode on field if 'enter' key was pressed
 		if msg.String() == "enter" {
 			m.isEditingValue = !(m.isEditingValue)
+			if m.tabAfterEntry && !m.isEditingValue {
+				m.decrCursor()
+			}
 		} else if msg.Type == tea.KeyBackspace {
 			switch m.getCursorFieldValue().(type) {
 			case string:
@@ -270,12 +277,12 @@ func (m TModelStructMenu) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.QuitWithCancel = true
 					return m, tea.Quit
 
-				// The "up" and "k" keys move the cursor up
-				case "up", "k":
+				// The "up" and "k" keys move the cursor up, or users may tab backward.
+				case "up", "k", "shift+tab":
 					m.incrCursor()
 
-				// The "down" and "j" keys move the cursor down
-				case "down", "j":
+				// The "down" and "j" keys move the cursor down, or users may tab forward.
+				case "down", "j", "tab":
 					m.decrCursor()
 
 				// Any numeric key sets the value for the item that
