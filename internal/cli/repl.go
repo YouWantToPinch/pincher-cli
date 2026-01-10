@@ -28,7 +28,7 @@ func StartRepl(cliState *State) {
 	fmt.Println("Use 'help' for available commands.")
 	for {
 		fmt.Println("__________________")
-		fmt.Print("REPL > ")
+		fmt.Print("Pincher > ")
 		if !scanner.Scan() {
 			break
 		}
