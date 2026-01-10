@@ -187,8 +187,10 @@ func (m TModelStructMenu) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				switch m.structFields[m.fields[m.cursor]].(type) {
 				case bool:
 					switch msg.String() {
-					case "t", "0":
+					case "t", "1":
 						m.structFields[m.fields[m.cursor]] = true
+					case "f", "0":
+						m.structFields[m.fields[m.cursor]] = false
 					case "right", "left":
 						m.structFields[m.fields[m.cursor]] = !(m.structFields[m.fields[m.cursor]].(bool))
 					default:
@@ -204,7 +206,7 @@ func (m TModelStructMenu) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					case "right", "l":
 						m.structFields[m.fields[m.cursor]] = m.structFields[m.fields[m.cursor]].(int) + 1
 
-					// The "left" and "h" keys increase the value
+					// The "left" and "h" keys decrease the value
 					case "left", "h":
 						m.structFields[m.fields[m.cursor]] = m.structFields[m.fields[m.cursor]].(int) - 1
 
