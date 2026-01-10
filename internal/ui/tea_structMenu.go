@@ -24,6 +24,38 @@ type TModelStructMenu struct {
 	QuitWithCancel bool           // can be used to communicate whether changes ought be saved
 }
 
+// incrCursor increases the field index the user is focused on
+func (m *TModelStructMenu) incrCursor() {
+	if m.cursor > 0 {
+		m.cursor--
+	}
+}
+
+// decrCursor decreases the field index the user is focused on
+func (m *TModelStructMenu) decrCursor() {
+	if m.cursor < len(m.fields)-1 {
+		m.cursor++
+	}
+}
+
+func (m *TModelStructMenu) getFieldValueAtIndex(i int) any {
+	return m.structFields[m.fields[i]]
+}
+
+func (m *TModelStructMenu) setFieldValueAtIndex(i int, value any) {
+	m.structFields[m.fields[i]] = value
+}
+
+// getCursorFieldValue returns the field value under the cursor
+func (m *TModelStructMenu) getCursorFieldValue() any {
+	return m.getFieldValueAtIndex(m.cursor)
+}
+
+// setCursorFieldValue sets the field value under the cursor
+func (m *TModelStructMenu) setCursorFieldValue(value any) {
+	m.setFieldValueAtIndex(m.cursor, value)
+}
+
 func InitialTModelStructMenu(structObj any, fieldList []string, asBlacklist bool) (TModelStructMenu, error) {
 	// if fieldList is empty, all fields are exposed to users; otherwise, it is used as a whitelist.
 	// if bool parameter 'asBlacklist' is 'true', the fieldList is used as a blacklist instead of a whitelist.
@@ -150,20 +182,19 @@ func (m TModelStructMenu) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.String() == "enter" {
 			m.isEditingValue = !(m.isEditingValue)
 		} else if msg.Type == tea.KeyBackspace {
-			switch m.structFields[m.fields[m.cursor]].(type) {
-
+			switch m.getCursorFieldValue().(type) {
 			case string:
-				stringVal := m.structFields[m.fields[m.cursor]].(string)
+				stringVal := m.getCursorFieldValue().(string)
 				if len(stringVal) > 0 {
-					m.structFields[m.fields[m.cursor]] = stringVal[:len(stringVal)-1]
+					m.setCursorFieldValue(stringVal[:len(stringVal)-1])
 				}
 			case int:
-				if m.structFields[m.fields[m.cursor]].(int) != 0 {
+				if val := m.getCursorFieldValue().(int); val != 0 {
 					intSign := 1
-					if m.structFields[m.fields[m.cursor]].(int) < 0 {
+					if val < 0 {
 						intSign = -1
 					}
-					stringVal := strconv.Itoa(m.structFields[m.fields[m.cursor]].(int))
+					stringVal := strconv.Itoa(val)
 					var newVal string
 					if intSign == 1 {
 						newVal = stringVal[:len(stringVal)-1]
@@ -171,59 +202,59 @@ func (m TModelStructMenu) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						newVal = stringVal[1 : len(stringVal)-1]
 					}
 					if len(newVal) == 0 {
-						m.structFields[m.fields[m.cursor]] = 0
+						m.setCursorFieldValue(0)
 					} else {
 						convValue, err := strconv.Atoi(newVal)
 						if err != nil {
 							fmt.Printf("ERROR converting ascii to int: %v\n", err)
 						} else {
-							m.structFields[m.fields[m.cursor]] = (convValue * intSign)
+							m.setCursorFieldValue(convValue * intSign)
 						}
 					}
 				}
 			}
 		} else {
 			if m.isEditingValue {
-				switch m.structFields[m.fields[m.cursor]].(type) {
+				switch m.getCursorFieldValue().(type) {
 				case bool:
 					switch msg.String() {
 					case "t", "1":
-						m.structFields[m.fields[m.cursor]] = true
+						m.setCursorFieldValue(true)
 					case "f", "0":
-						m.structFields[m.fields[m.cursor]] = false
+						m.setCursorFieldValue(false)
 					case "right", "left":
-						m.structFields[m.fields[m.cursor]] = !(m.structFields[m.fields[m.cursor]].(bool))
+						m.setCursorFieldValue(!m.getCursorFieldValue().(bool))
 					default:
-						m.structFields[m.fields[m.cursor]] = false
+						m.setCursorFieldValue(false)
 					}
 
 				case string:
-					m.structFields[m.fields[m.cursor]] = m.structFields[m.fields[m.cursor]].(string) + msg.String()
+					m.setCursorFieldValue(m.getCursorFieldValue().(string) + msg.String())
 				case int:
 					switch msg.String() {
 
 					// The "right" and "l" keys increase the value
 					case "right", "l":
-						m.structFields[m.fields[m.cursor]] = m.structFields[m.fields[m.cursor]].(int) + 1
+						m.setCursorFieldValue(m.getCursorFieldValue().(int) + 1)
 
 					// The "left" and "h" keys decrease the value
 					case "left", "h":
-						m.structFields[m.fields[m.cursor]] = m.structFields[m.fields[m.cursor]].(int) - 1
+						m.setCursorFieldValue(m.getCursorFieldValue().(int) - 1)
 
 					case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9":
-						if m.structFields[m.fields[m.cursor]] == 0 {
+						if m.getCursorFieldValue() == 0 {
 							convValue, err := strconv.Atoi(msg.String())
 							if err != nil {
 								fmt.Printf("ERROR: failed to convert ascii to int: %v\n", err)
 							} else {
-								m.structFields[m.fields[m.cursor]] = convValue
+								m.setCursorFieldValue(convValue)
 							}
 						} else {
-							intValue, err := strconv.Atoi(strconv.Itoa(m.structFields[m.fields[m.cursor]].(int)) + msg.String())
+							intValue, err := strconv.Atoi(strconv.Itoa(m.getCursorFieldValue().(int)) + msg.String())
 							if err != nil {
 								fmt.Printf("ERROR: %v\n", err)
 							}
-							m.structFields[m.fields[m.cursor]] = intValue
+							m.setCursorFieldValue(intValue)
 						}
 					}
 				}
@@ -241,15 +272,11 @@ func (m TModelStructMenu) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 				// The "up" and "k" keys move the cursor up
 				case "up", "k":
-					if m.cursor > 0 {
-						m.cursor--
-					}
+					m.incrCursor()
 
 				// The "down" and "j" keys move the cursor down
 				case "down", "j":
-					if m.cursor < len(m.fields)-1 {
-						m.cursor++
-					}
+					m.decrCursor()
 
 				// Any numeric key sets the value for the item that
 				// the cursor is pointing at.
@@ -258,7 +285,7 @@ func (m TModelStructMenu) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if err != nil {
 						fmt.Printf("ERROR: %v\n", err)
 					}
-					m.structFields[m.fields[m.cursor]] = intValue
+					m.setCursorFieldValue(intValue)
 				}
 			}
 		}
@@ -296,20 +323,17 @@ func (m TModelStructMenu) View() string {
 
 		// Is this choice numerated?
 		var value string // string represenation of field value
-		if _, ok := m.structFields[m.fields[i]]; ok {
-			switch m.structFields[m.fields[i]].(type) {
-			case string:
-				if m.isEditingValue && m.cursor == i {
-					iBeam := "|"
-					value = m.structFields[m.fields[i]].(string) + iBeam
-				} else {
-					value = m.structFields[m.fields[i]].(string)
-				}
-			case bool:
-				value = strconv.FormatBool(m.structFields[m.fields[i]].(bool))
-			case int:
-				value = strconv.Itoa(m.structFields[m.fields[i]].(int))
+		switch m.getFieldValueAtIndex(i).(type) {
+		case string:
+			if m.isEditingValue && m.cursor == i {
+				value = m.getFieldValueAtIndex(i).(string) + "|" // iBeam to indicate edit
+			} else {
+				value = m.getFieldValueAtIndex(i).(string)
 			}
+		case bool:
+			value = strconv.FormatBool(m.getFieldValueAtIndex(i).(bool))
+		case int:
+			value = strconv.Itoa(m.getFieldValueAtIndex(i).(int))
 		}
 
 		// Render the row
