@@ -19,17 +19,35 @@ type MenuSettings struct {
 	Header         string // message to display above the struct menu
 }
 
+type menuField struct {
+	value  any    // value assigned to field
+	name   string // name of the struct field
+	smName string // description pulled from smname tag
+	smDes  string // description pulled from smdes tag
+}
+
+// getFieldName returns a name for the menu field.
+// If an override name was provided via the smname tag
+// (e.g. for human readability or foramtting), that will
+// be returned. Otherwise, the name of the struct field
+// is returned.
+func (f *menuField) getFieldName() string {
+	if f.smName != "" {
+		return f.smName
+	}
+	return f.name
+}
+
 // TModelStructMenu is a bubbletea model that can be used to expose
 // primitive struct fields to end users for input,
 // as if they were elements of a menu.
 type TModelStructMenu struct {
 	// MENU STATE
-	fields         []string // fields which can be edited; populated dynamically
-	cursor         int      // which field our cursor is pointing at
-	isEditingValue bool     // tracks state of field editing
-	structType     reflect.Type
-	structFields   map[string]any // field values
-	QuitWithCancel bool           // can be used to communicate whether changes ought be saved
+	// fields which can be edited; populated dynamically
+	menuFields     []menuField
+	cursor         int  // which field our cursor is pointing at
+	isEditingValue bool // tracks state of field editing
+	QuitWithCancel bool // can be used to communicate whether changes ought be saved
 	Settings       MenuSettings
 }
 
@@ -55,17 +73,21 @@ func (m *TModelStructMenu) incrCursor() {
 
 // decrCursor decreases the field index the user is focused on
 func (m *TModelStructMenu) decrCursor() {
-	if m.cursor < len(m.fields)-1 {
+	if m.cursor < len(m.menuFields)-1 {
 		m.cursor++
 	}
 }
 
+func (m *TModelStructMenu) getFieldAtIndex(i int) *menuField {
+	return &m.menuFields[i]
+}
+
 func (m *TModelStructMenu) getFieldValueAtIndex(i int) any {
-	return m.structFields[m.fields[i]]
+	return m.getFieldAtIndex(i).value
 }
 
 func (m *TModelStructMenu) setFieldValueAtIndex(i int, value any) {
-	m.structFields[m.fields[i]] = value
+	m.menuFields[i].value = value
 }
 
 // getCursorFieldValue returns the field value under the cursor
@@ -98,8 +120,7 @@ func InitialTModelStructMenu(structObj any, fieldList []string, asBlacklist bool
 	}
 	newModel := TModelStructMenu{
 		isEditingValue: false,
-		structType:     t,
-		structFields:   make(map[string]any),
+		menuFields:     []menuField{},
 		QuitWithCancel: false,
 	}
 
@@ -130,20 +151,18 @@ func InitialTModelStructMenu(structObj any, fieldList []string, asBlacklist bool
 			continue
 		}
 
-		if field.Type.Kind() == reflect.String {
-			newModel.fields = append(newModel.fields, field.Name)
-			newModel.structFields[field.Name] = fieldVal.Interface() // ""
-		} else if field.Type.Kind() == reflect.Bool {
-			newModel.fields = append(newModel.fields, field.Name)
-			newModel.structFields[field.Name] = fieldVal.Interface() // false
-		} else if field.Type.Kind() >= reflect.Int && field.Type.Kind() <= reflect.Int64 {
-			newModel.fields = append(newModel.fields, field.Name)
-			newModel.structFields[field.Name] = fieldVal.Interface() // 0
+		if kind := field.Type.Kind(); kind == reflect.String || kind == reflect.Bool || (kind >= reflect.Int && kind <= reflect.Int64) {
+			newField := menuField{}
+			newField.name = field.Name
+			newField.value = fieldVal.Interface()
+			newField.smName = field.Tag.Get("smname")
+			newField.smDes = field.Tag.Get("smdes")
+			newModel.menuFields = append(newModel.menuFields, newField)
 		}
 	}
 
-	if len(newModel.structFields) == 0 {
-		return TModelStructMenu{}, fmt.Errorf("ERROR: No fields to expose to users in struct '%v'", newModel.structType.Name())
+	if len(newModel.menuFields) == 0 {
+		return TModelStructMenu{}, fmt.Errorf("ERROR: No fields to expose to users in struct")
 	}
 
 	return newModel, nil
@@ -156,7 +175,9 @@ func (m TModelStructMenu) ParseStruct(obj any) error {
 	}
 	v = v.Elem()
 
-	for fieldName, newValue := range m.structFields {
+	for _, menuField := range m.menuFields {
+		fieldName := menuField.name
+		newValue := menuField.value
 		field := v.FieldByName(fieldName)
 
 		if !field.IsValid() {
@@ -340,14 +361,26 @@ func (m TModelStructMenu) View() string {
 
 	// for formatting, get longest field name
 	maxFieldName := 0
-	for _, field := range m.fields {
-		if len(field) > maxFieldName {
-			maxFieldName = len(field)
+	for _, field := range m.menuFields {
+		if fieldName := field.getFieldName(); len(fieldName) > maxFieldName {
+			maxFieldName = len(fieldName)
+		}
+	}
+
+	// for formatting, get longest cursor string and build
+	// the empty version of the cursor based on its length
+	cursorEmpty := ""
+	for _, cursor := range []string{m.Settings.NavCursorChar, m.Settings.EditCursorChar} {
+		if len(cursor) > len(cursorEmpty) {
+			cursorEmpty = ""
+			for range cursor {
+				cursorEmpty += " "
+			}
 		}
 	}
 
 	// Iterate over our fields
-	for i, choice := range m.fields {
+	for i, choice := range m.menuFields {
 
 		// Is the cursor pointing at this choice?
 		cursor := "  " // no cursor
@@ -375,10 +408,16 @@ func (m TModelStructMenu) View() string {
 		}
 
 		// Render the row
-		s += fmt.Sprintf("%s ⟦ %-*s ⟧: %s\n", cursor, maxFieldName, choice, value)
+		s += fmt.Sprintf("%s ⟦ %-*s ⟧: %s\n", cursor, maxFieldName, choice.getFieldName(), value)
 	}
 
 	// The footer
+	s += "\n"
+	if smDes := m.getFieldAtIndex(m.cursor).smDes; smDes != "" {
+		s += smDes
+	}
+	s += "\n"
+
 	s += "\nPress s to save and quit.\nPress q to quit without saving.\n"
 
 	// Send the UI for rendering
