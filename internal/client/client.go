@@ -42,18 +42,12 @@ func (c *Client) API() string {
 }
 
 func NewClient(timeout, cacheInterval time.Duration, baseURL string) Client {
-	var url string
-	if baseURL == "" {
-		url = defaultBaseURL
-	} else {
-		url = baseURL
-	}
 	return Client{
 		cache: *NewCache(cacheInterval),
 		Client: http.Client{
 			Timeout: timeout,
 		},
-		BaseURL: url,
+		BaseURL: baseURL,
 	}
 }
 

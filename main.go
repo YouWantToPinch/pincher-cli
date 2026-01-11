@@ -19,21 +19,34 @@ func Quit(logger *cli.Logger) {
 }
 
 func main() {
+	var err error
+
 	done := make(chan bool)
 
 	cliState := &cli.State{DoneChan: &done}
-	cfg, err := config.ReadFromFile()
-	if err != nil {
-		fmt.Printf("CONFIG ERROR: %s (does a config file exist?)\n", err)
-	}
-	cliState.Config = cfg
 
+	// LOG SETUP
 	cliState.Logger = &cli.Logger{}
 	err = cliState.Logger.New(slog.LevelInfo)
 	if err != nil {
 		fmt.Printf("LOGGER ERROR: %s\n", err)
 	}
 	defer Quit(cliState.Logger)
+
+	// CONFIG SETUP
+	var cfg *config.Config
+	for cfg == nil {
+		cfg, err = config.ReadFromFile()
+		if err != nil {
+			cfg = &config.Config{}
+			err = cfg.NewConfigFile(defaultBaseURL)
+			if err != nil {
+				panic("could not load nor create config")
+			}
+			slog.Info("New config file created.")
+		}
+	}
+	cliState.Config = cfg
 
 	client := client.NewClient(time.Second*10, time.Minute*5, cliState.Config.BaseURL)
 	cliState.Client = &client
