@@ -388,6 +388,56 @@ func makeResourceCommandHandlers() []*cmdHandler {
 				},
 			},
 		},
+		{
+			cmdElement: cmdElement{
+				name:        "payee",
+				arguments:   []string{"action"},
+				description: "Manage payees under budget in view",
+				priority:    240,
+			},
+			nonRegMsg: "first view a budget to see its payees",
+			callback:  mdAct(handlerPayee),
+			actions: []cmdElement{
+				{
+					name:        "add",
+					description: "Add a new payee to budget",
+					arguments:   []string{"name"},
+					options: []cmdElement{
+						{
+							name:        "notes",
+							description: "give the new payee some notes",
+							arguments:   []string{"notes_value"},
+						},
+					},
+				},
+				{
+					name:        "update",
+					description: "update information on a payee by name",
+					arguments:   []string{"name"},
+					options: []cmdElement{
+						{
+							name:        "name",
+							description: "rewrite payee name",
+							arguments:   []string{"new_name"},
+						},
+						{
+							name:        "notes",
+							description: "rewrite payee notes",
+							arguments:   []string{"new_notes"},
+						},
+					},
+				},
+				{
+					name:        "list",
+					description: "see a list of all payees belonging to budget",
+				},
+				{
+					name:        "delete",
+					description: "Delete a payee",
+					arguments:   []string{"payee_name"},
+				},
+			},
+		},
 	}
 
 	return handlers

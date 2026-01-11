@@ -41,3 +41,12 @@ func findCategoryByName(name string, categories []client.Category) (*client.Cate
 	}
 	return nil, fmt.Errorf("no categories found with provided name")
 }
+
+func findPayeeByName(name string, payees []client.Payee) (*client.Payee, error) {
+	for i := range len(payees) {
+		if name == payees[i].Name {
+			return &payees[i], nil
+		}
+	}
+	return nil, fmt.Errorf("no payees found with provided name")
+}
