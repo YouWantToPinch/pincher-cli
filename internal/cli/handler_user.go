@@ -55,9 +55,7 @@ func handleUserLogin(s *State, c *handlerContext) error {
 		return err
 	}
 
-	s.Session.User = user
-	s.Session.OnLogin()
-	fmt.Printf("Logged in as user: %s\n", s.Session.Username)
+	s.Session.OnLogin(user)
 
 	c.args.trackOptArgs(&c.cmd, "view-budget")
 	budgetToView, _ := c.args.pfx()

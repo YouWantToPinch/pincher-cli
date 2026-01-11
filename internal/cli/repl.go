@@ -15,16 +15,21 @@ func StartRepl(cliState *State) {
 
 	cliState.NewSession()
 
-	// simulate login if session was saved
-	if cliState.Config.StayLoggedIn && cliState.Client.RefreshToken != "" {
-		cliState.Session.OnLogin()
-	}
-
 	commandQueue := make(chan string, 32)
 	cliState.CmdQueue = commandQueue
 
+	// simulate login if session was saved
+	if cliState.Config.StayLoggedIn && cliState.Client.RefreshToken != "" {
+		user, err := cliState.Client.GetAccessTokenWithUser()
+		if err != nil {
+			cliState.Client.RefreshToken = ""
+			cliState.Session.OnLogout()
+		}
+		cliState.Session.OnLogin(user)
+	}
+
 	scanner := bufio.NewScanner(os.Stdin)
-	fmt.Println("Welcome to the REPL CLI!")
+	fmt.Println("Welcome to the Pincher CLI!")
 	fmt.Println("Use 'help' for available commands.")
 	for {
 		fmt.Println("__________________")

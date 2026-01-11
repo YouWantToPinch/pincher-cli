@@ -6,7 +6,33 @@ import (
 	"net/http"
 )
 
-func (c *Client) GetAccessToken() (success bool, err error) {
+func (c *Client) GetAccessTokenWithUser() (user User, err error) {
+	url := c.API() + "/refresh" + "?=with-user"
+
+	type rspSchema struct {
+		User
+		NewAccessToken string `json:"token"`
+	}
+
+	var rspPayload rspSchema
+	resp, err := c.Post(url, c.RefreshToken, nil, &rspPayload)
+	if err != nil {
+		return User{}, err
+	}
+	switch resp.StatusCode {
+	case http.StatusOK:
+		c.token = rspPayload.NewAccessToken
+		return rspPayload.User, nil
+	case http.StatusBadRequest:
+		fallthrough
+	case http.StatusUnauthorized:
+		fallthrough
+	default:
+		return User{}, fmt.Errorf("could not get new access token")
+	}
+}
+
+func (c *Client) GetAccessToken() error {
 	url := c.API() + "/refresh"
 
 	type rspSchema struct {
@@ -16,18 +42,18 @@ func (c *Client) GetAccessToken() (success bool, err error) {
 	var token rspSchema
 	resp, err := c.Post(url, c.RefreshToken, nil, &token)
 	if err != nil {
-		return false, err
+		return err
 	}
 	switch resp.StatusCode {
 	case http.StatusOK:
 		c.token = token.NewAccessToken
-		return true, nil
+		return nil
 	case http.StatusBadRequest:
 		fallthrough
 	case http.StatusUnauthorized:
 		fallthrough
 	default:
-		return false, fmt.Errorf("could not get new access token")
+		return fmt.Errorf("could not get new access token")
 	}
 }
 

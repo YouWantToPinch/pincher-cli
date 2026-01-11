@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"fmt"
+
 	"github.com/YouWantToPinch/pincher-cli/internal/client"
 	"github.com/YouWantToPinch/pincher-cli/internal/config"
 )
@@ -27,9 +29,11 @@ func (s *cliSession) Init() {
 	s.CommandRegistry.batchRegistration(makeBaseCommandHandlers(), Registered)
 }
 
-func (s *cliSession) OnLogin() {
+func (s *cliSession) OnLogin(user client.User) {
 	// register commands that require login
 	s.CommandRegistry.register("budget")
+	s.User = user
+	fmt.Printf("Logged in as user: %s\n", s.Username)
 }
 
 func (s *cliSession) OnViewBudget() {

@@ -183,9 +183,9 @@ func (c *Client) doRequest(method, url, token string, payload, out any) (*http.R
 
 			// Try to get a new access token if it is invalid or we got an error.
 			// If that's not possible, log out the user, as their session must therefore be invalid.
-			success, err := c.GetAccessToken()
-			if !success || err != nil {
-				// an error return here means we've been logged out
+			err := c.GetAccessToken()
+			if err != nil {
+				// an error return here means the refrsh token was invalid
 				return nil, err
 			}
 			// update this loop with the new access token
