@@ -252,9 +252,8 @@ func makeResourceCommandHandlers() []*cmdHandler {
 					description: "see a list of all accounts belonging to budget",
 					options: []cmdElement{
 						{
-							name:         "include",
-							description:  "Include accounts usually excluded with qualities like: 'deleted'",
-							arguments:    []string{"quality"},
+							name:         "deleted",
+							description:  "view only soft-deleted accounts",
 							useShorthand: true,
 						},
 					},

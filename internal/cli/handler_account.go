@@ -3,7 +3,6 @@ package cli
 import (
 	"fmt"
 	"sort"
-	"strings"
 
 	"github.com/YouWantToPinch/pincher-cli/internal/client"
 )
@@ -56,21 +55,15 @@ func handleAccountAdd(s *State, c *handlerContext) error {
 }
 
 func handleAccountList(s *State, c *handlerContext) error {
-	c.args.trackOptArgs(&c.cmd, "include")
-	includeQuery, _ := c.args.pfx()
+	c.args.trackOptArgs(&c.cmd, "deleted")
+	listDeleted, _ := c.args.pfx()
 
-	qualities := cleanInput(includeQuery)
-	if len(qualities) > 0 {
-		includeQuery = "?include="
-		for i, quality := range qualities {
-			includeQuery += strings.ToLower(quality)
-			if i < len(qualities)-1 {
-				includeQuery += "&"
-			}
-		}
+	listDeletedQuery := ""
+	if listDeleted == "SET" {
+		listDeletedQuery = "?deleted"
 	}
 
-	accounts, err := s.Client.GetAccounts(includeQuery)
+	accounts, err := s.Client.GetAccounts(listDeletedQuery)
 	if err != nil {
 		return err
 	}
