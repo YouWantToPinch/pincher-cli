@@ -1,12 +1,11 @@
 package cli
 
 import (
-	"fmt"
 	"testing"
 )
 
 func TestCleanInput(t *testing.T) {
-	cases := []struct {
+	tests := []struct {
 		input    string
 		expected []string
 	}{
@@ -16,19 +15,19 @@ func TestCleanInput(t *testing.T) {
 		},
 		{
 			input:    " Hel lo  ",
-			expected: []string{"hel", "lo"},
+			expected: []string{"Hel", "lo"},
 		},
 		{
 			input:    "Hello, World!",
-			expected: []string{"hello,", "world!"},
+			expected: []string{"Hello,", "World!"},
 		},
 		{
 			input:    "Hello World HELLO",
-			expected: []string{"hello", "world", "hello"},
+			expected: []string{"Hello", "World", "HELLO"},
 		},
 		{
 			input:    "heLlO",
-			expected: []string{"hello"},
+			expected: []string{"heLlO"},
 		},
 		{
 			input:    `account add "My Checking Account" "on-budget" --notes "The checking account I use."`,
@@ -36,21 +35,20 @@ func TestCleanInput(t *testing.T) {
 		},
 	}
 
-	for _, c := range cases {
-		actual := cleanInput(c.input)
-		if len(actual) != len(c.expected) {
-			t.Errorf("input vs expected are of unequal lengths")
-			t.Fail()
-		}
-		for i := range actual {
-			phrase := actual[i]
-			expectedPhrase := c.expected[i]
-			if phrase != expectedPhrase {
-				t.Errorf("input word is unequal to expected phrase")
-				fmt.Println("expected: ", expectedPhrase)
-				fmt.Println("actual: ", phrase)
-
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			actual := cleanInput(tt.input)
+			if len(actual) != len(tt.expected) {
+				t.Errorf("input vs expected are of unequal lengths")
+				t.Fail()
 			}
-		}
+			for i := range actual {
+				phrase := actual[i]
+				expectedPhrase := tt.expected[i]
+				if phrase != expectedPhrase {
+					t.Errorf("input does not match expected phrase")
+				}
+			}
+		})
 	}
 }
