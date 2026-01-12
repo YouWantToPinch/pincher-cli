@@ -120,6 +120,6 @@ func parseCurrencyFromString(s string, currencyISO string) (CurrencyUnit, error)
 	default:
 		return 0, fmt.Errorf("decimal separator found more than once")
 	}
-	total := CurrencyUnit(negateMult)*(CurrencyUnit(dollars)*CurrencyUnit(currency.DecimalFactor)) + cents
+	total := ((CurrencyUnit(dollars) * CurrencyUnit(currency.DecimalFactor)) + cents) * CurrencyUnit(negateMult)
 	return total, nil
 }
