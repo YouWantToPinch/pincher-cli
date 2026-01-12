@@ -65,6 +65,12 @@ func parseCurrencyFromString(s string, currencyISO string) (CurrencyUnit, error)
 		return 0, fmt.Errorf("no content to parse from input")
 	}
 
+	negateMult := 1
+	if strings.HasPrefix(s, "-") {
+		negateMult = -1
+		s = strings.TrimLeft(s, "-")
+	}
+
 	var dollars int64
 	var cents CurrencyUnit
 	pair := strings.Split(s, string(currency.DecimalSeparator))
@@ -114,6 +120,6 @@ func parseCurrencyFromString(s string, currencyISO string) (CurrencyUnit, error)
 	default:
 		return 0, fmt.Errorf("decimal separator found more than once")
 	}
-	total := (CurrencyUnit(dollars) * CurrencyUnit(currency.DecimalFactor)) + cents
+	total := CurrencyUnit(negateMult)*(CurrencyUnit(dollars)*CurrencyUnit(currency.DecimalFactor)) + cents
 	return total, nil
 }
