@@ -20,6 +20,7 @@ type command struct {
 func (c *command) parse(handler *cmdHandler, input string) error {
 	cmdFields := cleanInput(input)
 	c.name = cmdFields[0]
+	optionsToParse := handler.options
 	var parsingOption *cmdElement
 	optArgCountNeeded := 0
 	var actionElement *cmdElement
@@ -35,39 +36,50 @@ func (c *command) parse(handler *cmdHandler, input string) error {
 			}
 		} else {
 			// have we encountered a potential option?
-			isOption := strings.HasPrefix(cmdFields[i], "--") ||
-				(strings.HasPrefix(cmdFields[i], "-") && len(cmdFields[i]) == 2 && !strings.Contains("0123456789", string(cmdFields[i][1])))
-			if isOption {
-				// find out if the handler takes this option
-				userOpt := strings.TrimLeft(cmdFields[i], "-")
-				foundMatch := false
-				for _, opt := range handler.options {
-					foundMatch = (opt.name == userOpt || ((opt.letter() == userOpt) && opt.useShorthand))
-					if foundMatch {
-						c.opts[opt.name] = []string{}
-						if opt.argCount() > 0 {
-							parsingOption = &opt
-							optArgCountNeeded = opt.argCount()
-						} else {
-							// if the option is valid, but takes no arguments, it must be a flag
-							c.opts[opt.name] = append(c.opts[opt.name], "SET")
+			if strings.HasPrefix(cmdFields[i], "--") ||
+				(strings.HasPrefix(cmdFields[i], "-") && len(cmdFields[i]) == 2 && !strings.Contains("0123456789", string(cmdFields[i][1]))) {
+				canTakeOpt := func() bool {
+					if actionElement != nil {
+						return len(c.args) >= len(handler.arguments)+len(actionElement.arguments)
+					}
+					return len(c.args) == len(handler.arguments)
+				}
+				// can we take an option right now?
+				if canTakeOpt() {
+					// find out if the handler takes this option
+					userOpt := strings.TrimLeft(cmdFields[i], "-")
+					foundMatch := false
+					for _, opt := range optionsToParse {
+						foundMatch = (opt.name == userOpt || ((opt.letter() == userOpt) && opt.useShorthand))
+						if foundMatch {
+							c.opts[opt.name] = []string{}
+							if opt.argCount() > 0 {
+								parsingOption = &opt
+								optArgCountNeeded = opt.argCount()
+							} else {
+								// if the option is valid, but takes no arguments, it must be a flag
+								c.opts[opt.name] = append(c.opts[opt.name], "SET")
+							}
+							break
 						}
-						break
+					}
+					// return error if this option is not taken by the handler
+					if !foundMatch {
+						optType := "command"
+						if actionElement != nil {
+							optType = "action"
+						}
+						return fmt.Errorf("input command includes unexpected %s option '%s'", optType, cmdFields[i])
 					}
 				}
-				// return error if this option is not taken by the handler
-				if !foundMatch {
-					return fmt.Errorf("command includes unexpected option '%s'", cmdFields[i])
-				}
-			} else {
-				// not parsing an option; include in command argument stack
-				c.args = append(c.args, cmdFields[i])
-				// check whether or not we are past the point of parsing command options,
-				// and onto the opportunity of parsing action options
-				if el, found := findCMDElementWithName(handler.actions, cmdFields[i]); found {
-					actionElement = el
-					handler.options = el.options
-				}
+			}
+			// not parsing an option; include in command argument stack
+			c.args = append(c.args, cmdFields[i])
+			// check whether or not we are past the point of parsing command options,
+			// and onto the opportunity of parsing action options
+			if el, found := findCMDElementWithName(handler.actions, cmdFields[i]); found {
+				actionElement = el
+				optionsToParse = el.options
 			}
 		}
 	}
