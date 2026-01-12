@@ -73,6 +73,31 @@ func Test_ParseCurrencyFromString(t *testing.T) {
 			expected: -20000,
 		},
 		{
+			input:    "-20",
+			isoCode:  "USD",
+			expected: -2000,
+		},
+		{
+			input:    "-5.27",
+			isoCode:  "USD",
+			expected: -527,
+		},
+		{
+			input:    ".27",
+			isoCode:  "USD",
+			expected: 27,
+		},
+		{
+			input:    "0.27",
+			isoCode:  "USD",
+			expected: 27,
+		},
+		{
+			input:    "5",
+			isoCode:  "USD",
+			expected: 500,
+		},
+		{
 			input:    "200,00",
 			isoCode:  "EUR",
 			expected: 20000,
