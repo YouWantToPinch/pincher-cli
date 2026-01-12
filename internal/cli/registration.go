@@ -435,6 +435,110 @@ func makeResourceCommandHandlers() []*cmdHandler {
 					name:        "delete",
 					description: "Delete a payee",
 					arguments:   []string{"payee_name"},
+					options: []cmdElement{
+						{
+							name:         "replacement",
+							description:  "name of a payee to replace payee to delete for where it is still in use",
+							arguments:    []string{"new_payee_name"},
+							useShorthand: true,
+						},
+					},
+				},
+			},
+		},
+		{
+			cmdElement: cmdElement{
+				name:        "txn",
+				arguments:   []string{"action"},
+				description: "Manage category groups under budget in view",
+				priority:    230,
+			},
+			nonRegMsg: "first view a budget to manage transactions within its accounts",
+			callback:  mdAct(handlerTxn),
+			actions: []cmdElement{
+				{
+					name:        "list",
+					description: "see a list of transactions",
+					options: []cmdElement{
+						{
+							name:         "account",
+							description:  "filter by account",
+							arguments:    []string{"account_name"},
+							useShorthand: true,
+						},
+						{
+							name:         "payee",
+							description:  "filter by payee",
+							arguments:    []string{"payee_name"},
+							useShorthand: true,
+						},
+						{
+							name:         "category",
+							description:  "filter by category",
+							arguments:    []string{"category=category_name"},
+							useShorthand: true,
+						},
+						{
+							name:         "dates",
+							description:  "filter by time frame",
+							arguments:    []string{"start_date", "end_date"},
+							useShorthand: true,
+						},
+					},
+				},
+				{
+					name:        "log",
+					description: "log a deposit or withdrawal transaction to the budget in view.",
+					arguments:   []string{"account", "payee", "amount", "category"},
+					options: []cmdElement{
+						{
+							name:         "date",
+							description:  "specify a date date for this transaction (defaults to present day)",
+							arguments:    []string{"date"},
+							useShorthand: true,
+						},
+						{
+							name:         "notes",
+							description:  "give the transaction some notes",
+							arguments:    []string{"new_notes"},
+							useShorthand: true,
+						},
+						{
+							name:         "cleared",
+							description:  "whether or not to represent this transaction as complete (false by default)",
+							useShorthand: true,
+						},
+						{
+							name:         "split",
+							description:  "split this transaction into 2+ categories(writing 'split' for the main category argument). Let their amounts total passed to the amount argument.",
+							arguments:    []string{"category=amount,..."},
+							useShorthand: true,
+						},
+					},
+				},
+				{
+					name:        "transfer",
+					description: "log a transfer transaction between two accounts within the budget in view",
+					arguments:   []string{"from_account", "to_account", "amount"},
+					options: []cmdElement{
+						{
+							name:         "date",
+							description:  "specify a date date for this transfer (defaults to present day)",
+							arguments:    []string{"date"},
+							useShorthand: true,
+						},
+						{
+							name:         "notes",
+							description:  "give the transfer some notes",
+							arguments:    []string{"notes_value"},
+							useShorthand: true,
+						},
+						{
+							name:         "cleared",
+							description:  "whether or not to represent this transfer as complete (false by default)",
+							useShorthand: true,
+						},
+					},
 				},
 			},
 		},

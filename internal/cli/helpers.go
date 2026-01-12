@@ -52,3 +52,10 @@ func findCMDElementWithName(elements []cmdElement, name string) (*cmdElement, bo
 	}
 	return nil, false
 }
+
+func firstNChars(s string, n int) string {
+	if len(s) > n {
+		return s[:n]
+	}
+	return s
+}
