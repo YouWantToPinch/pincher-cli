@@ -39,10 +39,10 @@ func (c *Client) GetGroups(urlQuery string) ([]Group, error) {
 	}
 
 	var groups groupContainer
-	resp, err := c.Get(url, c.token, &groups)
+	resp, cached, err := c.Get(url, c.token, &groups)
 	if err != nil {
 		return nil, err
-	} else if resp == nil {
+	} else if cached {
 		return groups.Groups, nil
 	}
 

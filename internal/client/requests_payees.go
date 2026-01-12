@@ -39,10 +39,10 @@ func (c *Client) GetPayees(urlQuery string) ([]Payee, error) {
 	}
 
 	var payees payeeContainer
-	resp, err := c.Get(url, c.token, &payees)
+	resp, cached, err := c.Get(url, c.token, &payees)
 	if err != nil {
 		return nil, err
-	} else if resp == nil {
+	} else if cached {
 		return payees.Payees, nil
 	}
 

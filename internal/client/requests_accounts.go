@@ -41,10 +41,10 @@ func (c *Client) GetAccounts(urlQuery string) ([]Account, error) {
 	}
 
 	var accounts accountContainer
-	resp, err := c.Get(url, c.token, &accounts)
+	resp, cached, err := c.Get(url, c.token, &accounts)
 	if err != nil {
 		return nil, err
-	} else if resp == nil {
+	} else if cached {
 		return accounts.Accounts, nil
 	}
 

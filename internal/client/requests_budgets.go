@@ -34,10 +34,10 @@ func (c *Client) GetBudgets(urlQuery string) ([]Budget, error) {
 	}
 
 	var budgets budgetContainer
-	resp, err := c.Get(url, c.token, &budgets)
+	resp, cached, err := c.Get(url, c.token, &budgets)
 	if err != nil {
 		return nil, err
-	} else if resp == nil {
+	} else if cached {
 		return budgets.Budgets, nil
 	}
 

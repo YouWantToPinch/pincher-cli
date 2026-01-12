@@ -41,10 +41,10 @@ func (c *Client) GetCategories(urlQuery string) ([]Category, error) {
 	}
 
 	var categories categoryContainer
-	resp, err := c.Get(url, c.token, &categories)
+	resp, cached, err := c.Get(url, c.token, &categories)
 	if err != nil {
 		return nil, err
-	} else if resp == nil {
+	} else if cached {
 		return categories.Categories, nil
 	}
 

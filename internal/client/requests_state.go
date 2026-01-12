@@ -8,7 +8,7 @@ import (
 func (c *Client) GetServerReady() (bool, error) {
 	url := c.API() + "/healthz"
 
-	resp, err := c.Get(url, "", nil)
+	resp, _, err := c.Get(url, "", nil)
 	if err != nil {
 		return false, err
 	}

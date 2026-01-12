@@ -96,14 +96,15 @@ func (c *Client) MakeRequest(method, path, token string, body any) (*http.Reques
 }
 
 // Get wrapper for doRequest
-func (c *Client) Get(url, token string, out any) (*http.Response, error) {
+func (c *Client) Get(url, token string, out any) (response *http.Response, respFromCache bool, err error) {
 	if val, ok := c.cache.Get(url); ok {
 		slog.Info("retrieving requested data from cache", slog.String("URL", url))
 		err := json.Unmarshal(val, out)
 		if err != nil {
-			return nil, err
+			slog.Error("attempted to pull request from cached data, but failed: " + err.Error())
+		} else {
+			return nil, true, nil
 		}
-		return nil, nil
 	}
 
 	resp, err := c.doRequest(http.MethodGet, url, token, nil, out)
@@ -116,7 +117,7 @@ func (c *Client) Get(url, token string, out any) (*http.Response, error) {
 		}
 	}
 
-	return resp, err
+	return resp, false, err
 }
 
 // Post wrapper for doRequest
