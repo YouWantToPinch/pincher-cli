@@ -37,6 +37,12 @@ func Test_Format(t *testing.T) {
 			useSymbol: false,
 			expected:  "420.69",
 		},
+		{
+			input:     -2000 + -527,
+			isoCode:   "USD",
+			useSymbol: false,
+			expected:  "-25.27",
+		},
 	}
 
 	for _, tt := range tests {
@@ -60,6 +66,11 @@ func Test_ParseCurrencyFromString(t *testing.T) {
 			input:    "200.00",
 			isoCode:  "USD",
 			expected: 20000,
+		},
+		{
+			input:    "-200.00",
+			isoCode:  "USD",
+			expected: -20000,
 		},
 		{
 			input:    "200,00",
@@ -102,7 +113,7 @@ func Test_ParseCurrencyFromString(t *testing.T) {
 		t.Run(fmt.Sprintf("%s: %s", tt.isoCode, tt.input), func(t *testing.T) {
 			amount, err := parseCurrencyFromString(tt.input, tt.isoCode)
 			if tt.wantErr != (err != nil) {
-				t.Fatalf("expected error: %v, but got: %v", tt.wantErr, (err != nil))
+				t.Fatalf("expected error: %v, but got: %v, with err value: %v", tt.wantErr, (err != nil), err)
 			}
 			if amount != tt.expected {
 				t.Fatalf("expected value %d, but got value: %d", tt.expected, amount)
