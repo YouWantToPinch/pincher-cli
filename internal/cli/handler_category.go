@@ -34,20 +34,8 @@ func handleCategoryAdd(s *State, c *handlerContext) error {
 
 	c.args.trackOptArgs(&c.cmd, "group")
 	groupName, _ := c.args.pfx()
-	assignGroupID := ""
-	if groupName != "" {
-		groups, err := s.Client.GetGroups("")
-		if err != nil {
-			return err
-		}
-		group, err := findGroupByName(groupName, groups)
-		if err != nil {
-			return err
-		}
-		assignGroupID = group.ID.String()
-	}
 
-	categoryCreated, err := s.Client.CreateCategory(name, notes, assignGroupID)
+	categoryCreated, err := s.Client.CreateCategory(name, notes, groupName)
 	if err != nil {
 		return err
 	}
@@ -64,20 +52,9 @@ func handleCategoryList(s *State, c *handlerContext) error {
 	groupQuery := ""
 	c.args.trackOptArgs(&c.cmd, "group")
 	groupName, _ := c.args.pfx()
-	searchGroupID := ""
 	if groupName != "" {
-		groups, err := s.Client.GetGroups("")
-		if err != nil {
-			return err
-		}
-		group, err := findGroupByName(groupName, groups)
-		if err != nil {
-			return err
-		}
-		searchGroupID = group.ID.String()
-		groupQuery += "?group_id="
+		groupQuery = "?group_name=" + groupName
 	}
-	groupQuery += searchGroupID
 
 	categories, err := s.Client.GetCategories(groupQuery)
 	if err != nil {

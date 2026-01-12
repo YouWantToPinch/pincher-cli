@@ -5,10 +5,10 @@ import (
 	"net/http"
 )
 
-func (c *Client) CreateCategory(name, notes, groupID string) (success bool, error error) {
+func (c *Client) CreateCategory(name, notes, groupName string) (success bool, error error) {
 	type rqSchema struct {
 		Meta
-		GroupID string `json:"group_id"`
+		GroupName string `json:"group_name"`
 	}
 
 	url := c.API() + "/budgets/" + c.ViewedBudget.ID.String() + "/categories"
@@ -17,7 +17,7 @@ func (c *Client) CreateCategory(name, notes, groupID string) (success bool, erro
 			Name:  name,
 			Notes: notes,
 		},
-		GroupID: groupID,
+		GroupName: groupName,
 	}
 
 	resp, err := c.Post(url, c.token, payload, nil)
