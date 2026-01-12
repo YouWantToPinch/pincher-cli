@@ -25,6 +25,17 @@ func (c *command) parse(handler *cmdHandler, input string) error {
 	optArgCountNeeded := 0
 	var actionElement *cmdElement
 
+	allArgsSatisfied := func() bool {
+		if actionElement != nil {
+			return len(c.args) == len(handler.arguments)+len(actionElement.arguments)
+		}
+		return false
+	}
+
+	canTakeOpt := func() bool {
+		return allArgsSatisfied() || len(c.args) == len(handler.arguments)
+	}
+
 	for i := 1; i < len(cmdFields); i++ {
 		// are we parsing an option?
 		if parsingOption != nil {
@@ -38,12 +49,6 @@ func (c *command) parse(handler *cmdHandler, input string) error {
 			// have we encountered a potential option?
 			if strings.HasPrefix(cmdFields[i], "--") ||
 				(strings.HasPrefix(cmdFields[i], "-") && len(cmdFields[i]) == 2 && !strings.Contains("0123456789", string(cmdFields[i][1]))) {
-				canTakeOpt := func() bool {
-					if actionElement != nil {
-						return len(c.args) >= len(handler.arguments)+len(actionElement.arguments)
-					}
-					return len(c.args) == len(handler.arguments)
-				}
 				// can we take an option right now?
 				if canTakeOpt() {
 					// find out if the handler takes this option
@@ -72,6 +77,8 @@ func (c *command) parse(handler *cmdHandler, input string) error {
 						return fmt.Errorf("input command includes unexpected %s option '%s'", optType, cmdFields[i])
 					}
 				}
+			} else if allArgsSatisfied() {
+				return fmt.Errorf("input command includes unexpected argument '%s'", cmdFields[i])
 			}
 			// not parsing an option; include in command argument stack
 			c.args = append(c.args, cmdFields[i])
