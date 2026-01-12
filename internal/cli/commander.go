@@ -25,15 +25,15 @@ func (c *command) parse(handler *cmdHandler, input string) error {
 	optArgCountNeeded := 0
 	var actionElement *cmdElement
 
-	allArgsSatisfied := func() bool {
+	allParamsSatisfied := func() bool {
 		if actionElement != nil {
-			return len(c.args) == len(handler.arguments)+len(actionElement.arguments)
+			return len(c.args) == handler.argCount()+actionElement.argCount()
 		}
 		return false
 	}
 
 	canTakeOpt := func() bool {
-		return allArgsSatisfied() || len(c.args) == len(handler.arguments)
+		return allParamsSatisfied() || len(c.args) == handler.argCount()
 	}
 
 	for i := 1; i < len(cmdFields); i++ {
@@ -77,7 +77,7 @@ func (c *command) parse(handler *cmdHandler, input string) error {
 						return fmt.Errorf("input command includes unexpected %s option '%s'", optType, cmdFields[i])
 					}
 				}
-			} else if allArgsSatisfied() {
+			} else if allParamsSatisfied() {
 				return fmt.Errorf("input command includes unexpected argument '%s'", cmdFields[i])
 			}
 			// not parsing an option; include in command argument stack
@@ -90,14 +90,13 @@ func (c *command) parse(handler *cmdHandler, input string) error {
 			}
 		}
 	}
-	//
 	if optArgCountNeeded > 0 {
-		return fmt.Errorf("command could not be parsed; missing positional argument(s) for option [%s]: <%s>", parsingOption.name, parsingOption.arguments[len(c.opts[parsingOption.name])])
+		return fmt.Errorf("command could not be parsed; missing positional argument(s) for option [%s]: <%s>", parsingOption.name, parsingOption.parameters[len(c.opts[parsingOption.name])])
 	}
 	// if a command action was specified...
 	if actionElement != nil {
-		// check that the user has included all necessary arguments
-		expectedArgs := append(handler.arguments, actionElement.arguments...)
+		// check that the user has satisfied all parameters with arguments
+		expectedArgs := append(handler.parameters, actionElement.parameters...)
 		if len(c.args) < len(expectedArgs) {
 			return fmt.Errorf("command could not be parsed; missing positional argument: <%s>", expectedArgs[len(c.args)])
 		}
@@ -120,8 +119,8 @@ type cmdElement struct {
 	// Priority refers to an element's relevance to output.
 	// The lower the value, the higher the priority.
 	priority int
-	// A slice of arguments, in order, expected by this cmdElement.
-	arguments []string
+	// A slice of expected arguments, in order, expected by this cmdElement.
+	parameters []string
 	// Options that this cmdElement accepts.
 	// Should go UNUSED in cases where cmdElement IS an option, for obvious reasons.
 	options []cmdElement
@@ -131,7 +130,7 @@ type cmdElement struct {
 
 func (e *cmdElement) usage(withOptions bool) string {
 	usage := e.name
-	for _, arg := range e.arguments {
+	for _, arg := range e.parameters {
 		usage += " <" + arg + ">"
 	}
 	if len(e.options) > 0 {
@@ -150,7 +149,7 @@ func (e *cmdElement) usage(withOptions bool) string {
 }
 
 func (e *cmdElement) argCount() int {
-	return len(e.arguments)
+	return len(e.parameters)
 }
 
 func (e *cmdElement) letter() string {

@@ -16,7 +16,7 @@ func makeBaseCommandHandlers() []*cmdHandler {
 			cmdElement: cmdElement{
 				name:        "help",
 				description: "See usage of another command.",
-				arguments:   []string{"command"},
+				parameters:  []string{"command"},
 				priority:    1,
 				options: []cmdElement{
 					{
@@ -40,7 +40,7 @@ func makeBaseCommandHandlers() []*cmdHandler {
 			cmdElement: cmdElement{
 				name:        "config",
 				description: "Add, Load, or Save a local user configuration for the Pincher-CLI",
-				arguments:   []string{"action"},
+				parameters:  []string{"action"},
 				priority:    10,
 			},
 			actions: []cmdElement{
@@ -67,7 +67,7 @@ func makeBaseCommandHandlers() []*cmdHandler {
 			cmdElement: cmdElement{
 				name:        "user",
 				description: "Create a new user, or log in",
-				arguments:   []string{"action"},
+				parameters:  []string{"action"},
 				priority:    50,
 			},
 			callback: mdAct(handlerUser),
@@ -75,17 +75,17 @@ func makeBaseCommandHandlers() []*cmdHandler {
 				{
 					name:        "add",
 					description: "create a new user",
-					arguments:   []string{"new_username", "new_password", "retype_password"},
+					parameters:  []string{"new_username", "new_password", "retype_password"},
 				},
 				{
 					name:        "login",
 					description: "log in as an existing user",
-					arguments:   []string{"username", "password"},
+					parameters:  []string{"username", "password"},
 					options: []cmdElement{
 						{
 							name:         "view-budget",
 							description:  "specify a budget to view on successful login",
-							arguments:    []string{"budget_name"},
+							parameters:   []string{"budget_name"},
 							useShorthand: true,
 						},
 					},
@@ -93,29 +93,29 @@ func makeBaseCommandHandlers() []*cmdHandler {
 				{
 					name:        "update",
 					description: "update credentials of the logged-in user",
-					arguments:   []string{"username", "password"},
+					parameters:  []string{"username", "password"},
 					options: []cmdElement{
 						{
 							name:        "username",
 							description: "set a new username for the user",
-							arguments:   []string{"new_value"},
+							parameters:  []string{"new_value"},
 						},
 						{
 							name:        "password",
 							description: "set a new password for the user",
-							arguments:   []string{"new_value", "retyped_value"},
+							parameters:  []string{"new_value", "retyped_value"},
 						},
 					},
 				},
 				{
 					name:        "logout",
 					description: "log out existing user",
-					arguments:   []string{},
+					parameters:  []string{},
 				},
 				{
 					name:        "delete",
 					description: "delete the logged-in user by first entering its credentials",
-					arguments:   []string{"username", "password", "retype_password"},
+					parameters:  []string{"username", "password", "retype_password"},
 				},
 			},
 		},
@@ -129,20 +129,20 @@ func makeBudgetCommandHandler() *cmdHandler {
 		cmdElement: cmdElement{
 			name:        "budget",
 			description: "Manage budgets associated with logged-in user",
-			arguments:   []string{"action"},
+			parameters:  []string{"action"},
 			priority:    100,
 		},
 		nonRegMsg: "login required",
 		callback:  middlewareValidateAction(handlerBudget),
 		actions: []cmdElement{
 			{
-				name:      "add",
-				arguments: []string{"name"},
+				name:       "add",
+				parameters: []string{"name"},
 				options: []cmdElement{
 					{
 						name:        "notes",
 						description: "Give your budget some notes",
-						arguments:   []string{"notes_value"},
+						parameters:  []string{"notes_value"},
 					},
 				},
 			},
@@ -152,36 +152,36 @@ func makeBudgetCommandHandler() *cmdHandler {
 					{
 						name:        "roles",
 						description: "Filter results by user role. Can be ADMIN, MANAGER, CONTRIBUTOR, or VIEWER.",
-						arguments:   []string{"role_title"},
+						parameters:  []string{"role_title"},
 					},
 				},
 			},
 			{
 				name:        "view",
 				description: "specify a budget to interact with using other commands",
-				arguments:   []string{"budget_name"},
+				parameters:  []string{"budget_name"},
 			},
 			{
 				name:        "update",
 				description: "update budget information, IE name, notes",
-				arguments:   []string{"name"},
+				parameters:  []string{"name"},
 				options: []cmdElement{
 					{
 						name:        "name",
 						description: "Update budget name",
-						arguments:   []string{"name_value"},
+						parameters:  []string{"name_value"},
 					},
 					{
 						name:        "notes",
 						description: "Update budget name",
-						arguments:   []string{"notes_value"},
+						parameters:  []string{"notes_value"},
 					},
 				},
 			},
 			{
 				name:        "delete",
 				description: "delete an existing budget by name",
-				arguments:   []string{"budget_name"},
+				parameters:  []string{"budget_name"},
 			},
 		},
 	}
@@ -196,7 +196,7 @@ func makeResourceCommandHandlers() []*cmdHandler {
 		{
 			cmdElement: cmdElement{
 				name:        "account",
-				arguments:   []string{"action"},
+				parameters:  []string{"action"},
 				description: "Manage accounts under budget in view",
 				priority:    210,
 			},
@@ -206,12 +206,12 @@ func makeResourceCommandHandlers() []*cmdHandler {
 				{
 					name:        "add",
 					description: "Add a new account to budget",
-					arguments:   []string{"name"},
+					parameters:  []string{"name"},
 					options: []cmdElement{
 						{
 							name:        "notes",
 							description: "give the new account some notes",
-							arguments:   []string{"notes_value"},
+							parameters:  []string{"notes_value"},
 						},
 						{
 							name:         "off-budget",
@@ -223,29 +223,29 @@ func makeResourceCommandHandlers() []*cmdHandler {
 				{
 					name:        "update",
 					description: "update information on account by name",
-					arguments:   []string{"name"},
+					parameters:  []string{"name"},
 					options: []cmdElement{
 						{
 							name:        "name",
 							description: "rewrite account name",
-							arguments:   []string{"new_name"},
+							parameters:  []string{"new_name"},
 						},
 						{
 							name:        "notes",
 							description: "rewrite account notes",
-							arguments:   []string{"new_notes"},
+							parameters:  []string{"new_notes"},
 						},
 						{
 							name:        "type",
 							description: "choose different account type",
-							arguments:   []string{"new_type"},
+							parameters:  []string{"new_type"},
 						},
 					},
 				},
 				{
 					name:        "restore",
 					description: "restore a soft-deleted account",
-					arguments:   []string{"account_name"},
+					parameters:  []string{"account_name"},
 				},
 				{
 					name:        "list",
@@ -261,7 +261,7 @@ func makeResourceCommandHandlers() []*cmdHandler {
 				{
 					name:        "delete",
 					description: "Delete an account",
-					arguments:   []string{"account_name"},
+					parameters:  []string{"account_name"},
 					options: []cmdElement{
 						{
 							name:         "hard",
@@ -275,7 +275,7 @@ func makeResourceCommandHandlers() []*cmdHandler {
 		{
 			cmdElement: cmdElement{
 				name:        "category",
-				arguments:   []string{"action"},
+				parameters:  []string{"action"},
 				description: "Manage spending categories under budget in view",
 				priority:    220,
 			},
@@ -285,17 +285,17 @@ func makeResourceCommandHandlers() []*cmdHandler {
 				{
 					name:        "add",
 					description: "Add a new category to budget",
-					arguments:   []string{"name"},
+					parameters:  []string{"name"},
 					options: []cmdElement{
 						{
 							name:        "notes",
 							description: "give the new category some notes",
-							arguments:   []string{"notes_value"},
+							parameters:  []string{"notes_value"},
 						},
 						{
 							name:         "group",
 							description:  "assign the category to a group",
-							arguments:    []string{"group_name"},
+							parameters:   []string{"group_name"},
 							useShorthand: true,
 						},
 					},
@@ -303,22 +303,22 @@ func makeResourceCommandHandlers() []*cmdHandler {
 				{
 					name:        "update",
 					description: "update information on a category by name",
-					arguments:   []string{"name"},
+					parameters:  []string{"name"},
 					options: []cmdElement{
 						{
 							name:        "name",
 							description: "rewrite category name",
-							arguments:   []string{"new_name"},
+							parameters:  []string{"new_name"},
 						},
 						{
 							name:        "notes",
 							description: "rewrite category notes",
-							arguments:   []string{"new_notes"},
+							parameters:  []string{"new_notes"},
 						},
 						{
 							name:         "group",
 							description:  "assign the category to a group",
-							arguments:    []string{"group_name"},
+							parameters:   []string{"group_name"},
 							useShorthand: true,
 						},
 					},
@@ -330,7 +330,7 @@ func makeResourceCommandHandlers() []*cmdHandler {
 						{
 							name:         "group",
 							description:  "list only categories grouped by given name",
-							arguments:    []string{"group_name"},
+							parameters:   []string{"group_name"},
 							useShorthand: true,
 						},
 					},
@@ -338,14 +338,14 @@ func makeResourceCommandHandlers() []*cmdHandler {
 				{
 					name:        "delete",
 					description: "Delete a category",
-					arguments:   []string{"category_name"},
+					parameters:  []string{"category_name"},
 				},
 			},
 		},
 		{
 			cmdElement: cmdElement{
 				name:        "group",
-				arguments:   []string{"action"},
+				parameters:  []string{"action"},
 				description: "Manage category groups under budget in view",
 				priority:    230,
 			},
@@ -355,29 +355,29 @@ func makeResourceCommandHandlers() []*cmdHandler {
 				{
 					name:        "add",
 					description: "Add a new group to budget",
-					arguments:   []string{"name"},
+					parameters:  []string{"name"},
 					options: []cmdElement{
 						{
 							name:        "notes",
 							description: "give the new group some notes",
-							arguments:   []string{"notes_value"},
+							parameters:  []string{"notes_value"},
 						},
 					},
 				},
 				{
 					name:        "update",
 					description: "update information on a group by name",
-					arguments:   []string{"name"},
+					parameters:  []string{"name"},
 					options: []cmdElement{
 						{
 							name:        "name",
 							description: "rewrite group name",
-							arguments:   []string{"new_name"},
+							parameters:  []string{"new_name"},
 						},
 						{
 							name:        "notes",
 							description: "rewrite group notes",
-							arguments:   []string{"new_notes"},
+							parameters:  []string{"new_notes"},
 						},
 					},
 				},
@@ -388,14 +388,14 @@ func makeResourceCommandHandlers() []*cmdHandler {
 				{
 					name:        "delete",
 					description: "Delete a group",
-					arguments:   []string{"group_name"},
+					parameters:  []string{"group_name"},
 				},
 			},
 		},
 		{
 			cmdElement: cmdElement{
 				name:        "payee",
-				arguments:   []string{"action"},
+				parameters:  []string{"action"},
 				description: "Manage payees under budget in view",
 				priority:    240,
 			},
@@ -405,29 +405,29 @@ func makeResourceCommandHandlers() []*cmdHandler {
 				{
 					name:        "add",
 					description: "Add a new payee to budget",
-					arguments:   []string{"name"},
+					parameters:  []string{"name"},
 					options: []cmdElement{
 						{
 							name:        "notes",
 							description: "give the new payee some notes",
-							arguments:   []string{"notes_value"},
+							parameters:  []string{"notes_value"},
 						},
 					},
 				},
 				{
 					name:        "update",
 					description: "update information on a payee by name",
-					arguments:   []string{"name"},
+					parameters:  []string{"name"},
 					options: []cmdElement{
 						{
 							name:        "name",
 							description: "rewrite payee name",
-							arguments:   []string{"new_name"},
+							parameters:  []string{"new_name"},
 						},
 						{
 							name:        "notes",
 							description: "rewrite payee notes",
-							arguments:   []string{"new_notes"},
+							parameters:  []string{"new_notes"},
 						},
 					},
 				},
@@ -438,12 +438,12 @@ func makeResourceCommandHandlers() []*cmdHandler {
 				{
 					name:        "delete",
 					description: "Delete a payee",
-					arguments:   []string{"payee_name"},
+					parameters:  []string{"payee_name"},
 					options: []cmdElement{
 						{
 							name:         "replacement",
 							description:  "name of a payee to replace payee to delete for where it is still in use",
-							arguments:    []string{"new_payee_name"},
+							parameters:   []string{"new_payee_name"},
 							useShorthand: true,
 						},
 					},
@@ -453,7 +453,7 @@ func makeResourceCommandHandlers() []*cmdHandler {
 		{
 			cmdElement: cmdElement{
 				name:        "txn",
-				arguments:   []string{"action"},
+				parameters:  []string{"action"},
 				description: "Manage category groups under budget in view",
 				priority:    230,
 			},
@@ -467,25 +467,25 @@ func makeResourceCommandHandlers() []*cmdHandler {
 						{
 							name:         "account",
 							description:  "filter by account",
-							arguments:    []string{"account_name"},
+							parameters:   []string{"account_name"},
 							useShorthand: true,
 						},
 						{
 							name:         "payee",
 							description:  "filter by payee",
-							arguments:    []string{"payee_name"},
+							parameters:   []string{"payee_name"},
 							useShorthand: true,
 						},
 						{
 							name:         "category",
 							description:  "filter by category",
-							arguments:    []string{"category=category_name"},
+							parameters:   []string{"category=category_name"},
 							useShorthand: true,
 						},
 						{
 							name:         "dates",
 							description:  "filter by time frame",
-							arguments:    []string{"start_date", "end_date"},
+							parameters:   []string{"start_date", "end_date"},
 							useShorthand: true,
 						},
 					},
@@ -493,18 +493,18 @@ func makeResourceCommandHandlers() []*cmdHandler {
 				{
 					name:        "log",
 					description: "log a deposit or withdrawal transaction to the budget in view.",
-					arguments:   []string{"account", "payee", "amount", "category"},
+					parameters:  []string{"account", "payee", "amount", "category"},
 					options: []cmdElement{
 						{
 							name:         "date",
 							description:  "specify a date date for this transaction (defaults to present day)",
-							arguments:    []string{"date"},
+							parameters:   []string{"date"},
 							useShorthand: true,
 						},
 						{
 							name:         "notes",
 							description:  "give the transaction some notes",
-							arguments:    []string{"new_notes"},
+							parameters:   []string{"new_notes"},
 							useShorthand: true,
 						},
 						{
@@ -515,7 +515,7 @@ func makeResourceCommandHandlers() []*cmdHandler {
 						{
 							name:         "split",
 							description:  "split this transaction into 2+ categories(writing 'split' for the main category argument). Let their amounts total passed to the amount argument.",
-							arguments:    []string{"category=amount,..."},
+							parameters:   []string{"category=amount,..."},
 							useShorthand: true,
 						},
 					},
@@ -523,18 +523,18 @@ func makeResourceCommandHandlers() []*cmdHandler {
 				{
 					name:        "transfer",
 					description: "log a transfer transaction between two accounts within the budget in view",
-					arguments:   []string{"from_account", "to_account", "amount"},
+					parameters:  []string{"from_account", "to_account", "amount"},
 					options: []cmdElement{
 						{
 							name:         "date",
 							description:  "specify a date date for this transfer (defaults to present day)",
-							arguments:    []string{"date"},
+							parameters:   []string{"date"},
 							useShorthand: true,
 						},
 						{
 							name:         "notes",
 							description:  "give the transfer some notes",
-							arguments:    []string{"notes_value"},
+							parameters:   []string{"notes_value"},
 							useShorthand: true,
 						},
 						{
