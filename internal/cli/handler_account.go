@@ -31,7 +31,13 @@ func handlerAccount(s *State, c *handlerContext) error {
 
 func handleAccountAdd(s *State, c *handlerContext) error {
 	name, _ := c.args.pfx()
+	c.args.trackOptArgs(&c.cmd, "off-budget")
 	accountType, _ := c.args.pfx()
+	if accountType == "SET" {
+		accountType = "OFF_BUDGET"
+	} else {
+		accountType = "ON_BUDGET"
+	}
 
 	c.args.trackOptArgs(&c.cmd, "notes")
 	notes, _ := c.args.pfx()

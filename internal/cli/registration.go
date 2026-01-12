@@ -206,12 +206,17 @@ func makeResourceCommandHandlers() []*cmdHandler {
 				{
 					name:        "add",
 					description: "Add a new account to budget",
-					arguments:   []string{"name", "account_type"},
+					arguments:   []string{"name"},
 					options: []cmdElement{
 						{
 							name:        "notes",
 							description: "give the new account some notes",
 							arguments:   []string{"notes_value"},
+						},
+						{
+							name:         "off-budget",
+							description:  "create the account for tracking purposes only, seperating it from any categorization",
+							useShorthand: true,
 						},
 					},
 				},
