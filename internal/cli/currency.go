@@ -71,6 +71,14 @@ func parseCurrencyFromString(s string, currencyISO string) (CurrencyUnit, error)
 		s = strings.TrimLeft(s, "-")
 	}
 
+	if strings.HasPrefix(s, "0") {
+		s = strings.TrimLeft(s, "0")
+	}
+
+	if strings.HasPrefix(s, string(currency.DecimalSeparator)) {
+		s = "0" + s
+	}
+
 	var dollars int64
 	var cents CurrencyUnit
 	pair := strings.Split(s, string(currency.DecimalSeparator))
