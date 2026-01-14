@@ -75,6 +75,7 @@ func handleUserLogout(s *State, c *handlerContext) error {
 	if err != nil {
 		return err
 	}
+	s.Client.ClearCache()
 	s.Session.OnLogout()
 
 	fmt.Println("User logged out.")

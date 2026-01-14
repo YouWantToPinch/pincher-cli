@@ -38,6 +38,17 @@ func NewClient(timeout, cacheInterval time.Duration, baseURL string) Client {
 	}
 }
 
+// ClearCache calls the Clear() function on
+// the cache attached to the client and
+// forces an early save of the cache file.
+func (c *Client) ClearCache() {
+	c.cache.Clear()
+	err := c.SaveCacheFile()
+	if err != nil {
+		slog.Error("could not save cache file: " + err.Error())
+	}
+}
+
 // LoadCacheFile looks for a file with the given name within
 // the user cache directory and attempts to load it into the cache.
 func (c *Client) LoadCacheFile() error {
