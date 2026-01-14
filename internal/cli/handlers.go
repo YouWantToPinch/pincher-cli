@@ -66,20 +66,24 @@ func handlerHelp(s *State, c *handlerContext) error {
 		if verbose == "SET" {
 			fmt.Println("ALL COMMANDS: ")
 		} else {
-			fmt.Println("VERBOSE: " + verbose)
 			fmt.Println("AVAILABLE COMMANDS: ")
 		}
 		registered := s.Session.CommandRegistry.GetRegisteredHandlers(verbose == "SET")
 		sort.Slice(registered, func(i, j int) bool {
 			if registered[i].priority != registered[j].priority {
-				return registered[i].priority < registered[j].priority
+				result := registered[i].priority < registered[j].priority
+				return result
 			}
 			return registered[i].name < registered[j].name
 		})
-		maxLen := MaxOfStrings(ExtractStrings(registered, func(c *cmdHandler) string { return c.name }))
-		for _, handler := range registered {
-			fmt.Printf("  %-*s  %s\n", maxLen, handler.name, handler.description)
+		column1 := []string{}
+		column2 := []string{}
+		for _, reg := range registered {
+			column1 = append(column1, fmt.Sprintf("  %s", reg.name))
+			column2 = append(column2, reg.description)
 		}
+
+		fmt.Println(makeAlignedTable(column1, column2))
 
 		return nil
 	}

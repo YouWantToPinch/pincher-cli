@@ -1,26 +1,6 @@
 package cli
 
-import (
-	"strings"
-)
-
-func ExtractStrings[T any](items []T, f func(T) string) []string {
-	strings := make([]string, len(items))
-	for i, v := range items {
-		strings[i] = f(v)
-	}
-	return strings
-}
-
-func MaxOfStrings(s []string) int {
-	maxLen := 0
-	for _, str := range s {
-		if len(str) > maxLen {
-			maxLen = len(str)
-		}
-	}
-	return maxLen
-}
+import "strings"
 
 func cleanInput(text string) []string {
 	fields := []string{}
@@ -37,10 +17,6 @@ func cleanInput(text string) []string {
 	return fields
 }
 
-func nDashes(n int) string {
-	return strings.Repeat("-", n)
-}
-
 // returns the first cmdElement with the given name from a slice of cmdElements
 func findCMDElementWithName(elements []cmdElement, name string) (*cmdElement, bool) {
 	for i := range elements {
@@ -50,11 +26,4 @@ func findCMDElementWithName(elements []cmdElement, name string) (*cmdElement, bo
 		}
 	}
 	return nil, false
-}
-
-func firstNChars(s string, n int) string {
-	if len(s) > n {
-		return s[:n]
-	}
-	return s
 }

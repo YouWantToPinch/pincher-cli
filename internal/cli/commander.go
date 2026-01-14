@@ -140,10 +140,17 @@ func (e *cmdElement) usage(withOptions bool) string {
 		usage += " [options]\n"
 		if withOptions {
 			usage += "OPTIONS:\n"
-			maxLen := MaxOfStrings(ExtractStrings(e.options, func(c cmdElement) string { return c.name }))
+			column1 := []string{}
+			column2 := []string{}
 			for _, opt := range e.options {
-				usage += fmt.Sprintf("  %-*s  %s\n", maxLen, opt.name, opt.description)
+				shorthand := "    "
+				if opt.useShorthand {
+					shorthand = "-" + opt.letter() + " | "
+				}
+				column1 = append(column1, fmt.Sprintf("  %s--%s", shorthand, opt.name))
+				column2 = append(column2, opt.description)
 			}
+			usage += makeAlignedTable(column1, column2)
 		}
 	} else {
 		usage += "\n"
@@ -235,7 +242,6 @@ type cmdHandler struct {
 	//
 	// The further away a command gets from relevance to the state of
 	// the CLI at startup, the lower priority it ought to be given.
-	priority int
 }
 
 func (c *cmdHandler) help() {
@@ -245,10 +251,14 @@ func (c *cmdHandler) help() {
 	if len(c.actions) > 0 {
 		fmt.Println("ACTIONS:")
 		fmt.Printf("(for further help, specify \"help %s <action>\")\n", c.name)
-		maxLen := MaxOfStrings(ExtractStrings(c.actions, func(c cmdElement) string { return c.name }))
-		for _, opt := range c.actions {
-			fmt.Printf("  %-*s  %s\n", maxLen, opt.name, opt.description)
+
+		column1 := []string{}
+		column2 := []string{}
+		for _, action := range c.actions {
+			column1 = append(column1, fmt.Sprintf("  %s", action.name))
+			column2 = append(column2, action.description)
 		}
+		fmt.Println(makeAlignedTable(column1, column2))
 	}
 	fmt.Println()
 }
