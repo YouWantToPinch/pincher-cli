@@ -20,6 +20,12 @@ func makeBaseCommandHandlers() []*cmdHandler {
 				priority:    1,
 				options: []cmdElement{
 					{
+						name:         "action",
+						description:  "get help for a specific command action",
+						parameters:   []string{"action"},
+						useShorthand: true,
+					},
+					{
 						name:         "verbose",
 						description:  "show unregistered commands (those not available for use in the current CLI context)",
 						useShorthand: true,

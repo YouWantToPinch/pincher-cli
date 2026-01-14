@@ -46,24 +46,35 @@ func handlerClear(s *State, c *handlerContext) error {
 func handlerHelp(s *State, c *handlerContext) error {
 	commandInquiry, _ := c.args.pfx()
 	if handler, exists := s.Session.CommandRegistry.exists(commandInquiry); exists {
+		c.args.trackOptArgs(&c.cmd, "action")
 		actionInquiry, _ := c.args.pfx()
 		if actionInquiry != "" {
 			if cmdElement, found := findCMDElementWithName(handler.actions, actionInquiry); found {
-				fmt.Println("USAGE: " + cmdElement.usage(true))
+				fmt.Printf("USAGE: %s %s\n", commandInquiry, cmdElement.usage(true))
 				return nil
 			}
 		}
 		handler.help()
 		return nil
-	}
-	if handler, exists := s.Session.CommandRegistry.exists("help"); exists {
+	} else if handler, exists := s.Session.CommandRegistry.exists("help"); exists {
 		handler.help()
-		fmt.Println("AVAILABLE COMMANDS: ")
 		c.args.trackOptArgs(&c.cmd, "verbose")
-		verbose, _ := c.args.pfx()
+		verbose, err := c.args.pfx()
+		if commandInquiry == "-v" && err != nil {
+			verbose = "SET"
+		}
+		if verbose == "SET" {
+			fmt.Println("ALL COMMANDS: ")
+		} else {
+			fmt.Println("VERBOSE: " + verbose)
+			fmt.Println("AVAILABLE COMMANDS: ")
+		}
 		registered := s.Session.CommandRegistry.GetRegisteredHandlers(verbose == "SET")
 		sort.Slice(registered, func(i, j int) bool {
-			return registered[i].priority < registered[j].priority
+			if registered[i].priority != registered[j].priority {
+				return registered[i].priority < registered[j].priority
+			}
+			return registered[i].name < registered[j].name
 		})
 		maxLen := MaxOfStrings(ExtractStrings(registered, func(c *cmdHandler) string { return c.name }))
 		for _, handler := range registered {
