@@ -157,7 +157,7 @@ func (c *Client) doRequest(method, url, token string, payload, out any) (*http.R
 		}
 
 		// If the server responds with a 401 (unauthorized) code,
-		// we need to check whether or not it concerns an expired token.
+		// we need to check whether or not it concerns an expired access token.
 		tokenExpired, err := checkTokenExpired(token)
 
 		// if it isn't a 401, we don't care to retry with a new access token

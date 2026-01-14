@@ -24,8 +24,9 @@ func StartRepl(cliState *State) {
 		if err != nil {
 			cliState.Client.RefreshToken = ""
 			cliState.Session.OnLogout()
+		} else {
+			cliState.Session.OnLogin(user)
 		}
-		cliState.Session.OnLogin(user)
 	}
 
 	scanner := bufio.NewScanner(os.Stdin)

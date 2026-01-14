@@ -7,7 +7,7 @@ import (
 )
 
 func (c *Client) GetAccessTokenWithUser() (user User, err error) {
-	url := c.API() + "/refresh" + "?=with-user"
+	url := c.API() + "/refresh" + "?with-user"
 
 	type rspSchema struct {
 		User
