@@ -24,8 +24,20 @@ func (c *command) parse(handler *cmdHandler, input string) error {
 	var parsingOption *cmdElement
 	optArgCountNeeded := 0
 	var actionElement *cmdElement
-	canTakeOptions := false
-	allParametersSatisfied := false
+
+	// hasOptFormat() is TRUE when the input has the proper
+	// format of an option: a non-integer with a -- suffix,
+	// or a non-integer character preceded by a - suffix.
+	hasOptFormat := func(input string) bool {
+		return strings.HasPrefix(input, "--") ||
+			(strings.HasPrefix(input, "-") &&
+				len(input) == 2 && !strings.Contains("0123456789", string(input[1])))
+	}
+
+	// parametersSatisfied is TRUE when a user has supplied all
+	// arguments necessary given the command and subcommand they
+	// have otherwise written
+	parametersSatisfied := false
 
 	for i := 1; i < len(cmdFields); i++ {
 		// are we parsing an option?
@@ -37,10 +49,8 @@ func (c *command) parse(handler *cmdHandler, input string) error {
 				parsingOption = nil
 			}
 		} else {
-			// have we encountered a potential option? Can we take it?
-			if canTakeOptions && strings.HasPrefix(cmdFields[i], "--") ||
-				(strings.HasPrefix(cmdFields[i], "-") && len(cmdFields[i]) == 2 && !strings.Contains("0123456789", string(cmdFields[i][1]))) {
-				// can we take an option right now?
+			// have we encountered a potential option we could take?
+			if parametersSatisfied && hasOptFormat(cmdFields[i]) {
 				// find out if the handler takes this option
 				userOpt := strings.TrimLeft(cmdFields[i], "-")
 				foundMatch := false
@@ -66,7 +76,7 @@ func (c *command) parse(handler *cmdHandler, input string) error {
 					}
 					return fmt.Errorf("input command includes unexpected %s option '%s'", optType, cmdFields[i])
 				}
-			} else if allParametersSatisfied {
+			} else if parametersSatisfied {
 				return fmt.Errorf("input command includes unexpected argument '%s'", cmdFields[i])
 			}
 			// not parsing an option; include in command argument stack
@@ -76,13 +86,10 @@ func (c *command) parse(handler *cmdHandler, input string) error {
 				actionElement = el
 				optionsToParse = el.options
 			}
-			if len(c.args) == handler.argCount() && actionElement == nil {
-				canTakeOptions = true
-			} else if len(c.args) == handler.argCount()+actionElement.argCount() {
-				canTakeOptions = true
-				allParametersSatisfied = true
+			if actionElement == nil {
+				parametersSatisfied = len(c.args) == handler.argCount()
 			} else {
-				canTakeOptions = false
+				parametersSatisfied = len(c.args) == handler.argCount()+actionElement.argCount()
 			}
 		}
 	}
@@ -90,7 +97,7 @@ func (c *command) parse(handler *cmdHandler, input string) error {
 		return fmt.Errorf("command could not be parsed; missing positional argument(s) for option [%s]: <%s>", parsingOption.name, parsingOption.parameters[len(c.opts[parsingOption.name])])
 	}
 	// if a command action was specified...
-	if actionElement != nil {
+	if actionElement != nil && !parametersSatisfied {
 		// check that the user has satisfied all parameters with arguments
 		expectedArgs := append(handler.parameters, actionElement.parameters...)
 		if len(c.args) < len(expectedArgs) {
