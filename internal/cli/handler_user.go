@@ -39,7 +39,7 @@ func handleUserAdd(s *State, c *handlerContext) error {
 	}
 	if userCreated {
 		fmt.Println("User " + username + " successfully created with new password.")
-		fmt.Println("For help logging in, see: `help user login`")
+		fmt.Println("For help logging in, see: `help user -a login`")
 		return nil
 	} else {
 		return fmt.Errorf("username already exists")
