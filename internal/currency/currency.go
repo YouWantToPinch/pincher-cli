@@ -106,24 +106,27 @@ func Parse(s string, currencyISO string) (int64, error) {
 		// may call this modulo into question, necessitating the
 		// aforementioned modification.
 
-		// For the International System of Units,
-		// separators for the portion preceding the
-		// decimal should be found after every
-		// third digit.
-		if len(dollarString)%4 == 0 {
-			return 0, fmt.Errorf("string could not be parsed as given currency")
-		}
-		// If the dollar amount is 1-999, dollarString may be parsed
-		if len(dollarString) > 3 {
-			dollarRunes := []rune(dollarString)
-			i := 1
-			for j := len(dollarRunes) - 1; j >= 0; j-- {
-				if i%4 == 0 && dollarRunes[j] != currency.ThousandSeparator {
-					return 0, fmt.Errorf("improper thousands separator for currency")
-				}
-				i++
+		// let thousand-place separation be optional
+		if strings.Contains(dollarString, string(currency.ThousandSeparator)) {
+			// For the International System of Units,
+			// separators for the portion preceding the
+			// decimal should be found after every
+			// third digit.
+			if len(dollarString)%4 == 0 {
+				return 0, fmt.Errorf("string could not be parsed as given currency")
 			}
-			dollarString = strings.ReplaceAll(dollarString, string(currency.ThousandSeparator), "")
+			// If the dollar amount is 1-999, dollarString may be parsed
+			if len(dollarString) > 3 {
+				dollarRunes := []rune(dollarString)
+				i := 1
+				for j := len(dollarRunes) - 1; j >= 0; j-- {
+					if i%4 == 0 && dollarRunes[j] != currency.ThousandSeparator {
+						return 0, fmt.Errorf("improper thousands separator for currency")
+					}
+					i++
+				}
+				dollarString = strings.ReplaceAll(dollarString, string(currency.ThousandSeparator), "")
+			}
 		}
 		parsedDollars, err := strconv.ParseInt(dollarString, 10, 64)
 		if err != nil {
