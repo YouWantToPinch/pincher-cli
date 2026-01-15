@@ -8,7 +8,7 @@ import (
 func Test_Format(t *testing.T) {
 	tests := []struct {
 		name      string
-		input     CurrencyUnit
+		input     int64
 		isoCode   string
 		useSymbol bool
 		expected  string
@@ -47,7 +47,7 @@ func Test_Format(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("%s: %d", tt.isoCode, tt.input), func(t *testing.T) {
-			displayStr := tt.input.Format(tt.isoCode, tt.useSymbol)
+			displayStr := Format(tt.input, tt.isoCode, tt.useSymbol)
 			if displayStr != tt.expected {
 				t.Fatalf("expected string %s, but got string: %s", tt.expected, displayStr)
 			}
@@ -59,7 +59,7 @@ func Test_ParseCurrencyFromString(t *testing.T) {
 	tests := []struct {
 		input    string
 		isoCode  string
-		expected CurrencyUnit
+		expected int64
 		wantErr  bool
 	}{
 		{
@@ -101,7 +101,7 @@ func Test_ParseCurrencyFromString(t *testing.T) {
 		{
 			input:    "55.550",
 			isoCode:  "USD",
-			expected: 5555,
+			expected: 0,
 			wantErr:  true,
 		},
 		{
@@ -148,7 +148,7 @@ func Test_ParseCurrencyFromString(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(fmt.Sprintf("%s: %s", tt.isoCode, tt.input), func(t *testing.T) {
-			amount, err := parseCurrencyFromString(tt.input, tt.isoCode)
+			amount, err := Parse(tt.input, tt.isoCode)
 			if tt.wantErr != (err != nil) {
 				t.Fatalf("expected error: %v, but got: %v, with err value: %v", tt.wantErr, (err != nil), err)
 			}

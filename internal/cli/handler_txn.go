@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/YouWantToPinch/pincher-cli/internal/client"
+	cc "github.com/YouWantToPinch/pincher-cli/internal/currency"
 )
 
 func handlerTxn(s *State, c *handlerContext) error {
@@ -33,7 +34,7 @@ func handleTxnTransfer(s *State, c *handlerContext) error {
 	amounts := map[string]int64{}
 	{
 		amount, _ := c.args.pfx()
-		parsedAmount, err := parseCurrencyFromString(amount, s.Config.CurrencyISOCode)
+		parsedAmount, err := cc.Parse(amount, s.Config.CurrencyISOCode)
 		if err != nil {
 			return fmt.Errorf("could not log transfer: %w", err)
 		}
@@ -100,14 +101,14 @@ func handleTxnLog(s *State, c *handlerContext) error {
 					return fmt.Errorf("could not parse one or more splits")
 				}
 				category, amount := pair[0], pair[1]
-				parsedAmount, err := parseCurrencyFromString(amount, s.Config.CurrencyISOCode)
+				parsedAmount, err := cc.Parse(amount, s.Config.CurrencyISOCode)
 				if err != nil {
 					return err
 				}
 				amounts[category] = int64(parsedAmount)
 				splitsTotal += int64(parsedAmount)
 			}
-			totalAmount, err := parseCurrencyFromString(totalAmountString, s.Config.CurrencyISOCode)
+			totalAmount, err := cc.Parse(totalAmountString, s.Config.CurrencyISOCode)
 			if err != nil {
 				return err
 			}
@@ -118,7 +119,7 @@ func handleTxnLog(s *State, c *handlerContext) error {
 			return fmt.Errorf("substitute 'split' for the category argument to use the --splits option")
 		}
 	} else {
-		totalAmount, err := parseCurrencyFromString(totalAmountString, s.Config.CurrencyISOCode)
+		totalAmount, err := cc.Parse(totalAmountString, s.Config.CurrencyISOCode)
 		if err != nil {
 			return err
 		}
@@ -175,13 +176,13 @@ func handleTxnList(s *State, c *handlerContext) error {
 	// const uuidLength = 36
 	maxLenDate := MaxOfStrings(ExtractStrings(txns, func(t client.TransactionDetail) string { return t.TransactionDate.Format("2006-01-02") }))
 	maxLenAmount := MaxOfStrings(ExtractStrings(txns, func(t client.TransactionDetail) string {
-		return CurrencyUnit(t.TotalAmount).Format(s.Config.CurrencyISOCode, true)
+		return cc.Format(t.TotalAmount, s.Config.CurrencyISOCode, true)
 	}))
 	maxLenNotes := MaxOfStrings(ExtractStrings(txns, func(t client.TransactionDetail) string { return firstNChars(t.Notes, 25) + "..." }))
 	fmt.Printf("  %-*s | %-*s | %s\n", maxLenDate, "DATE", maxLenAmount, "AMOUNT", "NOTES")
 	fmt.Printf("  %s-+-%s-+-%s\n", nDashes(maxLenDate), nDashes(maxLenAmount), nDashes(maxLenNotes))
 	for _, txn := range txns {
-		fmt.Printf("  %-*s  %-*s   %s\n", maxLenDate, txn.TransactionDate.Format("2006-01-02"), maxLenAmount, CurrencyUnit(txn.TotalAmount).Format(s.Config.CurrencyISOCode, true), firstNChars(txn.Notes, 25))
+		fmt.Printf("  %-*s  %-*s   %s\n", maxLenDate, txn.TransactionDate.Format("2006-01-02"), maxLenAmount, cc.Format(txn.TotalAmount, s.Config.CurrencyISOCode, true), firstNChars(txn.Notes, 25))
 	}
 
 	return nil

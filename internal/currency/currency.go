@@ -13,7 +13,7 @@ type Currency struct {
 	ThousandSeparator rune   `json:"thousand_separator"`
 	SymbolBefore      bool   `json:"symbol_before"`
 	Name              string `json:"name"`
-	DecimalFactor     int8   `json:"decimal_factor"`
+	DecimalFactor     int64  `json:"decimal_factor"`
 }
 
 var Currencies = map[string]Currency{
@@ -23,19 +23,14 @@ var Currencies = map[string]Currency{
 	"GBP": {"GBP", "£", '.', ',', true, "Pound Sterling", 100},
 }
 
-// CurrencyUnit is an abstract unit used to represent
-// some amount of money in the smallest unit of a
-// currency.
-type CurrencyUnit int64
-
 // NOTE: Further localization of this software may
 // warrant modification of this formatting and
 // parsing logic.
 
 // Format returns a string providing readers with the appropriate visual
 // corresponding to their currency's ISO Code.
-func (c CurrencyUnit) Format(ISOCode string, useSymbol bool) string {
-	s := strconv.FormatInt(int64(c), 10)
+func Format(amount int64, ISOCode string, useSymbol bool) string {
+	s := strconv.FormatInt(int64(amount), 10)
 	i := len(s) - 2
 	res := s[:i] + string(Currencies[ISOCode].DecimalSeparator) + s[i:]
 	if useSymbol {
@@ -47,7 +42,7 @@ func (c CurrencyUnit) Format(ISOCode string, useSymbol bool) string {
 	return res
 }
 
-// parseCurrencyFromStr takes a string, attempts to parse
+// Parse takes a string, attempts to parse
 // it as the given currency by ISO, and if successful,
 // converts the string to an integer representing the
 // dollar unit of the currency, before multiplying the
@@ -55,7 +50,7 @@ func (c CurrencyUnit) Format(ISOCode string, useSymbol bool) string {
 // value in the currency's smallest unit.
 // If the string could could not be parsed as the given
 // currency, an error is returned.
-func parseCurrencyFromString(s string, currencyISO string) (CurrencyUnit, error) {
+func Parse(s string, currencyISO string) (int64, error) {
 	currency, ok := Currencies[currencyISO]
 	if !ok {
 		return 0, fmt.Errorf("invalid or unavailable ISO Currency Code")
@@ -65,7 +60,8 @@ func parseCurrencyFromString(s string, currencyISO string) (CurrencyUnit, error)
 		return 0, fmt.Errorf("no content to parse from input")
 	}
 
-	negateMult := 1
+	var negateMult int64
+	negateMult = 1
 	if strings.HasPrefix(s, "-") {
 		negateMult = -1
 		s = strings.TrimLeft(s, "-")
@@ -80,7 +76,7 @@ func parseCurrencyFromString(s string, currencyISO string) (CurrencyUnit, error)
 	}
 
 	var dollars int64
-	var cents CurrencyUnit
+	var cents int64
 	pair := strings.Split(s, string(currency.DecimalSeparator))
 	switch len(pair) {
 	case 2:
@@ -91,7 +87,7 @@ func parseCurrencyFromString(s string, currencyISO string) (CurrencyUnit, error)
 		if err != nil {
 			return 0, fmt.Errorf("could not parse cent currency unit: %w", err)
 		}
-		cents = CurrencyUnit(parsedCents)
+		cents = parsedCents
 		fallthrough
 	case 1:
 		dollarString := pair[0]
@@ -131,6 +127,6 @@ func parseCurrencyFromString(s string, currencyISO string) (CurrencyUnit, error)
 	default:
 		return 0, fmt.Errorf("decimal separator found more than once")
 	}
-	total := ((CurrencyUnit(dollars) * CurrencyUnit(currency.DecimalFactor)) + cents) * CurrencyUnit(negateMult)
+	total := ((dollars * currency.DecimalFactor) + cents) * negateMult
 	return total, nil
 }
