@@ -84,6 +84,9 @@ func parseCurrencyFromString(s string, currencyISO string) (CurrencyUnit, error)
 	pair := strings.Split(s, string(currency.DecimalSeparator))
 	switch len(pair) {
 	case 2:
+		if len(pair[1]) != 2 {
+			return 0, fmt.Errorf("write any specified decimal values to only the hundredths place: .xy")
+		}
 		parsedCents, err := strconv.ParseInt(pair[1], 0, 64)
 		if err != nil {
 			return 0, fmt.Errorf("could not parse cent currency unit: %w", err)
