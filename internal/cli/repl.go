@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+
+	"github.com/YouWantToPinch/pincher-cli/internal/ui"
 )
 
 func StartRepl(cliState *State) {
@@ -29,12 +31,15 @@ func StartRepl(cliState *State) {
 		}
 	}
 
+	cliState.styles = &ui.Styles{}
+	cliState.styles.Init()
+
 	scanner := bufio.NewScanner(os.Stdin)
 	fmt.Println("Welcome to the Pincher CLI!")
 	fmt.Println("Use 'help' for available commands.")
 	for {
-		fmt.Println("__________________")
-		fmt.Print("Pincher > ")
+		fmt.Println(cliState.getDiv(true))
+		fmt.Print(cliState.GetPrompt())
 		if !scanner.Scan() {
 			break
 		}

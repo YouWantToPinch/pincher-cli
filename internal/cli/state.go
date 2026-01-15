@@ -5,7 +5,79 @@ import (
 
 	"github.com/YouWantToPinch/pincher-cli/internal/client"
 	"github.com/YouWantToPinch/pincher-cli/internal/config"
+	"github.com/YouWantToPinch/pincher-cli/internal/ui"
 )
+
+// State represents the full state of the CLI during a session,
+// regardless of user login. It knows the full context of all
+// systems connected.
+type State struct {
+	DoneChan *chan bool
+	Logger   *Logger
+	Config   *config.Config
+	Client   *client.Client
+	Session  *cliSession
+	CmdQueue chan<- string
+	styles   *ui.Styles
+}
+
+func (s *State) NewSession() {
+	s.Session = &cliSession{}
+	s.Session.Init()
+}
+
+// GetPrompt returns the proper input
+// prompt to print to the command line,
+// dependent on user activity during
+// this session.
+func (s *State) GetPrompt() string {
+	if s.styles != nil {
+		return s.getStyledPrompt()
+	}
+	return s.getUnstyledPrompt()
+}
+
+func (s *State) getDiv(styled bool) string {
+	div := "___________________________"
+	if styled && s.styles != nil {
+		return s.styles.Green.Render(div)
+	}
+	return div
+}
+
+// getUnstyledPrompt returns the pincher-cli prompt without pretty colors :(
+func (s *State) getUnstyledPrompt() string {
+	if s.Session.Username == "" {
+		return "pin¢her > "
+	} else if s.Client.ViewedBudget.Name == "" {
+		return fmt.Sprintf("p¢/%s > ", s.Session.Username)
+	} else {
+		return fmt.Sprintf("p¢/%s[%s] > ", s.Session.Username, s.Client.ViewedBudget.Name)
+	}
+}
+
+// getStyledPrompt returns the pincher-cli prompt with pretty colors :)
+func (s *State) getStyledPrompt() string {
+	cent := s.styles.Orange.Render("¢")
+	chev := s.styles.White.Render(" > ")
+
+	if s.Session.Username == "" {
+		pin := s.styles.White.Render("pin")
+		her := s.styles.White.Render("her")
+		return pin + cent + her + chev
+	} else {
+		p := s.styles.White.Render("p")
+		slash := s.styles.White.Render("/")
+
+		if s.Client.ViewedBudget.Name == "" {
+			return p + cent + slash + s.styles.White.Render(s.Session.Username) + chev
+		} else {
+			lbr := s.styles.Green.Render("[")
+			rbr := s.styles.Green.Render("]")
+			return p + cent + slash + s.styles.White.Render(s.Session.Username) + lbr + s.styles.White.Render(s.Client.ViewedBudget.Name) + rbr + chev
+		}
+	}
+}
 
 // cliSession represents the state of the CLI in regard to
 // a logged-in user.
@@ -49,18 +121,4 @@ func (s *cliSession) OnLogout() {
 func (s *cliSession) OnExit() {
 	// deregister commands
 	s.CommandRegistry.deregisterNonBaseCommands()
-}
-
-type State struct {
-	DoneChan *chan bool
-	Logger   *Logger
-	Config   *config.Config
-	Client   *client.Client
-	Session  *cliSession
-	CmdQueue chan<- string
-}
-
-func (s *State) NewSession() {
-	s.Session = &cliSession{}
-	s.Session.Init()
 }
