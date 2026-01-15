@@ -69,8 +69,8 @@ func handleCategoryList(s *State, c *handlerContext) error {
 		return categories[i].Name < categories[j].Name
 	})
 	const uuidLength = 36
-	maxLenName := MaxOfStrings(ExtractStrings(categories, func(b client.Category) string { return b.Name }))
-	maxLenNotes := MaxOfStrings(ExtractStrings(categories, func(b client.Category) string { return b.Notes }))
+	maxLenName := MaxOfStrings(ExtractStrings(categories, func(b client.Category) string { return b.Name })...)
+	maxLenNotes := MaxOfStrings(ExtractStrings(categories, func(b client.Category) string { return b.Notes })...)
 	fmt.Printf("  %-*s | %-*s | %s\n", maxLenName, "NAME", uuidLength, "ID", "NOTES")
 	fmt.Printf("  %s-+-%s-+-%s\n", nDashes(maxLenName), nDashes(uuidLength), nDashes(maxLenNotes))
 	for _, category := range categories {

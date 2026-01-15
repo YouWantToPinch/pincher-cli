@@ -74,8 +74,8 @@ func handlePayeeList(s *State, c *handlerContext) error {
 		return payees[i].Name < payees[j].Name
 	})
 	const uuidLength = 36
-	maxLenName := MaxOfStrings(ExtractStrings(payees, func(b client.Payee) string { return b.Name }))
-	maxLenNotes := MaxOfStrings(ExtractStrings(payees, func(b client.Payee) string { return b.Notes }))
+	maxLenName := MaxOfStrings(ExtractStrings(payees, func(b client.Payee) string { return b.Name })...)
+	maxLenNotes := MaxOfStrings(ExtractStrings(payees, func(b client.Payee) string { return b.Notes })...)
 	fmt.Printf("  %-*s | %-*s | %s\n", maxLenName, "NAME", uuidLength, "ID", "NOTES")
 	fmt.Printf("  %s-+-%s-+-%s\n", nDashes(maxLenName), nDashes(uuidLength), nDashes(maxLenNotes))
 	for _, payee := range payees {

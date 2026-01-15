@@ -15,7 +15,7 @@ func ExtractStrings[T any](items []T, f func(T) string) []string {
 	return strings
 }
 
-func MaxOfStrings(s []string) int {
+func MaxOfStrings(s ...string) int {
 	maxLen := 0
 	for _, str := range s {
 		if len(str) > maxLen {

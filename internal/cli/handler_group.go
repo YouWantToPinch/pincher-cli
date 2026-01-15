@@ -74,8 +74,8 @@ func handleGroupList(s *State, c *handlerContext) error {
 		return groups[i].Name < groups[j].Name
 	})
 	const uuidLength = 36
-	maxLenName := MaxOfStrings(ExtractStrings(groups, func(b client.Group) string { return b.Name }))
-	maxLenNotes := MaxOfStrings(ExtractStrings(groups, func(b client.Group) string { return b.Notes }))
+	maxLenName := MaxOfStrings(ExtractStrings(groups, func(b client.Group) string { return b.Name })...)
+	maxLenNotes := MaxOfStrings(ExtractStrings(groups, func(b client.Group) string { return b.Notes })...)
 	fmt.Printf("  %-*s | %-*s | %s\n", maxLenName, "NAME", uuidLength, "ID", "NOTES")
 	fmt.Printf("  %s-+-%s-+-%s\n", nDashes(maxLenName), nDashes(uuidLength), nDashes(maxLenNotes))
 	for _, group := range groups {

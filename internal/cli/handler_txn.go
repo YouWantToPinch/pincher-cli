@@ -174,11 +174,11 @@ func handleTxnList(s *State, c *handlerContext) error {
 		return txns[i].TransactionDate.Before(txns[j].TransactionDate)
 	})
 	// const uuidLength = 36
-	maxLenDate := MaxOfStrings(ExtractStrings(txns, func(t client.TransactionDetail) string { return t.TransactionDate.Format("2006-01-02") }))
+	maxLenDate := MaxOfStrings(ExtractStrings(txns, func(t client.TransactionDetail) string { return t.TransactionDate.Format("2006-01-02") })...)
 	maxLenAmount := MaxOfStrings(ExtractStrings(txns, func(t client.TransactionDetail) string {
 		return cc.Format(t.TotalAmount, s.Config.CurrencyISOCode, true)
-	}))
-	maxLenNotes := MaxOfStrings(ExtractStrings(txns, func(t client.TransactionDetail) string { return firstNChars(t.Notes, 25) + "..." }))
+	})...)
+	maxLenNotes := MaxOfStrings(ExtractStrings(txns, func(t client.TransactionDetail) string { return firstNChars(t.Notes, 25) + "..." })...)
 	fmt.Printf("  %-*s | %-*s | %s\n", maxLenDate, "DATE", maxLenAmount, "AMOUNT", "NOTES")
 	fmt.Printf("  %s-+-%s-+-%s\n", nDashes(maxLenDate), nDashes(maxLenAmount), nDashes(maxLenNotes))
 	for _, txn := range txns {

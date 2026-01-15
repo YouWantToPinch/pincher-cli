@@ -76,8 +76,8 @@ func handleAccountList(s *State, c *handlerContext) error {
 		return accounts[i].Name < accounts[j].Name
 	})
 	const uuidLength = 36
-	maxLenName := MaxOfStrings(ExtractStrings(accounts, func(b client.Account) string { return b.Name }))
-	maxLenNotes := MaxOfStrings(ExtractStrings(accounts, func(b client.Account) string { return b.Notes }))
+	maxLenName := MaxOfStrings(ExtractStrings(accounts, func(b client.Account) string { return b.Name })...)
+	maxLenNotes := MaxOfStrings(ExtractStrings(accounts, func(b client.Account) string { return b.Notes })...)
 	fmt.Printf("  %-*s | %-*s | %s\n", maxLenName, "NAME", uuidLength, "ID", "NOTES")
 	fmt.Printf("  %s-+-%s-+-%s\n", nDashes(maxLenName), nDashes(uuidLength), nDashes(maxLenNotes))
 	for _, account := range accounts {
