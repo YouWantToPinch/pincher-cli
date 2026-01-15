@@ -27,10 +27,18 @@ var Currencies = map[string]Currency{
 // warrant modification of this formatting and
 // parsing logic.
 
-// Format returns a string providing readers with the appropriate visual
-// corresponding to their currency's ISO Code.
+// Format returns a string providing readers with the appropriate
+// currency format corresponding to their currency's ISO Code.
+// It assumes an amount measures in the smallest unit of the
+// currency.
 func Format(amount int64, ISOCode string, useSymbol bool) string {
 	s := strconv.FormatInt(int64(amount), 10)
+	switch len(s) {
+	case 2:
+		s = "0" + s
+	case 1:
+		s = "00" + s
+	}
 	i := len(s) - 2
 	res := s[:i] + string(Currencies[ISOCode].DecimalSeparator) + s[i:]
 	if useSymbol {
@@ -39,6 +47,7 @@ func Format(amount int64, ISOCode string, useSymbol bool) string {
 		}
 		return res + Currencies[ISOCode].Symbol
 	}
+	// TODO: add thousand separators where necessary
 	return res
 }
 
@@ -83,7 +92,7 @@ func Parse(s string, currencyISO string) (int64, error) {
 		if len(pair[1]) != 2 {
 			return 0, fmt.Errorf("write any specified decimal values to only the hundredths place: .xy")
 		}
-		parsedCents, err := strconv.ParseInt(pair[1], 0, 64)
+		parsedCents, err := strconv.ParseInt(pair[1], 10, 64)
 		if err != nil {
 			return 0, fmt.Errorf("could not parse cent currency unit: %w", err)
 		}
@@ -116,7 +125,7 @@ func Parse(s string, currencyISO string) (int64, error) {
 			}
 			dollarString = strings.ReplaceAll(dollarString, string(currency.ThousandSeparator), "")
 		}
-		parsedDollars, err := strconv.ParseInt(dollarString, 0, 64)
+		parsedDollars, err := strconv.ParseInt(dollarString, 10, 64)
 		if err != nil {
 			return 0, fmt.Errorf("could not parse dollar unit: %w", err)
 		}

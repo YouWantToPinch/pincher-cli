@@ -20,6 +20,18 @@ func Test_Format(t *testing.T) {
 			expected:  "200.00",
 		},
 		{
+			input:     2,
+			isoCode:   "USD",
+			useSymbol: false,
+			expected:  "0.02",
+		},
+		{
+			input:     20,
+			isoCode:   "USD",
+			useSymbol: false,
+			expected:  "0.20",
+		},
+		{
 			input:     20000,
 			isoCode:   "USD",
 			useSymbol: true,
