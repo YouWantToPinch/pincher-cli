@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/YouWantToPinch/pincher-cli/internal/client"
+	cc "github.com/YouWantToPinch/pincher-cli/internal/currency"
 )
 
 func handlerBudget(s *State, c *handlerContext) error {
@@ -15,6 +17,8 @@ func handlerBudget(s *State, c *handlerContext) error {
 			return handleBudgetAdd(s, c)
 		case "list":
 			return handleBudgetList(s, c)
+		case "report":
+			return handleBudgetReport(s, c)
 		case "view":
 			return handleBudgetView(s, c)
 		case "update":
@@ -69,6 +73,36 @@ func handleBudgetView(s *State, c *handlerContext) error {
 	return nil
 }
 
+func handleBudgetReport(s *State, c *handlerContext) error {
+	var err error
+
+	monthTime := time.Now()
+	c.args.trackOptArgs(&c.cmd, "month")
+	month, _ := c.args.pfx()
+	if month != "" {
+		monthTime, err = time.Parse("2006-01", month)
+		if err != nil {
+			return fmt.Errorf("bad month format; use YYYY-MM")
+		}
+	}
+	monthStr := monthTime.Format("2006-01-02")
+
+	report, err := s.Client.GetBudgetReport(monthStr)
+	if err != nil {
+		return err
+	}
+	iso := s.Config.CurrencyISOCode
+	assigned := cc.Format(report.Assigned, iso, true)
+	activity := cc.Format(report.Activity, iso, true)
+	balance := cc.Format(report.Balance, iso, true)
+	fmt.Printf("%s report for %s:\n", monthStr, s.Client.ViewedBudget.Name)
+	fmt.Printf("  %-*s | %-*s | %s\n", len(assigned), "ASSIGNED", len(activity), "ACTIVITY", "BALANCE")
+	fmt.Printf("  %s-+-%s-+-%s\n", nDashes(len("ASSIGNED")), nDashes(len("ACTIVITY")), nDashes(len("BALANCE")))
+	fmt.Printf("  %-*s | %-*s | %s\n", len(assigned), assigned, len(activity), activity, balance)
+	fmt.Printf("  %s-+-%s-+-%s\n", nDashes(len(assigned)), nDashes(len(activity)), nDashes(len(balance)))
+	return nil
+}
+
 func handleBudgetList(s *State, c *handlerContext) error {
 	c.args.trackOptArgs(&c.cmd, "roles")
 	roleQuery, _ := c.args.pfx()
@@ -103,7 +137,8 @@ func handleBudgetList(s *State, c *handlerContext) error {
 	fmt.Printf("  %-*s | %-*s | %s\n", maxLenName, "NAME", uuidLength, "ID", "NOTES")
 	fmt.Printf("  %s-+-%s-+-%s\n", nDashes(maxLenName), nDashes(uuidLength), nDashes(maxLenNotes))
 	for _, budget := range budgets {
-		fmt.Printf("  %-*s  %-*s   %s\n", maxLenName, budget.Name, uuidLength, budget.ID, budget.Notes)
+		fmt.Printf("  %-*s | %-*s | %s\n", maxLenName, budget.Name, uuidLength, budget.ID, budget.Notes)
+		fmt.Printf("  %s-+-%s-+-%s\n", nDashes(maxLenName), nDashes(uuidLength), nDashes(maxLenNotes))
 	}
 
 	return nil

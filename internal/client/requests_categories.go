@@ -33,24 +33,78 @@ func (c *Client) CreateCategory(name, notes, groupName string) (success bool, er
 	}
 }
 
-func (c *Client) GetCategories(urlQuery string) ([]Category, error) {
-	url := c.API() + "/budgets/" + c.ViewedBudget.ID.String() + "/categories" + urlQuery
+func (c *Client) AssignAmountToCategory(amount int64, toCategoryName, fromCategoryName, monthID string) error {
+	url := c.API() + "/budgets/" + c.ViewedBudget.ID.String() + "/months/" + monthID + "/categories"
 
-	type categoryContainer struct {
-		Categories []Category `json:"categories"`
+	type rqSchema struct {
+		Amount       int64  `json:"amount"`
+		ToCategory   string `json:"to_category"`
+		FromCategory string `json:"from_category"`
+	}
+	payload := &rqSchema{
+		Amount:       amount,
+		ToCategory:   toCategoryName,
+		FromCategory: fromCategoryName,
 	}
 
-	var categories categoryContainer
-	resp, cached, err := c.Get(url, c.token, &categories)
+	resp, err := c.Post(url, c.token, payload, nil)
 	if err != nil {
-		return nil, err
-	} else if cached {
-		return categories.Categories, nil
+		return err
 	}
 
 	switch resp.StatusCode {
 	case http.StatusOK:
-		return categories.Categories, nil
+		return nil
+	case http.StatusBadRequest:
+		return fmt.Errorf("improper input")
+	default:
+		return fmt.Errorf("%d: failed to assign amount to category", resp.StatusCode)
+	}
+}
+
+func (c *Client) GetCategoryReports(monthID string) ([]CategoryReport, error) {
+	url := c.API() + "/budgets/" + c.ViewedBudget.ID.String() + "/months/" + monthID + "/categories"
+
+	type rspSchema struct {
+		CategoryReports []CategoryReport `json:"category_reports"`
+	}
+
+	var rspPayload rspSchema
+	resp, cached, err := c.Get(url, c.token, &rspPayload)
+	if err != nil {
+		return nil, err
+	} else if cached {
+		return rspPayload.CategoryReports, nil
+	}
+
+	switch resp.StatusCode {
+	case http.StatusOK:
+		return rspPayload.CategoryReports, nil
+	case http.StatusBadRequest:
+		return nil, fmt.Errorf("improper input")
+	default:
+		return nil, fmt.Errorf("failed to assign amount to category")
+	}
+}
+
+func (c *Client) GetCategories(urlQuery string) ([]Category, error) {
+	url := c.API() + "/budgets/" + c.ViewedBudget.ID.String() + "/categories" + urlQuery
+
+	type rspSchema struct {
+		Categories []Category `json:"categories"`
+	}
+
+	var rspPayload rspSchema
+	resp, cached, err := c.Get(url, c.token, &rspPayload)
+	if err != nil {
+		return nil, err
+	} else if cached {
+		return rspPayload.Categories, nil
+	}
+
+	switch resp.StatusCode {
+	case http.StatusOK:
+		return rspPayload.Categories, nil
 	case http.StatusNotFound:
 		return nil, fmt.Errorf("resource not found")
 	default:

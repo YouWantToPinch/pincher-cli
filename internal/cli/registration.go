@@ -153,6 +153,18 @@ func makeBudgetCommandHandler() *cmdHandler {
 				},
 			},
 			{
+				name:        "report",
+				description: "get a report of the budget",
+				parameters:  []string{},
+				options: []cmdElement{
+					{
+						name:         "month",
+						description:  "Specify a month within which to pull a report. You will see a reflection of the budget at that point in time.",
+						useShorthand: true,
+					},
+				},
+			},
+			{
 				name: "list",
 				options: []cmdElement{
 					{
@@ -302,6 +314,35 @@ func makeResourceCommandHandlers() []*cmdHandler {
 							name:         "group",
 							description:  "assign the category to a group",
 							parameters:   []string{"group_name"},
+							useShorthand: true,
+						},
+					},
+				},
+				{
+					name:        "assign",
+					description: "assign an amount of money to a category by name",
+					parameters:  []string{"category_name", "amount"},
+					options: []cmdElement{
+						{
+							name:         "from",
+							description:  "Pull the amount to assign FROM another category. Useful for keeping budgets in sync, or covering overspending.",
+							useShorthand: true,
+							parameters:   []string{"from_category"},
+						},
+						{
+							name:         "month",
+							description:  "Specify a month within which to make the assignent. This affects future balances relative to that point in time.",
+							useShorthand: true,
+						},
+					},
+				},
+				{
+					name:        "reports",
+					description: "get a reports for all categories",
+					options: []cmdElement{
+						{
+							name:         "month",
+							description:  "Specify a month within which to pull reports. You will see a reflection of the categories at that point in time.",
 							useShorthand: true,
 						},
 					},

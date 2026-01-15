@@ -51,6 +51,27 @@ func (c *Client) GetBudgets(urlQuery string) ([]Budget, error) {
 	}
 }
 
+func (c *Client) GetBudgetReport(monthID string) (MonthReport, error) {
+	url := c.API() + "/budgets/" + c.ViewedBudget.ID.String() + "/months/" + monthID
+
+	var report MonthReport
+	resp, cached, err := c.Get(url, c.token, &report)
+	if err != nil {
+		return MonthReport{}, err
+	} else if cached {
+		return report, nil
+	}
+
+	switch resp.StatusCode {
+	case http.StatusOK:
+		return report, nil
+	case http.StatusBadRequest:
+		return MonthReport{}, fmt.Errorf("improper input")
+	default:
+		return MonthReport{}, fmt.Errorf("failed to get budget report")
+	}
+}
+
 func (c *Client) UpdateBudget(budgetID, name, notes string) error {
 	url := c.API() + "/budgets/" + budgetID
 
