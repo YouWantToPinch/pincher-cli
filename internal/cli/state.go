@@ -115,10 +115,6 @@ func (s *cliSession) OnViewBudget() {
 
 func (s *cliSession) OnLogout() {
 	// deregister commands
-	s.CommandRegistry.deregisterNonBaseCommands()
-}
-
-func (s *cliSession) OnExit() {
-	// deregister commands
+	s.User = client.User{}
 	s.CommandRegistry.deregisterNonBaseCommands()
 }
