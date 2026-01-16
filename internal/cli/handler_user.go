@@ -60,7 +60,7 @@ func handleUserLogin(s *State, c *handlerContext) error {
 	c.args.trackOptArgs(&c.cmd, "view-budget")
 	budgetToView, _ := c.args.pfx()
 	if budgetToView != "" {
-		s.CmdQueue <- "budget view " + budgetToView
+		s.CmdQueue <- "budget view " + fmt.Sprintf(`"%s"`, budgetToView)
 	}
 
 	return nil
