@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-
-	"github.com/YouWantToPinch/pincher-cli/internal/ui"
 )
 
 func StartRepl(cliState *State) {
@@ -31,7 +29,7 @@ func StartRepl(cliState *State) {
 		}
 	}
 
-	cliState.styles = &ui.Styles{}
+	cliState.styles = &styles{}
 	cliState.styles.Init()
 
 	scanner := bufio.NewScanner(os.Stdin)

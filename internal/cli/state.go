@@ -5,7 +5,6 @@ import (
 
 	"github.com/YouWantToPinch/pincher-cli/internal/client"
 	"github.com/YouWantToPinch/pincher-cli/internal/config"
-	"github.com/YouWantToPinch/pincher-cli/internal/ui"
 )
 
 // State represents the full state of the CLI during a session,
@@ -18,7 +17,7 @@ type State struct {
 	Client   *client.Client
 	Session  *cliSession
 	CmdQueue chan<- string
-	styles   *ui.Styles
+	styles   *styles
 }
 
 func (s *State) NewSession() {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/YouWantToPinch/pincher-cli/internal/config"
-	"github.com/YouWantToPinch/pincher-cli/internal/ui"
+	ui "github.com/bntrtm/gostructui"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
