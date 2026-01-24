@@ -107,7 +107,6 @@ func handleCategoryReports(s *State, c *handlerContext) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Categories under budget %s: \n", s.Client.ViewedBudget.Name)
 	sort.Slice(reports, func(i, j int) bool {
 		return reports[i].Name < reports[j].Name
 	})
@@ -115,6 +114,7 @@ func handleCategoryReports(s *State, c *handlerContext) error {
 		fmt.Println("Nothing to report.")
 		return nil
 	}
+	fmt.Printf("Categories under budget %s: \n", s.Client.ViewedBudget.Name)
 	maxLenMonth := MaxOfStrings(ExtractStrings(reports, func(r client.CategoryReport) string { return r.MonthID.Format("2006-01") })...)
 	maxLenName := MaxOfStrings(ExtractStrings(reports, func(r client.CategoryReport) string { return r.Name })...)
 	maxLenAssigned := MaxOfStrings(ExtractStrings(reports, func(r client.CategoryReport) string { return cc.Format(r.Assigned, s.Config.CurrencyISOCode, true) })...)
