@@ -250,7 +250,7 @@ func (c *cmdHandler) help() {
 	fmt.Println("USAGE: " + c.usage(true))
 	if len(c.actions) > 0 {
 		fmt.Println("ACTIONS:")
-		fmt.Printf("(for further help, specify \"help %s <action>\")\n", c.name)
+		fmt.Printf("(for further help, specify \"help %s -a <action>\")\n", c.name)
 
 		column1 := []string{}
 		column2 := []string{}
