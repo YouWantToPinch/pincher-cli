@@ -75,6 +75,8 @@ func (c *command) parse(handler *cmdHandler, input string) error {
 						optType = "action"
 					}
 					return fmt.Errorf("input command includes unexpected %s option '%s'", optType, cmdFields[i])
+				} else {
+					continue
 				}
 			} else if parametersSatisfied {
 				return fmt.Errorf("input command includes unexpected argument '%s'", cmdFields[i])
