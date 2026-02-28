@@ -3,11 +3,13 @@ package client
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -15,10 +17,13 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// Client is a struct offering methods used to interact
+// with the Pincher REST API. You should not instantiate
+// this client directly, and instead use the NewClient()
+// function.
 type Client struct {
 	http.Client
 	cache        Cache
-	ViewedBudget Budget
 	BaseURL      string
 	token        string
 	RefreshToken string
@@ -28,6 +33,7 @@ func (c *Client) API() string {
 	return c.BaseURL + "/api"
 }
 
+// NewClient is the proper way to instantiate a client with the sdk.
 func NewClient(timeout, cacheInterval time.Duration, baseURL string) Client {
 	return Client{
 		cache: *NewCache(cacheInterval),
@@ -151,6 +157,92 @@ func (c *Client) Delete(url, token string, payload any) (*http.Response, error) 
 	return c.doRequest(http.MethodDelete, url, token, payload, nil)
 }
 
+func (c *Client) Request(method, destination string, data, result any) error {
+	destination, err := c.ResolveURL("/api" + destination)
+	if err != nil {
+		return err
+	}
+
+	reader, contentType, err := c.prepareRequestBody(data)
+	if err != nil {
+		return err
+	}
+
+	request, err := http.NewRequestWithContext(context.Background(), method, destination, reader)
+	if err != nil {
+		return err
+	}
+
+	request.Header.Set("Content-Type", contentType)
+	if c.token != "" {
+		request.Header.Set("Authorization", "Bearer "+c.token)
+	}
+
+	response, err := c.Do(request)
+	if err != nil {
+		return err
+	}
+
+	defer response.Body.Close()
+
+	err = c.handleResponse(response.StatusCode, response.Body, result)
+	if err != nil {
+		return fmt.Errorf("for destination %s: %w", destination, err)
+	}
+
+	return nil
+}
+
+// handleResponse processes the API response
+func (c *Client) handleResponse(statusCode int, body io.Reader, result any) error {
+	switch statusCode {
+	case http.StatusNoContent:
+		return nil
+	case http.StatusOK, http.StatusCreated:
+		if result != nil {
+			if err := json.NewDecoder(body).Decode(result); err != nil {
+				return fmt.Errorf("handleResponse: %w", err)
+			}
+		}
+	default:
+		const limit = 1024
+		message, _ := io.ReadAll(io.LimitReader(body, limit))
+		return fmt.Errorf("bad status code %d: %s", statusCode, message)
+	}
+
+	return nil
+}
+
+// ResolveURL converts a relative URL to an absolute URL.
+// It prefixes relative URLs with the API base URL.
+func (c *Client) ResolveURL(destination string) (string, error) {
+	destination = strings.TrimSpace(destination)
+	if destination == "" {
+		return "", fmt.Errorf("destination empty")
+	}
+
+	u, err := url.Parse(destination)
+	if err != nil {
+		return "", fmt.Errorf("parse(destination): %w", err)
+	}
+
+	// Reject scheme-less URLs (//host/path) and any provided scheme.
+	if u.Scheme != "" || u.Host != "" {
+		if sameHostname(u, parsedBase) {
+			return u.String(), nil
+		}
+		return "", fmt.Errorf("refusing external URL host %q", u.Host)
+	}
+
+	// Path-only (or query/fragment) reference.
+	return parsedBase.ResolveReference(u).String(), nil
+}
+
+func sameHostname(a, b *url.URL) bool {
+	// Host may include port; compare case-insensitively.
+	return strings.EqualFold(a.Host, b.Host)
+}
+
 func (c *Client) doRequest(method, url, token string, payload, out any) (*http.Response, error) {
 	// try to make the new request.
 	req, err := c.MakeRequest(method, url, token, payload)
@@ -222,6 +314,24 @@ func (c *Client) doRequest(method, url, token string, payload, out any) (*http.R
 	return resp, nil
 }
 
+// prepareJSONBody encodes data as JSON
+func (c *Client) prepareJSONBody(body any) (io.Reader, string, error) {
+	data, err := json.Marshal(body)
+	if err != nil {
+		return nil, "", fmt.Errorf("json.Marshal: %w", err)
+	}
+
+	return bytes.NewReader(data), "application/json", nil
+}
+
+func (c *Client) prepareRequestBody(body any) (io.Reader, string, error) {
+	if body == nil {
+		return http.NoBody, "application/json", nil
+	}
+
+	return c.prepareJSONBody(body)
+}
+
 // --------------
 //  Helpers
 // --------------
@@ -261,3 +371,83 @@ func checkTokenExpired(tokenString string) (bool, error) {
 
 	return exp.Before(time.Now()), nil
 }
+
+// --------------------------------------------
+//  HTTP data that can be sent to the REST API
+// --------------------------------------------
+
+type MetaData struct {
+	Name  string `json:"name"`
+	Notes string `json:"notes"`
+}
+
+// BUDGETS
+
+type BudgetCreateData struct {
+	MetaData
+}
+
+type BudgetUpdateData = BudgetCreateData
+
+// ACCOUNTS
+
+const (
+	BudgetAccountTypeOnBudget  = "ON_BUDGET"
+	BudgetAccountTypeOffBudget = "OFF_BUDGET"
+)
+
+type BudgetAccountCreateData struct {
+	MetaData
+	AccountType string `json:"account_type"`
+}
+
+type BudgetAccountUpdateData = BudgetAccountCreateData
+
+type BudgetAccountDeleteData struct {
+	DeleteHard bool `json:"delete_hard"`
+}
+
+// GROUPS
+
+type BudgetGroupCreateData struct {
+	MetaData
+}
+type BudgetGroupUpdateData = BudgetGroupCreateData
+
+// PAYEES
+
+type BudgetPayeeCreateData struct {
+	MetaData
+}
+type BudgetPayeeUpdateData = BudgetPayeeCreateData
+
+type BudgetPayeeDeleteData struct {
+	NewPayeeName string `json:"new_payee_name"`
+}
+
+// CATEGORIES
+
+type BudgetCategoryCreateData struct {
+	MetaData
+	GroupName string `json:"group_name"`
+}
+type BudgetCategoryUpdateData = BudgetCategoryCreateData
+
+type BudgetCategoryAssignData struct {
+	Amount       int64  `json:"amount"`
+	ToCategory   string `json:"to_category"`
+	FromCategory string `json:"from_category"`
+}
+
+// TRANSACTIONS
+
+type BudgetTransactionCreateData struct {
+	AccountName         string           `json:"account_name"`
+	TransferAccountName string           `json:"transfer_account_name"`
+	TransactionDate     string           `json:"transaction_date"`
+	PayeeName           string           `json:"payee_name"`
+	Notes               string           `json:"notes"`
+	Cleared             bool             `json:"is_cleared"`
+	Amounts             map[string]int64 `json:"amounts"`
+}
+type BudgetTransactionUpdateData = BudgetTransactionCreateData
