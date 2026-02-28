@@ -39,23 +39,25 @@ func handleBudgetAdd(s *State, c *handlerContext) error {
 	c.args.trackOptArgs(&c.cmd, "notes")
 	notes, _ := c.args.pfx()
 
-	budgetCreated, err := s.Client.CreateBudget(name, notes)
+	err := s.Client.BudgetCreate(s.Session.ActiveBudget.ID.String(), client.BudgetCreateData{
+		MetaData: client.MetaData{
+			Name:  name,
+			Notes: notes,
+		},
+	})
 	if err != nil {
 		return err
 	}
-	if budgetCreated {
-		fmt.Println("Budget " + name + " successfully created as user: " + s.Session.Username + ".")
-		fmt.Println("See it with: `budget view`")
-		return nil
-	} else {
-		return fmt.Errorf("budget could not be created")
-	}
+
+	fmt.Println("Budget " + name + " successfully created as user: " + s.Session.ActiveUser.Username + ".")
+	fmt.Println("See it with: `budget view`")
+	return nil
 }
 
 func handleBudgetView(s *State, c *handlerContext) error {
 	name, _ := c.args.pfx()
 
-	budgets, err := s.Client.GetBudgets("")
+	budgets, err := s.Client.Budgets(s.Session.ActiveBudget.ID.String(), "")
 	if err != nil {
 		return fmt.Errorf("could not view specified budget: %w", err)
 	}
@@ -67,7 +69,7 @@ func handleBudgetView(s *State, c *handlerContext) error {
 
 	// NOTE: We store a VALUE rather than the ptr,
 	// as the cache by nature may change at a moment's notice
-	s.Client.ViewedBudget = *budget
+	s.Session.ActiveBudget = *budget
 	s.Session.OnViewBudget()
 	fmt.Printf("Now viewing budget: %s\n", budget.Name)
 	return nil
@@ -87,7 +89,7 @@ func handleBudgetReport(s *State, c *handlerContext) error {
 	}
 	monthStr := monthTime.Format("2006-01-02")
 
-	report, err := s.Client.GetBudgetReport(monthStr)
+	report, err := s.Client.BudgetReport(s.Session.ActiveBudget.ID.String(), monthStr)
 	if err != nil {
 		return err
 	}
@@ -95,7 +97,7 @@ func handleBudgetReport(s *State, c *handlerContext) error {
 	assigned := cc.Format(report.Assigned, iso, true)
 	activity := cc.Format(report.Activity, iso, true)
 	balance := cc.Format(report.Balance, iso, true)
-	fmt.Printf("%s report for %s:\n", monthStr, s.Client.ViewedBudget.Name)
+	fmt.Printf("%s report for %s:\n", monthStr, s.Session.ActiveBudget.Name)
 	fmt.Printf("  %-*s | %-*s | %s\n", len(assigned), "ASSIGNED", len(activity), "ACTIVITY", "BALANCE")
 	fmt.Printf("  %s-+-%s-+-%s\n", nDashes(len("ASSIGNED")), nDashes(len("ACTIVITY")), nDashes(len("BALANCE")))
 	fmt.Printf("  %-*s | %-*s | %s\n", len(assigned), assigned, len(activity), activity, balance)
@@ -118,22 +120,22 @@ func handleBudgetList(s *State, c *handlerContext) error {
 		}
 	}
 
-	budgets, err := s.Client.GetBudgets(roleQuery)
+	budgets, err := s.Client.Budgets(s.Session.ActiveBudget.ID.String(), roleQuery)
 	if err != nil {
 		return err
 	}
 	if len(budgets) == 0 {
-		fmt.Printf("No memberships found in query from user %s. \n", s.Session.Username)
+		fmt.Printf("No memberships found in query from user %s. \n", s.Session.ActiveUser.Username)
 		return nil
 	}
 
-	fmt.Printf("%s's budget memberships: \n", s.Session.Username)
+	fmt.Printf("%s's budget memberships: \n", s.Session.ActiveUser.Username)
 	sort.Slice(budgets, func(i, j int) bool {
 		return budgets[i].Name < budgets[j].Name
 	})
 	const uuidLength = 36
-	maxLenName := MaxOfStrings(ExtractStrings(budgets, func(b client.Budget) string { return b.Name })...)
-	maxLenNotes := MaxOfStrings(ExtractStrings(budgets, func(b client.Budget) string { return b.Notes })...)
+	maxLenName := MaxOfStrings(ExtractStrings(budgets, func(b *client.Budget) string { return b.Name })...)
+	maxLenNotes := MaxOfStrings(ExtractStrings(budgets, func(b *client.Budget) string { return b.Notes })...)
 	fmt.Printf("  %-*s | %-*s | %s\n", maxLenName, "NAME", uuidLength, "ID", "NOTES")
 	fmt.Printf("  %s-+-%s-+-%s\n", nDashes(maxLenName), nDashes(uuidLength), nDashes(maxLenNotes))
 	for _, budget := range budgets {
@@ -147,7 +149,7 @@ func handleBudgetList(s *State, c *handlerContext) error {
 func handleBudgetUpdate(s *State, c *handlerContext) error {
 	budgetName, _ := c.args.pfx()
 
-	budgets, err := s.Client.GetBudgets("")
+	budgets, err := s.Client.Budgets(s.Session.ActiveBudget.ID.String(), "")
 	if err != nil {
 		return err
 	}
@@ -167,7 +169,12 @@ func handleBudgetUpdate(s *State, c *handlerContext) error {
 		payloadNotes = budget.Notes
 	}
 
-	err = s.Client.UpdateBudget(budget.ID.String(), payloadName, payloadNotes)
+	err = s.Client.BudgetUpdate(budget.ID.String(), client.BudgetCreateData{
+		MetaData: client.MetaData{
+			Name:  payloadName,
+			Notes: payloadNotes,
+		},
+	})
 	if err != nil {
 		return err
 	}
@@ -178,7 +185,7 @@ func handleBudgetUpdate(s *State, c *handlerContext) error {
 func handleBudgetDelete(s *State, c *handlerContext) error {
 	name, _ := c.args.pfx()
 
-	budgets, err := s.Client.GetBudgets("")
+	budgets, err := s.Client.Budgets(s.Session.ActiveBudget.ID.String(), "")
 	if err != nil {
 		return err
 	}
@@ -187,7 +194,7 @@ func handleBudgetDelete(s *State, c *handlerContext) error {
 		return err
 	}
 
-	err = s.Client.DeleteBudget(budget.ID.String())
+	err = s.Client.BudgetDelete(budget.ID.String())
 	if err != nil {
 		return err
 	}

@@ -33,17 +33,19 @@ func handleGroupAdd(s *State, c *handlerContext) error {
 	c.args.trackOptArgs(&c.cmd, "notes")
 	notes, _ := c.args.pfx()
 
-	groupCreated, err := s.Client.CreateGroup(name, notes)
+	err := s.Client.BudgetGroupCreate(s.Session.ActiveBudget.ID.String(), client.BudgetGroupCreateData{
+		MetaData: client.MetaData{
+			Name:  name,
+			Notes: notes,
+		},
+	})
 	if err != nil {
 		return err
 	}
-	if groupCreated {
-		fmt.Println("Group " + name + " successfully created as user: " + s.Session.Username)
-		fmt.Println("See it with: `group list`")
-		return nil
-	} else {
-		return fmt.Errorf("group could not be created")
-	}
+
+	fmt.Println("Group " + name + " successfully created as user: " + s.Session.ActiveUser.Username)
+	fmt.Println("See it with: `group list`")
+	return nil
 }
 
 func handleGroupList(s *State, c *handlerContext) error {
@@ -61,21 +63,21 @@ func handleGroupList(s *State, c *handlerContext) error {
 		}
 	}
 
-	groups, err := s.Client.GetGroups(includeQuery)
+	groups, err := s.Client.BudgetGroups(s.Session.ActiveBudget.ID.String(), includeQuery)
 	if err != nil {
 		return err
 	}
 	if len(groups) == 0 {
-		fmt.Printf("No groups found belonging to budget %s. \n", s.Client.ViewedBudget.Name)
+		fmt.Printf("No groups found belonging to budget %s. \n", s.Session.ActiveBudget.Name)
 		return nil
 	}
-	fmt.Printf("Groups under budget %s: \n", s.Client.ViewedBudget.Name)
+	fmt.Printf("Groups under budget %s: \n", s.Session.ActiveBudget.Name)
 	sort.Slice(groups, func(i, j int) bool {
 		return groups[i].Name < groups[j].Name
 	})
 	const uuidLength = 36
-	maxLenName := MaxOfStrings(ExtractStrings(groups, func(b client.Group) string { return b.Name })...)
-	maxLenNotes := MaxOfStrings(ExtractStrings(groups, func(b client.Group) string { return b.Notes })...)
+	maxLenName := MaxOfStrings(ExtractStrings(groups, func(b *client.Group) string { return b.Name })...)
+	maxLenNotes := MaxOfStrings(ExtractStrings(groups, func(b *client.Group) string { return b.Notes })...)
 	fmt.Printf("  %-*s | %-*s | %s\n", maxLenName, "NAME", uuidLength, "ID", "NOTES")
 	fmt.Printf("  %s-+-%s-+-%s\n", nDashes(maxLenName), nDashes(uuidLength), nDashes(maxLenNotes))
 	for _, group := range groups {
@@ -88,7 +90,7 @@ func handleGroupList(s *State, c *handlerContext) error {
 func handleGroupUpdate(s *State, c *handlerContext) error {
 	groupName, _ := c.args.pfx()
 
-	groups, err := s.Client.GetGroups("")
+	groups, err := s.Client.BudgetGroups(s.Session.ActiveBudget.ID.String(), "")
 	if err != nil {
 		return err
 	}
@@ -108,7 +110,12 @@ func handleGroupUpdate(s *State, c *handlerContext) error {
 		payloadNotes = group.Notes
 	}
 
-	err = s.Client.UpdateGroup(group.ID.String(), payloadName, payloadNotes)
+	err = s.Client.BudgetGroupUpdate(s.Session.ActiveBudget.ID.String(), group.ID.String(), client.BudgetGroupUpdateData{
+		MetaData: client.MetaData{
+			Name:  payloadName,
+			Notes: payloadNotes,
+		},
+	})
 	if err != nil {
 		return err
 	}
@@ -119,7 +126,7 @@ func handleGroupUpdate(s *State, c *handlerContext) error {
 func handleGroupDelete(s *State, c *handlerContext) error {
 	name, _ := c.args.pfx()
 
-	groups, err := s.Client.GetGroups("")
+	groups, err := s.Client.BudgetGroups(s.Session.ActiveBudget.ID.String(), "")
 	if err != nil {
 		return err
 	}
@@ -128,7 +135,7 @@ func handleGroupDelete(s *State, c *handlerContext) error {
 		return err
 	}
 
-	err = s.Client.DeleteGroup(group.ID.String())
+	err = s.Client.BudgetGroupDelete(s.Session.ActiveBudget.ID.String(), group.ID.String())
 	if err != nil {
 		return err
 	}

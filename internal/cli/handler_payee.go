@@ -33,17 +33,18 @@ func handlePayeeAdd(s *State, c *handlerContext) error {
 	c.args.trackOptArgs(&c.cmd, "notes")
 	notes, _ := c.args.pfx()
 
-	payeeCreated, err := s.Client.CreatePayee(name, notes)
+	err := s.Client.BudgetPayeeCreate(s.Session.ActiveBudget.ID.String(), client.BudgetPayeeCreateData{
+		MetaData: client.MetaData{
+			Name:  name,
+			Notes: notes,
+		},
+	})
 	if err != nil {
 		return err
 	}
-	if payeeCreated {
-		fmt.Println("Payee " + name + " successfully created as user: " + s.Session.Username)
-		fmt.Println("See it with: `payee list`")
-		return nil
-	} else {
-		return fmt.Errorf("payee could not be created")
-	}
+	fmt.Println("Payee " + name + " successfully created as user: " + s.Session.ActiveUser.Username)
+	fmt.Println("See it with: `payee list`")
+	return nil
 }
 
 func handlePayeeList(s *State, c *handlerContext) error {
@@ -61,21 +62,21 @@ func handlePayeeList(s *State, c *handlerContext) error {
 		}
 	}
 
-	payees, err := s.Client.GetPayees(includeQuery)
+	payees, err := s.Client.BudgetPayees(s.Session.ActiveBudget.ID.String(), includeQuery)
 	if err != nil {
 		return err
 	}
 	if len(payees) == 0 {
-		fmt.Printf("No payees found belonging to budget %s. \n", s.Client.ViewedBudget.Name)
+		fmt.Printf("No payees found belonging to budget %s. \n", s.Session.ActiveBudget.Name)
 		return nil
 	}
-	fmt.Printf("Payees under budget %s: \n", s.Client.ViewedBudget.Name)
+	fmt.Printf("Payees under budget %s: \n", s.Session.ActiveBudget.Name)
 	sort.Slice(payees, func(i, j int) bool {
 		return payees[i].Name < payees[j].Name
 	})
 	const uuidLength = 36
-	maxLenName := MaxOfStrings(ExtractStrings(payees, func(b client.Payee) string { return b.Name })...)
-	maxLenNotes := MaxOfStrings(ExtractStrings(payees, func(b client.Payee) string { return b.Notes })...)
+	maxLenName := MaxOfStrings(ExtractStrings(payees, func(b *client.Payee) string { return b.Name })...)
+	maxLenNotes := MaxOfStrings(ExtractStrings(payees, func(b *client.Payee) string { return b.Notes })...)
 	fmt.Printf("  %-*s | %-*s | %s\n", maxLenName, "NAME", uuidLength, "ID", "NOTES")
 	fmt.Printf("  %s-+-%s-+-%s\n", nDashes(maxLenName), nDashes(uuidLength), nDashes(maxLenNotes))
 	for _, payee := range payees {
@@ -88,7 +89,7 @@ func handlePayeeList(s *State, c *handlerContext) error {
 func handlePayeeUpdate(s *State, c *handlerContext) error {
 	payeeName, _ := c.args.pfx()
 
-	payees, err := s.Client.GetPayees("")
+	payees, err := s.Client.BudgetPayees(s.Session.ActiveBudget.ID.String(), "")
 	if err != nil {
 		return err
 	}
@@ -108,7 +109,12 @@ func handlePayeeUpdate(s *State, c *handlerContext) error {
 		payloadNotes = payee.Notes
 	}
 
-	err = s.Client.UpdatePayee(payee.ID.String(), payloadName, payloadNotes)
+	err = s.Client.BudgetPayeeUpdate(s.Session.ActiveBudget.ID.String(), payee.ID.String(), client.BudgetPayeeUpdateData{
+		MetaData: client.MetaData{
+			Name:  payloadName,
+			Notes: payloadNotes,
+		},
+	})
 	if err != nil {
 		return err
 	}
@@ -121,7 +127,7 @@ func handlePayeeDelete(s *State, c *handlerContext) error {
 	c.args.trackOptArgs(&c.cmd, "replacement")
 	newPayeeName, _ := c.args.pfx()
 
-	payees, err := s.Client.GetPayees("")
+	payees, err := s.Client.BudgetPayees(s.Session.ActiveBudget.ID.String(), "")
 	if err != nil {
 		return err
 	}
@@ -130,7 +136,9 @@ func handlePayeeDelete(s *State, c *handlerContext) error {
 		return err
 	}
 
-	err = s.Client.DeletePayee(payee.ID.String(), newPayeeName)
+	err = s.Client.BudgetPayeeDelete(s.Session.ActiveBudget.ID.String(), payee.ID.String(), client.BudgetPayeeDeleteData{
+		NewPayeeName: newPayeeName,
+	})
 	if err != nil {
 		return err
 	}

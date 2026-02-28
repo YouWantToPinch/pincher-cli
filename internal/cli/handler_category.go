@@ -41,17 +41,19 @@ func handleCategoryAdd(s *State, c *handlerContext) error {
 	c.args.trackOptArgs(&c.cmd, "group")
 	groupName, _ := c.args.pfx()
 
-	categoryCreated, err := s.Client.CreateCategory(name, notes, groupName)
+	err := s.Client.BudgetCategoryCreate(s.Session.ActiveBudget.ID.String(), client.BudgetCategoryCreateData{
+		MetaData: client.MetaData{
+			Name:  name,
+			Notes: notes,
+		},
+		GroupName: groupName,
+	})
 	if err != nil {
 		return err
 	}
-	if categoryCreated {
-		fmt.Println("Category " + name + " successfully created as user: " + s.Session.Username)
-		fmt.Println("See it with: `category list`")
-		return nil
-	} else {
-		return fmt.Errorf("budget could not be created")
-	}
+	fmt.Println("Category " + name + " successfully created as user: " + s.Session.ActiveUser.Username)
+	fmt.Println("See it with: `category list`")
+	return nil
 }
 
 func handleCategoryAssign(s *State, c *handlerContext) error {
@@ -77,7 +79,11 @@ func handleCategoryAssign(s *State, c *handlerContext) error {
 	c.args.trackOptArgs(&c.cmd, "from")
 	fromCategory, _ := c.args.pfx()
 
-	err = s.Client.AssignAmountToCategory(int64(parsedAmount), toCategory, fromCategory, monthStr)
+	err = s.Client.BudgetCategoryAssign(s.Session.ActiveBudget.ID.String(), monthStr, client.BudgetCategoryAssignData{
+		Amount:       parsedAmount,
+		ToCategory:   toCategory,
+		FromCategory: fromCategory,
+	})
 	if err != nil {
 		return err
 	}
@@ -103,7 +109,7 @@ func handleCategoryReports(s *State, c *handlerContext) error {
 		}
 	}
 
-	reports, err := s.Client.GetCategoryReports(monthTime.Format("2006-01-02"))
+	reports, err := s.Client.BudgetCategoryReports(s.Session.ActiveBudget.ID.String(), monthTime.Format("2006-01-02"))
 	if err != nil {
 		return err
 	}
@@ -114,12 +120,12 @@ func handleCategoryReports(s *State, c *handlerContext) error {
 		fmt.Println("Nothing to report.")
 		return nil
 	}
-	fmt.Printf("Categories under budget %s: \n", s.Client.ViewedBudget.Name)
-	maxLenMonth := MaxOfStrings(ExtractStrings(reports, func(r client.CategoryReport) string { return r.MonthID.Format("2006-01") })...)
-	maxLenName := MaxOfStrings(ExtractStrings(reports, func(r client.CategoryReport) string { return r.Name })...)
-	maxLenAssigned := MaxOfStrings(ExtractStrings(reports, func(r client.CategoryReport) string { return cc.Format(r.Assigned, s.Config.CurrencyISOCode, true) })...)
-	maxLenActivity := MaxOfStrings(ExtractStrings(reports, func(r client.CategoryReport) string { return cc.Format(r.Activity, s.Config.CurrencyISOCode, true) })...)
-	maxLenBalance := MaxOfStrings(ExtractStrings(reports, func(r client.CategoryReport) string { return cc.Format(r.Balance, s.Config.CurrencyISOCode, true) })...)
+	fmt.Printf("Categories under budget %s: \n", s.Session.ActiveBudget.Name)
+	maxLenMonth := MaxOfStrings(ExtractStrings(reports, func(r *client.CategoryReport) string { return r.MonthID.Format("2006-01") })...)
+	maxLenName := MaxOfStrings(ExtractStrings(reports, func(r *client.CategoryReport) string { return r.Name })...)
+	maxLenAssigned := MaxOfStrings(ExtractStrings(reports, func(r *client.CategoryReport) string { return cc.Format(r.Assigned, s.Config.CurrencyISOCode, true) })...)
+	maxLenActivity := MaxOfStrings(ExtractStrings(reports, func(r *client.CategoryReport) string { return cc.Format(r.Activity, s.Config.CurrencyISOCode, true) })...)
+	maxLenBalance := MaxOfStrings(ExtractStrings(reports, func(r *client.CategoryReport) string { return cc.Format(r.Balance, s.Config.CurrencyISOCode, true) })...)
 	fmt.Printf("  %-*s | %-*s | %-*s | %-*s | %s\n", maxLenMonth, "MONTH", maxLenName, "NAME", maxLenAssigned, "ASSIGNED", maxLenActivity, "ACTIVITY", "BALANCE")
 	fmt.Printf("  %s-+-%s-+-%s-+-%s-+-%s\n", nDashes(maxLenMonth), nDashes(maxLenName), nDashes(maxLenAssigned), nDashes(maxLenActivity), nDashes(maxLenBalance))
 	for _, report := range reports {
@@ -147,21 +153,21 @@ func handleCategoryList(s *State, c *handlerContext) error {
 		groupQuery = "?group_name=" + groupName
 	}
 
-	categories, err := s.Client.GetCategories(groupQuery)
+	categories, err := s.Client.BudgetCategories(s.Session.ActiveBudget.ID.String(), groupQuery)
 	if err != nil {
 		return err
 	}
 	if len(categories) == 0 {
-		fmt.Printf("No categories found belonging to budget %s. \n", s.Client.ViewedBudget.Name)
+		fmt.Printf("No categories found belonging to budget %s. \n", s.Session.ActiveBudget.Name)
 		return nil
 	}
-	fmt.Printf("Categories under budget %s: \n", s.Client.ViewedBudget.Name)
+	fmt.Printf("Categories under budget %s: \n", s.Session.ActiveBudget.Name)
 	sort.Slice(categories, func(i, j int) bool {
 		return categories[i].Name < categories[j].Name
 	})
 	const uuidLength = 36
-	maxLenName := MaxOfStrings(ExtractStrings(categories, func(b client.Category) string { return b.Name })...)
-	maxLenNotes := MaxOfStrings(ExtractStrings(categories, func(b client.Category) string { return b.Notes })...)
+	maxLenName := MaxOfStrings(ExtractStrings(categories, func(b *client.Category) string { return b.Name })...)
+	maxLenNotes := MaxOfStrings(ExtractStrings(categories, func(b *client.Category) string { return b.Notes })...)
 	fmt.Printf("  %-*s | %-*s | %s\n", maxLenName, "NAME", uuidLength, "ID", "NOTES")
 	fmt.Printf("  %s-+-%s-+-%s\n", nDashes(maxLenName), nDashes(uuidLength), nDashes(maxLenNotes))
 	for _, category := range categories {
@@ -174,7 +180,7 @@ func handleCategoryList(s *State, c *handlerContext) error {
 func handleCategoryUpdate(s *State, c *handlerContext) error {
 	categoryName, _ := c.args.pfx()
 
-	categories, err := s.Client.GetCategories("")
+	categories, err := s.Client.BudgetCategories(s.Session.ActiveBudget.ID.String(), "")
 	if err != nil {
 		return err
 	}
@@ -185,18 +191,6 @@ func handleCategoryUpdate(s *State, c *handlerContext) error {
 
 	c.args.trackOptArgs(&c.cmd, "group")
 	groupName, _ := c.args.pfx()
-	assignGroupID := ""
-	if groupName != "" {
-		groups, err := s.Client.GetGroups("")
-		if err != nil {
-			return err
-		}
-		group, err := findGroupByName(groupName, groups)
-		if err != nil {
-			return err
-		}
-		assignGroupID = group.ID.String()
-	}
 
 	c.args.trackOptArgs(&c.cmd, "name")
 	payloadName, err := c.args.pfx()
@@ -209,7 +203,13 @@ func handleCategoryUpdate(s *State, c *handlerContext) error {
 		payloadNotes = category.Notes
 	}
 
-	err = s.Client.UpdateCategory(category.ID.String(), payloadName, payloadNotes, assignGroupID)
+	err = s.Client.BudgetCategoryUpdate(s.Session.ActiveBudget.ID.String(), category.ID.String(), client.BudgetCategoryUpdateData{
+		MetaData: client.MetaData{
+			Name:  payloadName,
+			Notes: payloadNotes,
+		},
+		GroupName: groupName,
+	})
 	if err != nil {
 		return err
 	}
@@ -220,7 +220,7 @@ func handleCategoryUpdate(s *State, c *handlerContext) error {
 func handleCategoryDelete(s *State, c *handlerContext) error {
 	name, _ := c.args.pfx()
 
-	categories, err := s.Client.GetCategories("")
+	categories, err := s.Client.BudgetCategories(s.Session.ActiveBudget.ID.String(), "")
 	if err != nil {
 		return err
 	}
@@ -229,9 +229,10 @@ func handleCategoryDelete(s *State, c *handlerContext) error {
 		return err
 	}
 
-	err = s.Client.DeleteCategory(category.ID.String())
+	err = s.Client.BudgetCategoryDelete(s.Session.ActiveBudget.ID.String(), category.ID.String())
 	if err != nil {
 		return err
 	}
+	fmt.Println("Category deleted.")
 	return nil
 }
