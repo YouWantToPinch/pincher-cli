@@ -54,18 +54,19 @@ func handleTxnTransfer(s *State, c *handlerContext) error {
 	c.args.trackOptArgs(&c.cmd, "cleared")
 	isCleared, _ := c.args.pfx()
 
-	_, err = s.Client.LogTxn(
-		fromAccountName,
-		toAccountName,
-		transactionDate,
-		"",
-		notes,
-		isCleared == "SET",
-		amounts,
-	)
+	err = s.Client.BudgetTransactionCreate(s.Session.ActiveBudget.ID.String(), client.BudgetTransactionCreateData{
+		AccountName:         fromAccountName,
+		TransferAccountName: toAccountName,
+		TransactionDate:     transactionDate,
+		PayeeName:           "",
+		Notes:               notes,
+		Cleared:             isCleared == "SET",
+		Amounts:             amounts,
+	})
 	if err != nil {
 		return err
 	}
+	fmt.Printf("New transfer logged to accounts: %s -> %s\n", fromAccountName, toAccountName)
 	return nil
 }
 
@@ -125,19 +126,19 @@ func handleTxnLog(s *State, c *handlerContext) error {
 		}
 		amounts[category] = int64(totalAmount)
 	}
-
-	_, err = s.Client.LogTxn(
-		accountName,
-		"",
-		transactionDate,
-		payeeName,
-		notes,
-		isCleared == "SET",
-		amounts,
-	)
+	err = s.Client.BudgetTransactionCreate(s.Session.ActiveBudget.ID.String(), client.BudgetTransactionCreateData{
+		AccountName:         accountName,
+		TransferAccountName: "",
+		TransactionDate:     transactionDate,
+		PayeeName:           payeeName,
+		Notes:               notes,
+		Cleared:             isCleared == "SET",
+		Amounts:             amounts,
+	})
 	if err != nil {
 		return err
 	}
+	fmt.Printf("New transaction logged to account: %s\n", accountName)
 	return nil
 }
 
@@ -161,24 +162,24 @@ func handleTxnList(s *State, c *handlerContext) error {
 		txnQuery = "?" + txnQuery
 	}
 
-	txns, err := s.Client.GetTxns(txnQuery)
+	txns, err := s.Client.BudgetTransactionsDetails(s.Session.ActiveBudget.ID.String(), txnQuery)
 	if err != nil {
 		return err
 	}
 	if len(txns) == 0 {
-		fmt.Printf("No transactions found under budget %s. \n", s.Client.ViewedBudget.Name)
+		fmt.Printf("No transactions found under budget %s.\n", s.Session.ActiveBudget.Name)
 		return nil
 	}
-	fmt.Printf("%s transactions: \n", s.Client.ViewedBudget.Name)
+	fmt.Printf("%s transactions:\n", s.Session.ActiveBudget.Name)
 	sort.Slice(txns, func(i, j int) bool {
 		return txns[i].TransactionDate.Before(txns[j].TransactionDate)
 	})
 	// const uuidLength = 36
-	maxLenDate := MaxOfStrings(ExtractStrings(txns, func(t client.TransactionDetail) string { return t.TransactionDate.Format("2006-01-02") })...)
-	maxLenAmount := MaxOfStrings(ExtractStrings(txns, func(t client.TransactionDetail) string {
+	maxLenDate := MaxOfStrings(ExtractStrings(txns, func(t *client.TransactionDetail) string { return t.TransactionDate.Format("2006-01-02") })...)
+	maxLenAmount := MaxOfStrings(ExtractStrings(txns, func(t *client.TransactionDetail) string {
 		return cc.Format(t.TotalAmount, s.Config.CurrencyISOCode, true)
 	})...)
-	maxLenNotes := MaxOfStrings(ExtractStrings(txns, func(t client.TransactionDetail) string { return firstNChars(t.Notes, 25) + "..." })...)
+	maxLenNotes := MaxOfStrings(ExtractStrings(txns, func(t *client.TransactionDetail) string { return firstNChars(t.Notes, 25) + "..." })...)
 	fmt.Printf("  %-*s | %-*s | %s\n", maxLenDate, "DATE", maxLenAmount, "AMOUNT", "NOTES")
 	fmt.Printf("  %s-+-%s-+-%s\n", nDashes(maxLenDate), nDashes(maxLenAmount), nDashes(maxLenNotes))
 	for _, txn := range txns {
@@ -187,3 +188,19 @@ func handleTxnList(s *State, c *handlerContext) error {
 
 	return nil
 }
+
+// TODO:
+// Add transaction updates and deletes.
+//
+// These are a slightly different beast, as transactions cannot be
+// identified by name.
+//
+// The implementation is going to require something of a list view
+// or other interactive approach as might be provided by Charm's 'bubbletea,'
+// a courtesy that also ought be extended to the transaction LOGGING
+// as well, for a better user experience.
+//
+// One idea might be to have a bubbletea model that renders a list of
+// transactions, and when the limit is hit near the bottom, a message is
+// sent outside the model to another goroutine that requests the next
+// (LIMIT) amount of transactions, then adds it the the list.

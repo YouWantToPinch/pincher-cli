@@ -33,24 +33,27 @@ func handleAccountAdd(s *State, c *handlerContext) error {
 	c.args.trackOptArgs(&c.cmd, "off-budget")
 	accountType, _ := c.args.pfx()
 	if accountType == "SET" {
-		accountType = "OFF_BUDGET"
+		accountType = client.BudgetAccountTypeOffBudget
 	} else {
-		accountType = "ON_BUDGET"
+		accountType = client.BudgetAccountTypeOnBudget
 	}
 
 	c.args.trackOptArgs(&c.cmd, "notes")
 	notes, _ := c.args.pfx()
 
-	accountCreated, err := s.Client.CreateAccount(name, notes, accountType)
+	err := s.Client.BudgetAccountCreate(s.Session.ActiveBudget.ID.String(), client.BudgetAccountCreateData{
+		MetaData: client.MetaData{
+			Name:  name,
+			Notes: notes,
+		},
+		AccountType: accountType,
+	})
 	if err != nil {
-		return err
-	}
-	if accountCreated {
-		fmt.Println("Account " + name + " successfully created as user: " + s.Session.Username + ".")
+		return fmt.Errorf("s.Client.BudgetAccountCreate: %w", err)
+	} else {
+		fmt.Println("Account " + name + " successfully created as user: " + s.Session.ActiveUser.Username + ".")
 		fmt.Println("See it with: `account list`")
 		return nil
-	} else {
-		return fmt.Errorf("account could not be created")
 	}
 }
 
@@ -63,21 +66,21 @@ func handleAccountList(s *State, c *handlerContext) error {
 		listDeletedQuery = "?deleted"
 	}
 
-	accounts, err := s.Client.GetAccounts(listDeletedQuery)
+	accounts, err := s.Client.BudgetAccounts(s.Session.ActiveBudget.ID.String(), listDeletedQuery)
 	if err != nil {
 		return err
 	}
 	if len(accounts) == 0 {
-		fmt.Printf("No accounts found belonging to budget %s. \n", s.Client.ViewedBudget.Name)
+		fmt.Printf("No accounts found belonging to budget %s. \n", s.Session.ActiveBudget.Name)
 		return nil
 	}
-	fmt.Printf("Accounts under budget %s: \n", s.Client.ViewedBudget.Name)
+	fmt.Printf("Accounts under budget %s: \n", s.Session.ActiveBudget.Name)
 	sort.Slice(accounts, func(i, j int) bool {
 		return accounts[i].Name < accounts[j].Name
 	})
 	const uuidLength = 36
-	maxLenName := MaxOfStrings(ExtractStrings(accounts, func(b client.Account) string { return b.Name })...)
-	maxLenNotes := MaxOfStrings(ExtractStrings(accounts, func(b client.Account) string { return b.Notes })...)
+	maxLenName := MaxOfStrings(ExtractStrings(accounts, func(b *client.Account) string { return b.Name })...)
+	maxLenNotes := MaxOfStrings(ExtractStrings(accounts, func(b *client.Account) string { return b.Notes })...)
 	fmt.Printf("  %-*s | %-*s | %s\n", maxLenName, "NAME", uuidLength, "ID", "NOTES")
 	fmt.Printf("  %s-+-%s-+-%s\n", nDashes(maxLenName), nDashes(uuidLength), nDashes(maxLenNotes))
 	for _, account := range accounts {
@@ -90,7 +93,7 @@ func handleAccountList(s *State, c *handlerContext) error {
 func handleAccountUpdate(s *State, c *handlerContext) error {
 	accountName, _ := c.args.pfx()
 
-	accounts, err := s.Client.GetAccounts("")
+	accounts, err := s.Client.BudgetAccounts(s.Session.ActiveBudget.ID.String(), "")
 	if err != nil {
 		return err
 	}
@@ -115,7 +118,13 @@ func handleAccountUpdate(s *State, c *handlerContext) error {
 		payloadNotes = account.Notes
 	}
 
-	err = s.Client.UpdateAccount(account.ID.String(), payloadName, payloadNotes, payloadAccountType)
+	err = s.Client.BudgetAccountUpdate(s.Session.ActiveBudget.ID.String(), account.ID.String(), client.BudgetAccountUpdateData{
+		MetaData: client.MetaData{
+			Name:  payloadName,
+			Notes: payloadNotes,
+		},
+		AccountType: payloadAccountType,
+	})
 	if err != nil {
 		return err
 	}
@@ -124,31 +133,9 @@ func handleAccountUpdate(s *State, c *handlerContext) error {
 }
 
 func handleAccountRestore(s *State, c *handlerContext) error {
-	accountName, _ := c.args.pfx()
-
-	accounts, err := s.Client.GetAccounts("?include=deleted")
-	if err != nil {
-		return err
-	}
-	account, err := findAccountByName(accountName, accounts)
-	if err != nil {
-		return err
-	}
-
-	err = s.Client.RestoreAccount(account.ID.String(), accountName)
-	if err != nil {
-		return err
-	}
-	fmt.Println("Account restored")
-	return nil
-}
-
-func handleAccountDelete(s *State, c *handlerContext) error {
 	name, _ := c.args.pfx()
-	c.args.trackOptArgs(&c.cmd, "hard")
-	flagDeleteHard, _ := c.args.pfx()
 
-	accounts, err := s.Client.GetAccounts("?include=deleted")
+	accounts, err := s.Client.BudgetAccounts(s.Session.ActiveBudget.ID.String(), "?deleted")
 	if err != nil {
 		return err
 	}
@@ -157,9 +144,38 @@ func handleAccountDelete(s *State, c *handlerContext) error {
 		return err
 	}
 
-	err = s.Client.DeleteAccount(account.ID.String(), flagDeleteHard)
+	err = s.Client.BudgetAccountRestore(s.Session.ActiveBudget.ID.String(), account.ID.String())
 	if err != nil {
 		return err
+	}
+	fmt.Println("Account restored.")
+	return nil
+}
+
+func handleAccountDelete(s *State, c *handlerContext) error {
+	name, _ := c.args.pfx()
+	c.args.trackOptArgs(&c.cmd, "hard")
+	flagDeleteHard, _ := c.args.pfx()
+
+	accounts, err := s.Client.BudgetAccounts(s.Session.ActiveBudget.ID.String(), "?deleted")
+	if err != nil {
+		return err
+	}
+	account, err := findAccountByName(name, accounts)
+	if err != nil {
+		return err
+	}
+
+	err = s.Client.BudgetAccountDelete(s.Session.ActiveBudget.ID.String(), account.ID.String(), client.BudgetAccountDeleteData{
+		DeleteHard: flagDeleteHard == "SET",
+	})
+	if err != nil {
+		return err
+	}
+	if flagDeleteHard == "SET" {
+		fmt.Println("Account deleted. It cannot be restored.")
+	} else {
+		fmt.Println("Account deleted. It may be restored, or permanently deleted.")
 	}
 	return nil
 }

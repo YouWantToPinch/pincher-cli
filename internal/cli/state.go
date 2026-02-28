@@ -46,12 +46,12 @@ func (s *State) getDiv(styled bool) string {
 
 // getUnstyledPrompt returns the pincher-cli prompt without pretty colors :(
 func (s *State) getUnstyledPrompt() string {
-	if s.Session.Username == "" {
+	if s.Session.ActiveUser.Username == "" {
 		return "pin¢her > "
-	} else if s.Client.ViewedBudget.Name == "" {
-		return fmt.Sprintf("p¢/%s > ", s.Session.Username)
+	} else if s.Session.ActiveBudget.Name == "" {
+		return fmt.Sprintf("p¢/%s > ", s.Session.ActiveUser.Username)
 	} else {
-		return fmt.Sprintf("p¢/%s[%s] > ", s.Session.Username, s.Client.ViewedBudget.Name)
+		return fmt.Sprintf("p¢/%s[%s] > ", s.Session.ActiveUser.Username, s.Session.ActiveBudget.Name)
 	}
 }
 
@@ -60,7 +60,7 @@ func (s *State) getStyledPrompt() string {
 	cent := s.styles.Orange.Render("¢")
 	chev := s.styles.White.Render(" > ")
 
-	if s.Session.Username == "" {
+	if s.Session.ActiveUser.Username == "" {
 		pin := s.styles.White.Render("pin")
 		her := s.styles.White.Render("her")
 		return pin + cent + her + chev
@@ -68,12 +68,12 @@ func (s *State) getStyledPrompt() string {
 		p := s.styles.White.Render("p")
 		slash := s.styles.White.Render("/")
 
-		if s.Client.ViewedBudget.Name == "" {
-			return p + cent + slash + s.styles.White.Render(s.Session.Username) + chev
+		if s.Session.ActiveBudget.Name == "" {
+			return p + cent + slash + s.styles.White.Render(s.Session.ActiveUser.Username) + chev
 		} else {
 			lbr := s.styles.Green.Render("[")
 			rbr := s.styles.Green.Render("]")
-			return p + cent + slash + s.styles.White.Render(s.Session.Username) + lbr + s.styles.White.Render(s.Client.ViewedBudget.Name) + rbr + chev
+			return p + cent + slash + s.styles.White.Render(s.Session.ActiveUser.Username) + lbr + s.styles.White.Render(s.Session.ActiveBudget.Name) + rbr + chev
 		}
 	}
 }
@@ -82,7 +82,8 @@ func (s *State) getStyledPrompt() string {
 // a logged-in user.
 type cliSession struct {
 	CommandRegistry *commandRegistry
-	client.User
+	ActiveUser      client.User
+	ActiveBudget    client.Budget
 }
 
 // Init preregisters all commands to the internal command registry.
@@ -103,8 +104,8 @@ func (s *cliSession) Init() {
 func (s *cliSession) OnLogin(user client.User) {
 	// register commands that require login
 	s.CommandRegistry.register("budget")
-	s.User = user
-	fmt.Printf("Logged in as user: %s\n", s.Username)
+	s.ActiveUser = user
+	fmt.Printf("Logged in as user: %s\n", s.ActiveUser.Username)
 }
 
 func (s *cliSession) OnViewBudget() {
@@ -114,6 +115,6 @@ func (s *cliSession) OnViewBudget() {
 
 func (s *cliSession) OnLogout() {
 	// deregister commands
-	s.User = client.User{}
+	s.ActiveUser = client.User{}
 	s.CommandRegistry.deregisterNonBaseCommands()
 }
