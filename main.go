@@ -68,16 +68,26 @@ func main() {
 
 	<-done
 	if cliState.Config.StayLoggedIn {
+		// update config to track refresh token for user
+		// to log in again automatically
 		cliState.Config.RefreshToken = cliState.Client.RefreshToken
 		err := cliState.Config.WriteToFile()
 		if err != nil {
 			fmt.Printf("CONFIG ERROR: %s\n", err)
 		}
+
+		// no cache needs to remain if user wants to be logged out
 		err = cliState.Client.SaveCacheFile()
 		if err != nil {
 			fmt.Printf("CACHE ERROR: %s\n", err)
 		} else {
 			cliState.Config.RefreshToken = ""
+		}
+	} else {
+		cliState.Config.RefreshToken = ""
+		err := cliState.Config.WriteToFile()
+		if err != nil {
+			fmt.Printf("CONFIG ERROR: %s\n", err)
 		}
 	}
 }
