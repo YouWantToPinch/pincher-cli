@@ -88,30 +88,6 @@ func (c *Client) SaveCacheFile() error {
 	return nil
 }
 
-func (c *Client) MakeRequest(method, path, token string, body any) (*http.Request, error) {
-	var buffer io.Reader
-
-	if body != nil {
-		b, err := json.Marshal(body)
-		if err != nil {
-			return nil, err
-		}
-		buffer = bytes.NewReader(b)
-	}
-
-	req, err := http.NewRequest(method, path, buffer)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	if token != "" {
-		req.Header.Set("Authorization", "Bearer "+token)
-	}
-
-	return req, nil
-}
-
 // Get wrapper for doRequest
 func (c *Client) Get(url, token string, out any) (response *http.Response, respFromCache bool, err error) {
 	if val, ok := c.cache.Get(url); ok {
@@ -124,7 +100,7 @@ func (c *Client) Get(url, token string, out any) (response *http.Response, respF
 		}
 	}
 
-	resp, err := c.doRequest(http.MethodGet, url, token, nil, out)
+	resp, err := c.doRequestWithCache(http.MethodGet, url, token, nil, out)
 	if err == nil && out != nil {
 		data, cacheErr := json.Marshal(out)
 		if cacheErr != nil {
@@ -137,27 +113,49 @@ func (c *Client) Get(url, token string, out any) (response *http.Response, respF
 	return resp, false, err
 }
 
-// Post wrapper for doRequest
+// Post wrapper for doRequestWithCache
 func (c *Client) Post(url, token string, payload, out any) (*http.Response, error) {
-	return c.doRequest(http.MethodPost, url, token, payload, out)
+	return c.doRequestWithCache(http.MethodPost, url, token, payload, out)
 }
 
-// Put wrapper for doRequest
+// Put wrapper for doRequestWithCache
 func (c *Client) Put(url, token string, payload any) (*http.Response, error) {
-	return c.doRequest(http.MethodPut, url, token, payload, nil)
+	return c.doRequestWithCache(http.MethodPut, url, token, payload, nil)
 }
 
-// Patch wrapper for doRequest
+// Patch wrapper for doRequestWithCache
 func (c *Client) Patch(url, token string, payload any) (*http.Response, error) {
-	return c.doRequest(http.MethodPatch, url, token, payload, nil)
+	return c.doRequestWithCache(http.MethodPatch, url, token, payload, nil)
 }
 
-// Delete wrapper for doRequest
+// Delete wrapper for doRequestWithCache
 func (c *Client) Delete(url, token string, payload any) (*http.Response, error) {
-	return c.doRequest(http.MethodDelete, url, token, payload, nil)
+	return c.doRequestWithCache(http.MethodDelete, url, token, payload, nil)
 }
 
+// Request validates a request before making a call to the API with it,
+// adding the client's internal token value to the Authorization header
+// as a Bearer token, if it is valid and not empty.
 func (c *Client) Request(method, destination string, data, result any) error {
+	return c.doRequest(&c.token, method, destination, data, result)
+}
+
+// RequestWithToken validates a request before making a call to the API with it,
+// but instead of using the client's internal token value as a bearer
+// token in the Authorization header, accepts the given token and uses
+// that, instead.
+//
+// This is useful when making calls to the API that may expect a
+// Refresh Token rather than an Access Token, so as to get a NEW access
+// token to work with.
+func (c *Client) RequestWithToken(token *string, method, destination string, data, result any) error {
+	return c.doRequest(token, method, destination, data, result)
+}
+
+// doRequest validates a request before making a call to the API with it.
+func (c *Client) doRequest(token *string, method, destination string, data, result any) error {
+	fmt.Println("DEBUG DEST: " + destination)
+
 	destination, err := c.ResolveURL("/api" + destination)
 	if err != nil {
 		return err
@@ -174,8 +172,9 @@ func (c *Client) Request(method, destination string, data, result any) error {
 	}
 
 	request.Header.Set("Content-Type", contentType)
-	if c.token != "" {
-		request.Header.Set("Authorization", "Bearer "+c.token)
+
+	if token != nil && *token != "" {
+		request.Header.Set("Authorization", "Bearer "+*token)
 	}
 
 	response, err := c.Do(request)
@@ -191,6 +190,24 @@ func (c *Client) Request(method, destination string, data, result any) error {
 	}
 
 	return nil
+}
+
+// prepareJSONBody encodes data as JSON
+func (c *Client) prepareJSONBody(body any) (io.Reader, string, error) {
+	data, err := json.Marshal(body)
+	if err != nil {
+		return nil, "", fmt.Errorf("json.Marshal: %w", err)
+	}
+
+	return bytes.NewReader(data), "application/json", nil
+}
+
+func (c *Client) prepareRequestBody(body any) (io.Reader, string, error) {
+	if body == nil {
+		return http.NoBody, "application/json", nil
+	}
+
+	return c.prepareJSONBody(body)
 }
 
 // handleResponse processes the API response
@@ -243,7 +260,14 @@ func sameHostname(a, b *url.URL) bool {
 	return strings.EqualFold(a.Host, b.Host)
 }
 
-func (c *Client) doRequest(method, url, token string, payload, out any) (*http.Response, error) {
+// doRequestWithCache is a DEPRECATED function that makes an API call
+// with a request built from the given arguments, and updates the client's
+// internal cache when doing so.
+// doRequestWithCache is being phased out in favor of an approach that expects
+// package users to deliberately work with the internal cache is needed, rather
+// than baking its logic into any logic making API calls.
+// doRequestWithCache has been replaced with Client.Request().
+func (c *Client) doRequestWithCache(method, url, token string, payload, out any) (*http.Response, error) {
 	// try to make the new request.
 	req, err := c.MakeRequest(method, url, token, payload)
 	if err != nil {
@@ -274,7 +298,7 @@ func (c *Client) doRequest(method, url, token string, payload, out any) (*http.R
 
 			// Try to get a new access token if it is invalid or we got an error.
 			// If that's not possible, log out the user, as their session must therefore be invalid.
-			err := c.GetAccessToken()
+			err := c.UserTokenRefresh()
 			if err != nil {
 				// an error return here means the refrsh token was invalid
 				return nil, err
@@ -314,22 +338,32 @@ func (c *Client) doRequest(method, url, token string, payload, out any) (*http.R
 	return resp, nil
 }
 
-// prepareJSONBody encodes data as JSON
-func (c *Client) prepareJSONBody(body any) (io.Reader, string, error) {
-	data, err := json.Marshal(body)
+// MakeRequest is a DEPRECATED function that accepts
+// arguments for building a request to be used for
+// an API call and returns the result.
+// In doRequest, it is replaced with prepareRequestBody.
+func (c *Client) MakeRequest(method, path, token string, body any) (*http.Request, error) {
+	var buffer io.Reader
+
+	if body != nil {
+		b, err := json.Marshal(body)
+		if err != nil {
+			return nil, err
+		}
+		buffer = bytes.NewReader(b)
+	}
+
+	req, err := http.NewRequest(method, path, buffer)
 	if err != nil {
-		return nil, "", fmt.Errorf("json.Marshal: %w", err)
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
 	}
 
-	return bytes.NewReader(data), "application/json", nil
-}
-
-func (c *Client) prepareRequestBody(body any) (io.Reader, string, error) {
-	if body == nil {
-		return http.NoBody, "application/json", nil
-	}
-
-	return c.prepareJSONBody(body)
+	return req, nil
 }
 
 // --------------
@@ -375,6 +409,20 @@ func checkTokenExpired(tokenString string) (bool, error) {
 // --------------------------------------------
 //  HTTP data that can be sent to the REST API
 // --------------------------------------------
+
+// AUTH, USERS
+
+type UserCreateData struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+type (
+	UserLoginData  = UserCreateData
+	UserUpdateData = UserCreateData
+	UserDeleteData = UserCreateData
+)
+
+// RESOURCE META VALUES
 
 type MetaData struct {
 	Name  string `json:"name"`

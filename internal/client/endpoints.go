@@ -59,9 +59,9 @@ const (
 	URLAdminUsers      = URLAdmin + "/users"
 	URLAdminUsersCount = URLAdminUsers + "/count"
 
-	URLLogin   = "/login"
-	URLRefresh = "/refresh"
-	URLRevoke  = "/revoke"
+	URLUserTokenLogin   = "/login"
+	URLUserTokenRefresh = "/refresh"
+	URLUserTokenRevoke  = "/revoke"
 
 	URLUsers = "/users"
 
@@ -89,6 +89,22 @@ const (
 	URLBudgetMonthCategories     = URLBudgetMonth + "/categories"
 	URLBudgetMonthCategory       = URLBudgetMonthCategories + sVerb
 )
+
+func EndpointLogin() string {
+	return URLUserTokenLogin
+}
+
+func EndpointRefresh() string {
+	return URLUserTokenRefresh
+}
+
+func EndpointRevoke() string {
+	return URLUserTokenRevoke
+}
+
+func EndpointUsers() string {
+	return URLUsers
+}
 
 func EndpointBudgets() string {
 	return URLBudgets
