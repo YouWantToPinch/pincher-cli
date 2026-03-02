@@ -6,80 +6,66 @@ import (
 	"net/http"
 )
 
-func (c *Client) GetAccessTokenWithUser() (user User, err error) {
-	url := c.API() + "/refresh" + "?with-user"
+func (c *Client) UserTokenRefreshWithUser() (user *User, err error) {
+	if c.RefreshToken == "" {
+		slog.Warn("Client directed to get new access token with user, but Refresh Token was empty.")
+		return nil, fmt.Errorf("refresh token is empty")
+	} else {
+		fmt.Println("RefreshToken: " + c.RefreshToken)
+	}
+
+	endpoint := EndpointRefresh() + "?with-user"
 
 	type rspSchema struct {
 		User
 		NewAccessToken string `json:"token"`
 	}
 
-	var rspPayload rspSchema
-	resp, err := c.Post(url, c.RefreshToken, nil, &rspPayload)
+	var resp rspSchema
+	err = c.RequestWithToken(&c.RefreshToken, http.MethodPost, endpoint, nil, &resp)
 	if err != nil {
-		return User{}, err
+		return nil, err
 	}
-	switch resp.StatusCode {
-	case http.StatusOK:
-		c.token = rspPayload.NewAccessToken
-		return rspPayload.User, nil
-	case http.StatusBadRequest:
-		fallthrough
-	case http.StatusUnauthorized:
-		fallthrough
-	default:
-		return User{}, fmt.Errorf("could not get new access token")
-	}
+
+	c.token = resp.NewAccessToken
+	return &resp.User, nil
 }
 
-func (c *Client) GetAccessToken() error {
-	url := c.API() + "/refresh"
+func (c *Client) UserTokenRefresh() error {
+	if c.RefreshToken == "" {
+		slog.Warn("Client directed to get new access token, but Refresh Token was empty.")
+		return fmt.Errorf("refresh token is empty")
+	}
+
+	endpoint := EndpointRefresh()
 
 	type rspSchema struct {
 		NewAccessToken string `json:"token"`
 	}
 
 	var token rspSchema
-	resp, err := c.Post(url, c.RefreshToken, nil, &token)
+
+	err := c.RequestWithToken(&c.RefreshToken, http.MethodPost, endpoint, nil, &token)
 	if err != nil {
 		return err
 	}
-	switch resp.StatusCode {
-	case http.StatusOK:
-		c.token = token.NewAccessToken
-		return nil
-	case http.StatusBadRequest:
-		fallthrough
-	case http.StatusUnauthorized:
-		fallthrough
-	default:
-		return fmt.Errorf("could not get new access token")
-	}
+
+	c.token = token.NewAccessToken
+	return nil
 }
 
-func (c *Client) RevokeRefreshToken() error {
+func (c *Client) UserTokenRevoke() error {
 	if c.RefreshToken == "" {
 		slog.Warn("Client directed to revoke active refresh token, but found none to revoke.")
 		return nil
 	}
 
-	url := c.API() + "/revoke"
+	endpoint := EndpointRevoke()
+	err := c.RequestWithToken(&c.RefreshToken, http.MethodPost, endpoint, nil, nil)
 
-	resp, err := c.Post(url, c.RefreshToken, nil, nil)
-	if err != nil {
-		return err
-	}
 	// Whether or not the server has trouble revoking,
 	// we can at least forget it here in the CLI as well.
 	c.RefreshToken = ""
-	switch resp.StatusCode {
-	case http.StatusNoContent:
-		return nil
-	case http.StatusBadRequest:
-		fallthrough
-	case http.StatusUnauthorized:
-		fallthrough
-	default:
-		return fmt.Errorf("failed to revoke refresh token")
-	}
+
+	return err
 }
