@@ -2,6 +2,8 @@ package cli
 
 import (
 	"fmt"
+
+	"github.com/YouWantToPinch/pincher-cli/internal/client"
 )
 
 func handlerUser(s *State, c *handlerContext) error {
@@ -33,29 +35,31 @@ func handleUserAdd(s *State, c *handlerContext) error {
 	if password != retypedPassword {
 		return fmt.Errorf("password fields did not match")
 	}
-	userCreated, err := s.Client.CreateUser(username, password)
+	err := s.Client.UserCreate(client.UserCreateData{
+		Username: username,
+		Password: password,
+	})
 	if err != nil {
 		return err
 	}
-	if userCreated {
-		fmt.Println("User " + username + " successfully created with new password.")
-		fmt.Println("For help logging in, see: `help user -a login`")
-		return nil
-	} else {
-		return fmt.Errorf("username already exists")
-	}
+	fmt.Println("User " + username + " successfully created with new password.")
+	fmt.Println("For help logging in, see: `help user -a login`")
+	return nil
 }
 
 func handleUserLogin(s *State, c *handlerContext) error {
 	username, _ := c.args.pfx()
 	password, _ := c.args.pfx()
 
-	user, err := s.Client.LoginUser(username, password)
+	user, err := s.Client.UserLogin(client.UserLoginData{
+		Username: username,
+		Password: password,
+	})
 	if err != nil {
 		return err
 	}
 
-	s.Session.OnLogin(user)
+	s.Session.OnLogin(*user)
 
 	c.args.trackOptArgs(&c.cmd, "view-budget")
 	budgetToView, _ := c.args.pfx()
@@ -71,7 +75,7 @@ func handleUserLogout(s *State, c *handlerContext) error {
 		fmt.Println("No user logged in.")
 		return nil
 	}
-	err := s.Client.RevokeRefreshToken()
+	err := s.Client.UserTokenRevoke()
 	if err != nil {
 		return err
 	}
@@ -101,7 +105,10 @@ func handleUserUpdate(s *State, c *handlerContext) error {
 		}
 	}
 
-	err = s.Client.UpdateUser(newUsername, newPassword)
+	err = s.Client.UserUpdate(client.UserUpdateData{
+		Username: newUsername,
+		Password: newPassword,
+	})
 	if err != nil {
 		return err
 	}
@@ -118,7 +125,10 @@ func handleUserDelete(s *State, c *handlerContext) error {
 	if password != retypedPassword {
 		return fmt.Errorf("password fields did not match")
 	}
-	err := s.Client.DeleteUser(username, password)
+	err := s.Client.UserDelete(client.UserDeleteData{
+		Username: username,
+		Password: password,
+	})
 	if err != nil {
 		return err
 	}

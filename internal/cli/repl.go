@@ -20,12 +20,12 @@ func StartRepl(cliState *State) {
 
 	// simulate login if session was saved
 	if cliState.Config.StayLoggedIn && cliState.Client.RefreshToken != "" {
-		user, err := cliState.Client.GetAccessTokenWithUser()
+		user, err := cliState.Client.UserTokenRefreshWithUser()
 		if err != nil {
 			cliState.Client.RefreshToken = ""
 			cliState.Session.OnLogout()
 		} else {
-			cliState.Session.OnLogin(user)
+			cliState.Session.OnLogin(*user)
 		}
 	}
 
