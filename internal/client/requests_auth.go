@@ -10,8 +10,6 @@ func (c *Client) UserTokenRefreshWithUser() (user *User, err error) {
 	if c.RefreshToken == "" {
 		slog.Warn("Client directed to get new access token with user, but Refresh Token was empty.")
 		return nil, fmt.Errorf("refresh token is empty")
-	} else {
-		fmt.Println("RefreshToken: " + c.RefreshToken)
 	}
 
 	endpoint := EndpointRefresh() + "?with-user"
