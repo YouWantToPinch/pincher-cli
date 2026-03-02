@@ -6,14 +6,8 @@ import (
 	"strings"
 )
 
-func mustParseURL(raw string) *url.URL {
-	u, err := url.Parse(raw)
-	if err != nil {
-		panic(err)
-	}
-	return u
-}
-
+// validateBaseURL ensures that the given URL
+// contains a host and contains no path.
 func validateBaseURL(newURL string) (u *url.URL, err error) {
 	newURL = strings.TrimSuffix(strings.TrimSpace(newURL), "/")
 
@@ -36,9 +30,11 @@ func validateBaseURL(newURL string) (u *url.URL, err error) {
 		return nil, fmt.Errorf("base URL must have a host")
 	}
 
-	if strings.Count(u.Hostname(), ".") < 1 {
-		return nil, fmt.Errorf("base URL must have a domain and TLD")
-	}
+	/*
+		if strings.Count(u.Hostname(), ".") < 1 {
+			return nil, fmt.Errorf("base URL must have a domain and TLD")
+		}
+	*/
 
 	return
 }

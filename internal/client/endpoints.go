@@ -2,7 +2,6 @@ package client
 
 import (
 	"fmt"
-	"log"
 )
 
 /*
@@ -22,33 +21,8 @@ import (
 */
 
 /* These base URLs are used by the Client.Request method */
-var (
-	baseURL = "http://localhost:8080"
 
-	parsedBase = mustParseURL(baseURL + "/api")
-)
-
-func BaseURL() string {
-	return baseURL
-}
-
-func APIURL() string {
-	return baseURL + "/api"
-}
-
-// SetBaseURL sets the base URL for the API.
-func SetBaseURL(newURL string) error {
-	u, err := validateBaseURL(newURL)
-	if err != nil {
-		return err
-	}
-
-	baseURL = u.String()
-	parsedBase = u
-
-	log.Printf("Base URL set to %s", baseURL)
-	return nil
-}
+const defaultBaseURL = "http://localhost:8080"
 
 const sVerb = "/%s"
 

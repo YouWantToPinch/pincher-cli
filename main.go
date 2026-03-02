@@ -41,14 +41,17 @@ func main() {
 			cfg = &config.Config{}
 			err = cfg.NewConfigFile(defaultBaseURL)
 			if err != nil {
-				panic("could not load nor create config")
+				panic("cfg.NewConfigFile: " + err.Error())
 			}
 			slog.Info("New config file created.")
 		}
 	}
 	cliState.Config = cfg
 
-	client := client.NewClient(time.Second*10, time.Minute*5, cliState.Config.BaseURL)
+	client, err := client.NewClient(time.Second*10, time.Minute*5, cliState.Config.BaseURL)
+	if err != nil {
+		panic("client.NewClient: " + err.Error())
+	}
 	cliState.Client = &client
 
 	// give the client the stored refresh token so it will load cache

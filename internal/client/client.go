@@ -23,25 +23,53 @@ import (
 // function.
 type Client struct {
 	http.Client
-	cache        Cache
-	BaseURL      string
-	token        string
-	RefreshToken string
-}
-
-func (c *Client) API() string {
-	return c.BaseURL + "/api"
+	cache         Cache
+	baseURL       string
+	parsedBaseURL *url.URL
+	token         string
+	RefreshToken  string
 }
 
 // NewClient is the proper way to instantiate a client with the sdk.
-func NewClient(timeout, cacheInterval time.Duration, baseURL string) Client {
-	return Client{
+func NewClient(timeout, cacheInterval time.Duration, baseURL string) (Client, error) {
+	c := Client{
 		cache: *NewCache(cacheInterval),
 		Client: http.Client{
 			Timeout: timeout,
 		},
-		BaseURL: baseURL,
 	}
+	err := c.SetBaseURL(baseURL)
+	if err != nil {
+		return Client{}, fmt.Errorf("client.SetBaseURL: %w", err)
+	}
+	return c, nil
+}
+
+// BaseURL returns the BaseURL stored within the client,
+// used for API calls.
+func (c *Client) BaseURL() string {
+	return c.baseURL
+}
+
+// APIURL returns the BaseURL stored within the client,
+// concatenated with the appropriate api path.
+func (c *Client) APIURL() string {
+	return c.baseURL + "/api"
+}
+
+// SetBaseURL sets the base URL stored within the client,
+// used for API calls.
+func (c *Client) SetBaseURL(newURL string) error {
+	u, err := validateBaseURL(newURL)
+	if err != nil {
+		return err
+	}
+
+	c.baseURL = u.String()
+	c.parsedBaseURL = u
+
+	slog.Info("Client Base URL set", slog.String("BaseURL", c.baseURL))
+	return nil
 }
 
 // ClearCache calls the Clear() function on
@@ -154,8 +182,6 @@ func (c *Client) RequestWithToken(token *string, method, destination string, dat
 
 // doRequest validates a request before making a call to the API with it.
 func (c *Client) doRequest(token *string, method, destination string, data, result any) error {
-	fmt.Println("DEBUG DEST: " + destination)
-
 	destination, err := c.ResolveURL("/api" + destination)
 	if err != nil {
 		return err
@@ -245,14 +271,14 @@ func (c *Client) ResolveURL(destination string) (string, error) {
 
 	// Reject scheme-less URLs (//host/path) and any provided scheme.
 	if u.Scheme != "" || u.Host != "" {
-		if sameHostname(u, parsedBase) {
+		if sameHostname(u, c.parsedBaseURL) {
 			return u.String(), nil
 		}
 		return "", fmt.Errorf("refusing external URL host %q", u.Host)
 	}
 
 	// Path-only (or query/fragment) reference.
-	return parsedBase.ResolveReference(u).String(), nil
+	return c.parsedBaseURL.ResolveReference(u).String(), nil
 }
 
 func sameHostname(a, b *url.URL) bool {

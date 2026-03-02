@@ -6,7 +6,7 @@ import (
 
 // GetServerReady reports back with a 200 Status Code
 func (c *Client) GetServerReady() (bool, error) {
-	url := c.API() + "/healthz"
+	url := c.APIURL() + "/healthz"
 
 	resp, _, err := c.Get(url, "", nil)
 	if err != nil {
