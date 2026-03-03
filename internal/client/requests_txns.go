@@ -14,10 +14,18 @@ type transactionContainer struct {
 	Transactions []*Transaction `json:"data"`
 }
 
+func (c *Client) BudgetTransaction(bID, tID string) (txn *Transaction, err error) {
+	endpoint := EndpointBudgetGroup(bID, tID)
+	err = c.Request(http.MethodGet, endpoint, nil, &txn)
+	c.Cache.addTxn(bID, txn)
+	return txn, err
+}
+
 func (c *Client) BudgetTransactions(bID, urlQuery string) (transactions []*Transaction, err error) {
 	endpoint := EndpointBudgetTransactions(bID) + urlQuery
 	var container transactionContainer
 	err = c.Request(http.MethodGet, endpoint, nil, &container)
+	c.Cache.addTxns(bID, container.Transactions)
 	return container.Transactions, err
 }
 
@@ -25,16 +33,28 @@ type transactionDetailContainer struct {
 	Transactions []*TransactionDetail `json:"data"`
 }
 
+func (c *Client) BudgetTransactionDetails(bID, tID string) (txn *TransactionDetail, err error) {
+	endpoint := EndpointBudgetTransactionDetails(bID, tID)
+	err = c.Request(http.MethodGet, endpoint, nil, &txn)
+	c.Cache.addTxnDetails(bID, txn)
+	return txn, err
+}
+
 func (c *Client) BudgetTransactionsDetails(bID, urlQuery string) (transactions []*TransactionDetail, err error) {
 	endpoint := EndpointBudgetTransactionsDetails(bID) + urlQuery
 	var container transactionDetailContainer
 	err = c.Request(http.MethodGet, endpoint, nil, &container)
+	c.Cache.addTxnsDetails(bID, container.Transactions)
 	return container.Transactions, err
 }
 
 func (c *Client) BudgetTransactionUpdate(bID, tID string, data BudgetTransactionUpdateData) error {
 	endpoint := EndpointBudgetTransaction(bID, tID)
 	err := c.Request(http.MethodPut, endpoint, data, nil)
+	if err != nil {
+		_, _ = c.BudgetTransaction(bID, tID)
+		_, _ = c.BudgetTransactionDetails(bID, tID)
+	}
 	return err
 }
 

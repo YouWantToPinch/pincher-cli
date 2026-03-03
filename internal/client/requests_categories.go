@@ -20,10 +20,18 @@ type categoryContainer struct {
 	Categories []*Category `json:"data"`
 }
 
+func (c *Client) BudgetCategory(bID, cID string) (category *Category, err error) {
+	endpoint := EndpointBudgetCategory(bID, cID)
+	err = c.Request(http.MethodGet, endpoint, nil, &category)
+	c.Cache.addCategory(bID, category)
+	return category, err
+}
+
 func (c *Client) BudgetCategories(bID, urlQuery string) (categories []*Category, err error) {
 	endpoint := EndpointBudgetCategories(bID) + urlQuery
 	var container categoryContainer
 	err = c.Request(http.MethodGet, endpoint, nil, &container)
+	c.Cache.addCategories(bID, container.Categories)
 	return container.Categories, err
 }
 
@@ -41,6 +49,9 @@ func (c *Client) BudgetCategoryReports(bID, mID string) (categories []*CategoryR
 func (c *Client) BudgetCategoryUpdate(bID, cID string, data BudgetCategoryUpdateData) error {
 	endpoint := EndpointBudgetCategory(bID, cID)
 	err := c.Request(http.MethodPut, endpoint, data, nil)
+	if err != nil {
+		_, _ = c.BudgetCategory(bID, cID)
+	}
 	return err
 }
 

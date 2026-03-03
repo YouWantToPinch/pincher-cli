@@ -23,7 +23,7 @@ import (
 // function.
 type Client struct {
 	http.Client
-	cache         Cache
+	Cache         Cache
 	baseURL       string
 	parsedBaseURL *url.URL
 	token         string
@@ -33,7 +33,7 @@ type Client struct {
 // NewClient is the proper way to instantiate a client with the sdk.
 func NewClient(timeout, cacheInterval time.Duration, baseURL string) (Client, error) {
 	c := Client{
-		cache: *NewCache(cacheInterval),
+		Cache: *NewCache(cacheInterval),
 		Client: http.Client{
 			Timeout: timeout,
 		},
@@ -76,7 +76,7 @@ func (c *Client) SetBaseURL(newURL string) error {
 // the cache attached to the client and
 // forces an early save of the cache file.
 func (c *Client) ClearCache() {
-	c.cache.Clear()
+	c.Cache.Clear()
 	err := c.SaveCacheFile()
 	if err != nil {
 		slog.Error("could not save cache file: " + err.Error())
@@ -97,7 +97,7 @@ func (c *Client) LoadCacheFile() error {
 		return fmt.Errorf(errMsg+"%w", err)
 	}
 
-	c.cache.Set(loadedCache.CachedEntries)
+	c.Cache.Set(loadedCache.Entries)
 	return nil
 }
 
@@ -109,7 +109,7 @@ func (c *Client) SaveCacheFile() error {
 	if err != nil {
 		return fmt.Errorf(errMsg+"%w", err)
 	}
-	err = file.WriteAsJSON(c.cache, cachePath)
+	err = file.WriteAsJSON(c.Cache, cachePath)
 	if err != nil {
 		return fmt.Errorf(errMsg+"%w", err)
 	}
@@ -118,7 +118,7 @@ func (c *Client) SaveCacheFile() error {
 
 // Get wrapper for doRequest
 func (c *Client) Get(url, token string, out any) (response *http.Response, respFromCache bool, err error) {
-	if val, ok := c.cache.Get(url); ok {
+	if val, ok := c.Cache.Get(url); ok {
 		slog.Info("retrieving requested data from cache", slog.String("URL", url))
 		err := json.Unmarshal(val, out)
 		if err != nil {
@@ -134,7 +134,7 @@ func (c *Client) Get(url, token string, out any) (response *http.Response, respF
 		if cacheErr != nil {
 			slog.Error(fmt.Sprintf("could not cache response data: %s", cacheErr))
 		} else {
-			c.cache.Add(url, data, false)
+			c.Cache.Add(url, data, false)
 		}
 	}
 
@@ -348,7 +348,7 @@ func (c *Client) doRequestWithCache(method, url, token string, payload, out any)
 	// delete existing cache for url, as the resource has been changed
 	switch method {
 	case http.MethodPost:
-		c.cache.DeleteAllStartsWith(url)
+		c.Cache.DeleteAllStartsWith(url)
 	case http.MethodPut:
 		fallthrough
 	case http.MethodDelete:
@@ -357,7 +357,7 @@ func (c *Client) doRequestWithCache(method, url, token string, payload, out any)
 			slog.Error("could not delete keys with url prefix from cache", slog.String("prefix", url))
 		} else {
 			// delete all probable cache of this resource
-			c.cache.DeleteAllStartsWith(path)
+			c.Cache.DeleteAllStartsWith(path)
 		}
 	}
 

@@ -1,37 +1,633 @@
 package client
 
 import (
+	"fmt"
 	"maps"
 	"strings"
 	"sync"
 	"time"
 )
 
-type cacheEntry struct {
-	CreatedAt time.Time `json:"created_at"`
-	Data      []byte    `json:"data"`
-	// entry is protected from reaping
-	Protected bool `json:"protected"`
+type metadata struct {
+	DestinationURL string    `json:"destination_url"` // request by which this entry was acquired
+	CreatedAt      time.Time `json:"created_at"`      // time at which this entry was created
+	Protected      bool      `json:"protected"`       // whether this entry is protected from the reap loop
+	Data           []byte    `json:"data"`            // data tied to entry
+}
+
+type accountCacheEntry struct {
+	account *Account
+	metadata
+}
+
+type payeeCacheEntry struct {
+	payee *Payee
+	metadata
+}
+
+type groupCacheEntry struct {
+	group *Group
+	metadata
+}
+
+type categoryCacheEntry struct {
+	category *Category
+	metadata
+}
+
+type txnCacheEntry struct {
+	transaction *Transaction
+	metadata
+}
+
+type txnDetailsCacheEntry struct {
+	txnDetails *TransactionDetail
+	metadata
+}
+
+// budgetCache is a subcache that stores its own relevant
+// budget resources such as accounts, payees, groups, etc.
+type budgetCache struct {
+	AccountCache    map[string]*accountCacheEntry    `json:"account_cache"`
+	PayeeCache      map[string]*payeeCacheEntry      `json:"payee_cache"`
+	GroupCache      map[string]*groupCacheEntry      `json:"group_cache"`
+	CategoryCache   map[string]*categoryCacheEntry   `json:"category_cache"`
+	TxnCache        map[string]*txnCacheEntry        `json:"transaction_cache"`
+	TxnDetailsCache map[string]*txnDetailsCacheEntry `json:"transaction_details_cache"`
+	budgetEntry     Budget
+	entryMetadata   metadata
+}
+
+// GET
+func (c *budgetCache) Budget() *Budget {
+	return &c.budgetEntry
+}
+
+func (c *budgetCache) Account(aID string) *Account {
+	return c.AccountCache[aID].account
+}
+
+func (c *budgetCache) Payee(pID string) *Payee {
+	return c.PayeeCache[pID].payee
+}
+
+func (c *budgetCache) Group(gID string) *Group {
+	return c.GroupCache[gID].group
+}
+
+func (c *budgetCache) Category(cID string) *Category {
+	return c.CategoryCache[cID].category
+}
+
+func (c *budgetCache) Transaction(tID string) *Transaction {
+	return c.TxnCache[tID].transaction
+}
+
+func (c *budgetCache) TransactionDetail(tID string) *TransactionDetail {
+	return c.TxnDetailsCache[tID].txnDetails
 }
 
 type Cache struct {
-	CachedEntries map[string]cacheEntry `json:"cached_entries"`
-	interval      time.Duration
-	mu            *sync.Mutex
+	mu *sync.Mutex
+
+	// map of budget IDs to a subcache of budget resources
+	budgets map[string]*budgetCache
+
+	// whether to update cache entries from relevant API calls
+	// related to singleton resources
+	trackAPICalls bool
+
+	// whether to update cache entries from relevant API calls
+	// related to resource collections
+	trackBulkAPICalls bool
+
+	Entries  map[string]metadata `json:"cached_entries"`
+	interval time.Duration
 }
 
-func (c *Cache) Set(entries map[string]cacheEntry) {
+// ----------------------
+//    GETTER FUNCTIONS
+// ----------------------
+
+func (c *Cache) Budget(bID string) *Budget {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	maps.Copy(c.CachedEntries, entries)
+	b, ok := c.budgets[bID]
+	if !ok {
+		return nil
+	}
+
+	return b.Budget()
+}
+
+func (c *Cache) Budgets() []*Budget {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	var budgets []*Budget
+	for _, v := range c.budgets {
+		budgets = append(budgets, &v.budgetEntry)
+	}
+
+	return budgets
+}
+
+func (c *Cache) Account(bID, aID string) *Account {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	b, ok := c.budgets[bID]
+	if !ok {
+		return nil
+	}
+
+	return b.Account(aID)
+}
+
+func (c *Cache) Accounts(bID string) []*Account {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	b, ok := c.budgets[bID]
+	if !ok {
+		return nil
+	}
+
+	accounts := make([]*Account, 0, len(b.AccountCache))
+	for _, entry := range b.AccountCache {
+		accounts = append(accounts, entry.account)
+	}
+
+	return accounts
+}
+
+func (c *Cache) Payee(bID, pID string) *Payee {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	b, ok := c.budgets[bID]
+	if !ok {
+		return nil
+	}
+
+	return b.Payee(pID)
+}
+
+func (c *Cache) Payees(bID string) []*Payee {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	b, ok := c.budgets[bID]
+	if !ok {
+		return nil
+	}
+
+	payees := make([]*Payee, 0, len(b.PayeeCache))
+	for _, entry := range b.PayeeCache {
+		payees = append(payees, entry.payee)
+	}
+
+	return payees
+}
+
+func (c *Cache) Group(bID, gID string) *Group {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	b, ok := c.budgets[bID]
+	if !ok {
+		return nil
+	}
+
+	return b.Group(gID)
+}
+
+func (c *Cache) Groups(bID string) []*Group {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	b, ok := c.budgets[bID]
+	if !ok {
+		return nil
+	}
+
+	groups := make([]*Group, 0, len(b.GroupCache))
+	for _, entry := range b.GroupCache {
+		groups = append(groups, entry.group)
+	}
+
+	return groups
+}
+
+func (c *Cache) Category(bID, cID string) *Category {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	b, ok := c.budgets[bID]
+	if !ok {
+		return nil
+	}
+
+	return b.Category(cID)
+}
+
+func (c *Cache) Categories(bID string) []*Category {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	b, ok := c.budgets[bID]
+	if !ok {
+		return nil
+	}
+
+	categories := make([]*Category, 0, len(b.CategoryCache))
+	for _, entry := range b.CategoryCache {
+		categories = append(categories, entry.category)
+	}
+
+	return categories
+}
+
+func (c *Cache) Transaction(bID, tID string) *Transaction {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	b, ok := c.budgets[bID]
+	if !ok {
+		return nil
+	}
+
+	return b.Transaction(tID)
+}
+
+func (c *Cache) Transactions(bID string) []*Transaction {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	b, ok := c.budgets[bID]
+	if !ok {
+		return nil
+	}
+
+	txns := make([]*Transaction, 0, len(b.TxnCache))
+	for _, entry := range b.TxnCache {
+		txns = append(txns, entry.transaction)
+	}
+
+	return txns
+}
+
+func (c *Cache) TransactionDetails(bID, tID string) *TransactionDetail {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	b, ok := c.budgets[bID]
+	if !ok {
+		return nil
+	}
+
+	return b.TransactionDetail(tID)
+}
+
+func (c *Cache) TransactionsDetails(bID string) []*TransactionDetail {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	b, ok := c.budgets[bID]
+	if !ok {
+		return nil
+	}
+
+	txns := make([]*TransactionDetail, 0, len(b.TxnDetailsCache))
+	for _, entry := range b.TxnDetailsCache {
+		txns = append(txns, entry.txnDetails)
+	}
+
+	return txns
+}
+
+// ----------------------
+//    SETTER FUNCTIONS
+// ----------------------
+
+func (c *Cache) addBudget(bID string, budget *Budget) {
+	if !c.trackAPICalls || budget == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if _, ok := c.budgets[bID]; !ok {
+		return
+	}
+
+	c.budgets[bID] = &budgetCache{
+		AccountCache:    map[string]*accountCacheEntry{},
+		PayeeCache:      map[string]*payeeCacheEntry{},
+		GroupCache:      map[string]*groupCacheEntry{},
+		CategoryCache:   map[string]*categoryCacheEntry{},
+		TxnCache:        map[string]*txnCacheEntry{},
+		TxnDetailsCache: map[string]*txnDetailsCacheEntry{},
+		budgetEntry:     *budget,
+		entryMetadata: metadata{
+			CreatedAt: time.Now().UTC(),
+		},
+	}
+}
+
+func (c *Cache) addBudgets(budgets []*Budget) {
+	if !c.trackBulkAPICalls || budgets == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	for _, b := range budgets {
+		c.budgets[b.ID.String()] = &budgetCache{
+			AccountCache:    map[string]*accountCacheEntry{},
+			PayeeCache:      map[string]*payeeCacheEntry{},
+			GroupCache:      map[string]*groupCacheEntry{},
+			CategoryCache:   map[string]*categoryCacheEntry{},
+			TxnCache:        map[string]*txnCacheEntry{},
+			TxnDetailsCache: map[string]*txnDetailsCacheEntry{},
+			budgetEntry:     *b,
+			entryMetadata: metadata{
+				CreatedAt: time.Now().UTC(),
+			},
+		}
+	}
+}
+
+func (c *Cache) addAccount(bID string, account *Account) {
+	if !c.trackAPICalls || account == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if _, ok := c.budgets[bID]; !ok {
+		return
+	}
+
+	c.budgets[bID].AccountCache[account.ID.String()] = &accountCacheEntry{
+		account: account,
+		metadata: metadata{
+			CreatedAt: time.Now().UTC(),
+		},
+	}
+}
+
+func (c *Cache) addAccounts(bID string, accounts []*Account) {
+	if !c.trackBulkAPICalls || accounts == nil {
+		fmt.Println("quitting addAccounts early")
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if _, ok := c.budgets[bID]; !ok {
+		return
+	}
+	for _, a := range accounts {
+		if a == nil {
+			continue
+		}
+		c.budgets[bID].AccountCache[a.ID.String()] = &accountCacheEntry{
+			account: a,
+			metadata: metadata{
+				CreatedAt: time.Now().UTC(),
+			},
+		}
+	}
+}
+
+func (c *Cache) addPayee(bID string, payee *Payee) {
+	if !c.trackAPICalls || payee == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if _, ok := c.budgets[bID]; !ok {
+		return
+	}
+
+	c.budgets[bID].PayeeCache[payee.ID.String()] = &payeeCacheEntry{
+		payee: payee,
+		metadata: metadata{
+			CreatedAt: time.Now().UTC(),
+		},
+	}
+}
+
+func (c *Cache) addPayees(bID string, payees []*Payee) {
+	if !c.trackBulkAPICalls || payees == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if _, ok := c.budgets[bID]; !ok {
+		return
+	}
+	for _, p := range payees {
+		if p == nil {
+			continue
+		}
+		c.budgets[bID].PayeeCache[p.ID.String()] = &payeeCacheEntry{
+			payee: p,
+			metadata: metadata{
+				CreatedAt: time.Now().UTC(),
+			},
+		}
+	}
+}
+
+func (c *Cache) addGroup(bID string, group *Group) {
+	if !c.trackAPICalls || group == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if _, ok := c.budgets[bID]; !ok {
+		return
+	}
+
+	c.budgets[bID].GroupCache[group.ID.String()] = &groupCacheEntry{
+		group: group,
+		metadata: metadata{
+			CreatedAt: time.Now().UTC(),
+		},
+	}
+}
+
+func (c *Cache) addGroups(bID string, groups []*Group) {
+	if !c.trackBulkAPICalls || groups == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if _, ok := c.budgets[bID]; !ok {
+		return
+	}
+	for _, g := range groups {
+		if g == nil {
+			continue
+		}
+		c.budgets[bID].GroupCache[g.ID.String()] = &groupCacheEntry{
+			group: g,
+			metadata: metadata{
+				CreatedAt: time.Now().UTC(),
+			},
+		}
+	}
+}
+
+func (c *Cache) addCategory(bID string, category *Category) {
+	if !c.trackAPICalls || category == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if _, ok := c.budgets[bID]; !ok {
+		return
+	}
+
+	c.budgets[bID].CategoryCache[category.ID.String()] = &categoryCacheEntry{
+		category: category,
+		metadata: metadata{
+			CreatedAt: time.Now().UTC(),
+		},
+	}
+}
+
+func (c *Cache) addCategories(bID string, categories []*Category) {
+	if !c.trackBulkAPICalls || categories == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if _, ok := c.budgets[bID]; !ok {
+		return
+	}
+	for _, cat := range categories {
+		if cat == nil {
+			continue
+		}
+		c.budgets[bID].CategoryCache[cat.ID.String()] = &categoryCacheEntry{
+			category: cat,
+			metadata: metadata{
+				CreatedAt: time.Now().UTC(),
+			},
+		}
+	}
+}
+
+func (c *Cache) addTxn(bID string, txn *Transaction) {
+	if !c.trackAPICalls || txn == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if _, ok := c.budgets[bID]; !ok {
+		return
+	}
+
+	c.budgets[bID].TxnCache[txn.ID.String()] = &txnCacheEntry{
+		transaction: txn,
+		metadata: metadata{
+			CreatedAt: time.Now().UTC(),
+		},
+	}
+}
+
+func (c *Cache) addTxns(bID string, txns []*Transaction) {
+	if !c.trackBulkAPICalls || txns == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if _, ok := c.budgets[bID]; !ok {
+		return
+	}
+	for _, t := range txns {
+		if t == nil {
+			continue
+		}
+		c.budgets[bID].TxnCache[t.ID.String()] = &txnCacheEntry{
+			transaction: t,
+			metadata: metadata{
+				CreatedAt: time.Now().UTC(),
+			},
+		}
+	}
+}
+
+func (c *Cache) addTxnDetails(bID string, txn *TransactionDetail) {
+	if !c.trackAPICalls || txn == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if _, ok := c.budgets[bID]; !ok {
+		return
+	}
+
+	c.budgets[bID].TxnDetailsCache[txn.ID.String()] = &txnDetailsCacheEntry{
+		txnDetails: txn,
+		metadata: metadata{
+			CreatedAt: time.Now().UTC(),
+		},
+	}
+}
+
+func (c *Cache) addTxnsDetails(bID string, txns []*TransactionDetail) {
+	if !c.trackBulkAPICalls || txns == nil {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if _, ok := c.budgets[bID]; !ok {
+		return
+	}
+	for _, t := range txns {
+		if t == nil {
+			continue
+		}
+		c.budgets[bID].TxnDetailsCache[t.ID.String()] = &txnDetailsCacheEntry{
+			txnDetails: t,
+			metadata: metadata{
+				CreatedAt: time.Now().UTC(),
+			},
+		}
+	}
+}
+
+// ---------------------------
+//  DEPRECATED CACHE FUNCTIONS
+// ---------------------------
+
+func (c *Cache) Set(entries map[string]metadata) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	maps.Copy(c.Entries, entries)
 }
 
 func (c *Cache) Add(key string, value []byte, protect bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.CachedEntries[key] = cacheEntry{
+	c.Entries[key] = metadata{
 		CreatedAt: time.Now().UTC(),
 		Data:      value,
 		Protected: protect,
@@ -42,7 +638,7 @@ func (c *Cache) Get(key string) (entryData []byte, found bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	val, ok := c.CachedEntries[key]
+	val, ok := c.Entries[key]
 	if !ok {
 		return nil, false
 	}
@@ -63,9 +659,47 @@ func (c *Cache) reap() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	for key, val := range c.CachedEntries {
+	// TODO: I know there's a way one can simplify this with
+	// an interface instead of all these multiple loops
+	// FOR EACH subcache, but I was getting errors when
+	// trying...
+
+	for _, bCache := range c.budgets {
+		for aID, entry := range bCache.AccountCache {
+			if !entry.Protected && (time.Since(entry.CreatedAt) > c.interval) {
+				delete(bCache.AccountCache, aID)
+			}
+		}
+		for pID, entry := range bCache.PayeeCache {
+			if !entry.Protected && (time.Since(entry.CreatedAt) > c.interval) {
+				delete(bCache.PayeeCache, pID)
+			}
+		}
+		for gID, entry := range bCache.GroupCache {
+			if !entry.Protected && (time.Since(entry.CreatedAt) > c.interval) {
+				delete(bCache.GroupCache, gID)
+			}
+		}
+		for cID, entry := range bCache.CategoryCache {
+			if !entry.Protected && (time.Since(entry.CreatedAt) > c.interval) {
+				delete(bCache.CategoryCache, cID)
+			}
+		}
+		for tID, entry := range bCache.TxnCache {
+			if !entry.Protected && (time.Since(entry.CreatedAt) > c.interval) {
+				delete(bCache.TxnCache, tID)
+			}
+		}
+		for tID, entry := range bCache.TxnDetailsCache {
+			if !entry.Protected && (time.Since(entry.CreatedAt) > c.interval) {
+				delete(bCache.TxnDetailsCache, tID)
+			}
+		}
+	}
+
+	for key, val := range c.Entries {
 		if !val.Protected && (time.Since(val.CreatedAt) > c.interval) {
-			delete(c.CachedEntries, key)
+			delete(c.Entries, key)
 		}
 	}
 }
@@ -74,7 +708,7 @@ func (c *Cache) Delete(key string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	delete(c.CachedEntries, key)
+	delete(c.Entries, key)
 }
 
 // DeleteAllStartsWith removes all cached entries whose
@@ -85,9 +719,9 @@ func (c *Cache) DeleteAllStartsWith(prefix string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	for key := range c.CachedEntries {
+	for key := range c.Entries {
 		if strings.HasPrefix(key, prefix) {
-			delete(c.CachedEntries, key)
+			delete(c.Entries, key)
 		}
 	}
 }
@@ -97,14 +731,17 @@ func (c *Cache) Clear() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	clear(c.CachedEntries)
+	clear(c.Entries)
 }
 
 func NewCache(interval time.Duration) *Cache {
 	cache := Cache{
-		CachedEntries: make(map[string]cacheEntry),
-		interval:      interval,
-		mu:            &sync.Mutex{},
+		mu:                &sync.Mutex{},
+		interval:          interval,
+		trackAPICalls:     true,
+		trackBulkAPICalls: true,
+		Entries:           make(map[string]metadata),
+		budgets:           map[string]*budgetCache{},
 	}
 
 	go cache.reapLoop()
