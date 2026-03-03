@@ -162,7 +162,7 @@ func handleTxnList(s *State, c *handlerContext) error {
 		txnQuery = "?" + txnQuery
 	}
 
-	txns, err := s.Client.BudgetTransactionsDetails(s.Session.ActiveBudget.ID.String(), txnQuery)
+	txns, err := s.GetTxnsDetails(s.Session.ActiveBudget.ID.String(), txnQuery)
 	if err != nil {
 		return err
 	}

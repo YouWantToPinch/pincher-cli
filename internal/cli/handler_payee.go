@@ -62,7 +62,7 @@ func handlePayeeList(s *State, c *handlerContext) error {
 		}
 	}
 
-	payees, err := s.Client.BudgetPayees(s.Session.ActiveBudget.ID.String(), includeQuery)
+	payees, err := s.GetPayees(s.Session.ActiveBudget.ID.String(), includeQuery)
 	if err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func handlePayeeList(s *State, c *handlerContext) error {
 func handlePayeeUpdate(s *State, c *handlerContext) error {
 	payeeName, _ := c.args.pfx()
 
-	payees, err := s.Client.BudgetPayees(s.Session.ActiveBudget.ID.String(), "")
+	payees, err := s.GetPayees(s.Session.ActiveBudget.ID.String(), "")
 	if err != nil {
 		return err
 	}
@@ -127,7 +127,7 @@ func handlePayeeDelete(s *State, c *handlerContext) error {
 	c.args.trackOptArgs(&c.cmd, "replacement")
 	newPayeeName, _ := c.args.pfx()
 
-	payees, err := s.Client.BudgetPayees(s.Session.ActiveBudget.ID.String(), "")
+	payees, err := s.GetPayees(s.Session.ActiveBudget.ID.String(), "")
 	if err != nil {
 		return err
 	}

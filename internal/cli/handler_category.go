@@ -153,7 +153,7 @@ func handleCategoryList(s *State, c *handlerContext) error {
 		groupQuery = "?group_name=" + groupName
 	}
 
-	categories, err := s.Client.BudgetCategories(s.Session.ActiveBudget.ID.String(), groupQuery)
+	categories, err := s.GetCategories(s.Session.ActiveBudget.ID.String(), groupQuery)
 	if err != nil {
 		return err
 	}
@@ -180,7 +180,7 @@ func handleCategoryList(s *State, c *handlerContext) error {
 func handleCategoryUpdate(s *State, c *handlerContext) error {
 	categoryName, _ := c.args.pfx()
 
-	categories, err := s.Client.BudgetCategories(s.Session.ActiveBudget.ID.String(), "")
+	categories, err := s.GetCategories(s.Session.ActiveBudget.ID.String(), "")
 	if err != nil {
 		return err
 	}
@@ -220,7 +220,7 @@ func handleCategoryUpdate(s *State, c *handlerContext) error {
 func handleCategoryDelete(s *State, c *handlerContext) error {
 	name, _ := c.args.pfx()
 
-	categories, err := s.Client.BudgetCategories(s.Session.ActiveBudget.ID.String(), "")
+	categories, err := s.GetCategories(s.Session.ActiveBudget.ID.String(), "")
 	if err != nil {
 		return err
 	}
