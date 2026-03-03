@@ -6,17 +6,10 @@ import (
 
 // GetServerReady reports back with a 200 Status Code
 func (c *Client) GetServerReady() (bool, error) {
-	url := c.APIURL() + "/healthz"
-
-	resp, _, err := c.Get(url, "", nil)
+	endpoint := EndpointServerReadiness()
+	err := c.Request(http.MethodGet, endpoint, nil, nil)
 	if err != nil {
 		return false, err
 	}
-
-	switch resp.StatusCode {
-	case http.StatusOK:
-		return true, nil
-	default:
-		return false, nil
-	}
+	return true, nil
 }

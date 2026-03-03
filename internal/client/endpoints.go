@@ -64,6 +64,10 @@ const (
 	URLBudgetMonthCategory       = URLBudgetMonthCategories + sVerb
 )
 
+func EndpointServerReadiness() string {
+	return URLHealthz
+}
+
 func EndpointLogin() string {
 	return URLUserTokenLogin
 }
