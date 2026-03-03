@@ -66,7 +66,7 @@ func handleAccountList(s *State, c *handlerContext) error {
 		listDeletedQuery = "?deleted"
 	}
 
-	accounts, err := s.Client.BudgetAccounts(s.Session.ActiveBudget.ID.String(), listDeletedQuery)
+	accounts, err := s.GetAccounts(s.Session.ActiveBudget.ID.String(), listDeletedQuery)
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func handleAccountList(s *State, c *handlerContext) error {
 func handleAccountUpdate(s *State, c *handlerContext) error {
 	accountName, _ := c.args.pfx()
 
-	accounts, err := s.Client.BudgetAccounts(s.Session.ActiveBudget.ID.String(), "")
+	accounts, err := s.GetAccounts(s.Session.ActiveBudget.ID.String(), "")
 	if err != nil {
 		return err
 	}
@@ -135,7 +135,7 @@ func handleAccountUpdate(s *State, c *handlerContext) error {
 func handleAccountRestore(s *State, c *handlerContext) error {
 	name, _ := c.args.pfx()
 
-	accounts, err := s.Client.BudgetAccounts(s.Session.ActiveBudget.ID.String(), "?deleted")
+	accounts, err := s.GetAccounts(s.Session.ActiveBudget.ID.String(), "?deleted")
 	if err != nil {
 		return err
 	}
@@ -157,7 +157,7 @@ func handleAccountDelete(s *State, c *handlerContext) error {
 	c.args.trackOptArgs(&c.cmd, "hard")
 	flagDeleteHard, _ := c.args.pfx()
 
-	accounts, err := s.Client.BudgetAccounts(s.Session.ActiveBudget.ID.String(), "?deleted")
+	accounts, err := s.GetAccounts(s.Session.ActiveBudget.ID.String(), "?deleted")
 	if err != nil {
 		return err
 	}

@@ -57,7 +57,7 @@ func handleBudgetAdd(s *State, c *handlerContext) error {
 func handleBudgetView(s *State, c *handlerContext) error {
 	name, _ := c.args.pfx()
 
-	budgets, err := s.Client.Budgets(s.Session.ActiveBudget.ID.String(), "")
+	budgets, err := s.GetBudgets(s.Session.ActiveBudget.ID.String(), "")
 	if err != nil {
 		return fmt.Errorf("could not view specified budget: %w", err)
 	}
@@ -120,7 +120,7 @@ func handleBudgetList(s *State, c *handlerContext) error {
 		}
 	}
 
-	budgets, err := s.Client.Budgets(s.Session.ActiveBudget.ID.String(), roleQuery)
+	budgets, err := s.GetBudgets(s.Session.ActiveBudget.ID.String(), roleQuery)
 	if err != nil {
 		return err
 	}
@@ -149,7 +149,7 @@ func handleBudgetList(s *State, c *handlerContext) error {
 func handleBudgetUpdate(s *State, c *handlerContext) error {
 	budgetName, _ := c.args.pfx()
 
-	budgets, err := s.Client.Budgets(s.Session.ActiveBudget.ID.String(), "")
+	budgets, err := s.GetBudgets(s.Session.ActiveBudget.ID.String(), "")
 	if err != nil {
 		return err
 	}
@@ -185,7 +185,7 @@ func handleBudgetUpdate(s *State, c *handlerContext) error {
 func handleBudgetDelete(s *State, c *handlerContext) error {
 	name, _ := c.args.pfx()
 
-	budgets, err := s.Client.Budgets(s.Session.ActiveBudget.ID.String(), "")
+	budgets, err := s.GetBudgets(s.Session.ActiveBudget.ID.String(), "")
 	if err != nil {
 		return err
 	}

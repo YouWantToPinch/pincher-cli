@@ -63,7 +63,7 @@ func handleGroupList(s *State, c *handlerContext) error {
 		}
 	}
 
-	groups, err := s.Client.BudgetGroups(s.Session.ActiveBudget.ID.String(), includeQuery)
+	groups, err := s.GetGroups(s.Session.ActiveBudget.ID.String(), includeQuery)
 	if err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func handleGroupList(s *State, c *handlerContext) error {
 func handleGroupUpdate(s *State, c *handlerContext) error {
 	groupName, _ := c.args.pfx()
 
-	groups, err := s.Client.BudgetGroups(s.Session.ActiveBudget.ID.String(), "")
+	groups, err := s.GetGroups(s.Session.ActiveBudget.ID.String(), "")
 	if err != nil {
 		return err
 	}
@@ -126,7 +126,7 @@ func handleGroupUpdate(s *State, c *handlerContext) error {
 func handleGroupDelete(s *State, c *handlerContext) error {
 	name, _ := c.args.pfx()
 
-	groups, err := s.Client.BudgetGroups(s.Session.ActiveBudget.ID.String(), "")
+	groups, err := s.GetGroups(s.Session.ActiveBudget.ID.String(), "")
 	if err != nil {
 		return err
 	}
