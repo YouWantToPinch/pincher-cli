@@ -14,10 +14,18 @@ type budgetContainer struct {
 	Budgets []*Budget `json:"data"`
 }
 
+func (c *Client) Budget(bID string) (budget *Budget, err error) {
+	endpoint := EndpointBudget(bID)
+	err = c.Request(http.MethodGet, endpoint, nil, &budget)
+	c.Cache.addBudget(bID, budget)
+	return budget, err
+}
+
 func (c *Client) Budgets(bID, urlQuery string) (budgets []*Budget, err error) {
 	endpoint := EndpointBudgets() + urlQuery
 	var container budgetContainer
 	err = c.Request(http.MethodGet, endpoint, nil, &container)
+	c.Cache.addBudgets(container.Budgets)
 	return container.Budgets, err
 }
 
@@ -30,6 +38,10 @@ func (c *Client) BudgetReport(bID, mID string) (report *MonthReport, err error) 
 func (c *Client) BudgetUpdate(bID string, data BudgetUpdateData) error {
 	endpoint := EndpointBudget(bID)
 	err := c.Request(http.MethodPut, endpoint, data, nil)
+	if err != nil {
+		_, _ = c.Budget(bID)
+	}
+
 	return err
 }
 

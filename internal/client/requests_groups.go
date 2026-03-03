@@ -14,16 +14,27 @@ type groupContainer struct {
 	Groups []*Group `json:"data"`
 }
 
+func (c *Client) BudgetGroup(bID, gID string) (group *Group, err error) {
+	endpoint := EndpointBudgetGroup(bID, gID)
+	err = c.Request(http.MethodGet, endpoint, nil, &group)
+	c.Cache.addGroup(bID, group)
+	return group, err
+}
+
 func (c *Client) BudgetGroups(bID, urlQuery string) (groups []*Group, err error) {
 	endpoint := EndpointBudgetGroups(bID) + urlQuery
 	var container groupContainer
 	err = c.Request(http.MethodGet, endpoint, nil, &container)
+	c.Cache.addGroups(bID, container.Groups)
 	return container.Groups, err
 }
 
 func (c *Client) BudgetGroupUpdate(bID, gID string, data BudgetGroupUpdateData) error {
 	endpoint := EndpointBudgetGroup(bID, gID)
 	err := c.Request(http.MethodPut, endpoint, data, nil)
+	if err != nil {
+		_, _ = c.BudgetGroup(bID, gID)
+	}
 	return err
 }
 

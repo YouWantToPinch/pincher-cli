@@ -14,16 +14,28 @@ type accountContainer struct {
 	Accounts []*Account `json:"data"`
 }
 
+func (c *Client) BudgetAccount(bID, aID string) (account *Account, err error) {
+	endpoint := EndpointBudgetAccount(bID, aID)
+	err = c.Request(http.MethodGet, endpoint, nil, &account)
+	c.Cache.addAccount(bID, account)
+	return account, err
+}
+
 func (c *Client) BudgetAccounts(bID, urlQuery string) (accounts []*Account, err error) {
 	endpoint := EndpointBudgetAccounts(bID) + urlQuery
 	var container accountContainer
 	err = c.Request(http.MethodGet, endpoint, nil, &container)
+	c.Cache.addAccounts(bID, container.Accounts)
 	return container.Accounts, err
 }
 
 func (c *Client) BudgetAccountUpdate(bID, aID string, data BudgetAccountUpdateData) error {
 	endpoint := EndpointBudgetAccount(bID, aID)
 	err := c.Request(http.MethodPut, endpoint, data, nil)
+	if err != nil {
+		_, _ = c.BudgetAccount(bID, aID)
+	}
+
 	return err
 }
 
