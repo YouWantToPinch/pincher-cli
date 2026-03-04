@@ -6,7 +6,9 @@ import (
 
 func (c *Client) BudgetGroupCreate(bID string, data BudgetGroupCreateData) error {
 	endpoint := EndpointBudgetGroups(bID)
-	err := c.Request(http.MethodPost, endpoint, data, nil)
+	var group *Group
+	err := c.Request(http.MethodPost, endpoint, data, &group)
+	c.Cache.addGroup(bID, group)
 	return err
 }
 

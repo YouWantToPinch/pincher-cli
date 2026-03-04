@@ -6,7 +6,9 @@ import (
 
 func (c *Client) BudgetAccountCreate(bID string, data BudgetAccountCreateData) error {
 	endpoint := EndpointBudgetAccounts(bID)
-	err := c.Request(http.MethodPost, endpoint, data, nil)
+	var account *Account
+	err := c.Request(http.MethodPost, endpoint, data, &account)
+	c.Cache.addAccount(bID, account)
 	return err
 }
 

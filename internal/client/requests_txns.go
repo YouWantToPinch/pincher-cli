@@ -6,7 +6,13 @@ import (
 
 func (c *Client) BudgetTransactionCreate(bID string, data BudgetTransactionCreateData) error {
 	endpoint := EndpointBudgetTransactions(bID)
-	err := c.Request(http.MethodPost, endpoint, data, nil)
+	var txn *Transaction
+	err := c.Request(http.MethodPost, endpoint, data, &txn)
+	c.Cache.addTxn(bID, txn)
+	if err != nil {
+		// retrieve & cache the detailed version as well
+		_, _ = c.BudgetTransactionDetails(bID, txn.ID.String())
+	}
 	return err
 }
 

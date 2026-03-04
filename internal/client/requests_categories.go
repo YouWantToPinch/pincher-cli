@@ -6,7 +6,9 @@ import (
 
 func (c *Client) BudgetCategoryCreate(bID string, data BudgetCategoryCreateData) error {
 	endpoint := EndpointBudgetCategories(bID)
-	err := c.Request(http.MethodPost, endpoint, data, nil)
+	var category *Category
+	err := c.Request(http.MethodPost, endpoint, data, &category)
+	c.Cache.addCategory(bID, category)
 	return err
 }
 
