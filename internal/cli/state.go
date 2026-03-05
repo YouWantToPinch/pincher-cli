@@ -6,7 +6,7 @@ import (
 
 	"github.com/YouWantToPinch/pincher-cli/internal/config"
 	file "github.com/YouWantToPinch/pincher-cli/internal/filemgr"
-	pgo "github.com/YouWantToPinch/pincher-cli/internal/pinchergo"
+	pgo "github.com/YouWantToPinch/pincher-sdk-go/pinchergo"
 )
 
 // State represents the full state of the CLI during a session,

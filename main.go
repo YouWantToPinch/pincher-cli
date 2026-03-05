@@ -6,7 +6,7 @@ import (
 
 	"github.com/YouWantToPinch/pincher-cli/internal/cli"
 	"github.com/YouWantToPinch/pincher-cli/internal/config"
-	pgo "github.com/YouWantToPinch/pincher-cli/internal/pinchergo"
+	pgo "github.com/YouWantToPinch/pincher-sdk-go/pinchergo"
 )
 
 // Quit is used by main() to ensure deletion of empty log files

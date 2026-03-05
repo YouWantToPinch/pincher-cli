@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	pgo "github.com/YouWantToPinch/pincher-cli/internal/pinchergo"
+	pgo "github.com/YouWantToPinch/pincher-sdk-go/pinchergo"
 )
 
 func handlerGroup(s *State, c *handlerContext) error {

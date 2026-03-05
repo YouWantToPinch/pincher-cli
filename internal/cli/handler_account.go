@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	pgo "github.com/YouWantToPinch/pincher-cli/internal/pinchergo"
+	pgo "github.com/YouWantToPinch/pincher-sdk-go/pinchergo"
 )
 
 func handlerAccount(s *State, c *handlerContext) error {
