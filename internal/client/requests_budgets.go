@@ -50,5 +50,6 @@ func (c *Client) BudgetUpdate(bID string, data BudgetUpdateData) error {
 func (c *Client) BudgetDelete(bID string) error {
 	endpoint := EndpointBudget(bID)
 	err := c.Request(http.MethodDelete, endpoint, nil, nil)
+	c.Cache.deleteBudget(bID)
 	return err
 }

@@ -67,5 +67,7 @@ func (c *Client) BudgetTransactionUpdate(bID, tID string, data BudgetTransaction
 func (c *Client) BudgetTransactionDelete(bID, tID string) error {
 	endpoint := EndpointBudgetTransaction(bID, tID)
 	err := c.Request(http.MethodDelete, endpoint, nil, nil)
+	c.Cache.deleteTxn(bID, tID)
+	c.Cache.deleteTxnsDetails(bID, tID)
 	return err
 }

@@ -49,5 +49,6 @@ func (c *Client) BudgetGroupRestore(bID, gID string) error {
 func (c *Client) BudgetGroupDelete(bID, gID string) error {
 	endpoint := EndpointBudgetGroup(bID, gID)
 	err := c.Request(http.MethodDelete, endpoint, nil, nil)
+	c.Cache.deleteGroup(bID, gID)
 	return err
 }

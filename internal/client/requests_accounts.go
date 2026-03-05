@@ -50,5 +50,6 @@ func (c *Client) BudgetAccountRestore(bID, aID string) error {
 func (c *Client) BudgetAccountDelete(bID, aID string, data BudgetAccountDeleteData) error {
 	endpoint := EndpointBudgetAccount(bID, aID)
 	err := c.Request(http.MethodDelete, endpoint, data, nil)
+	c.Cache.deleteAccount(bID, aID)
 	return err
 }
