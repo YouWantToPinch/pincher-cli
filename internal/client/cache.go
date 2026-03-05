@@ -13,32 +13,32 @@ type metadata struct {
 }
 
 type accountCacheEntry struct {
-	account *Account
+	Data *Account `json:"data"`
 	metadata
 }
 
 type payeeCacheEntry struct {
-	payee *Payee
+	Data *Payee `json:"data"`
 	metadata
 }
 
 type groupCacheEntry struct {
-	group *Group
+	Data *Group `json:"data"`
 	metadata
 }
 
 type categoryCacheEntry struct {
-	category *Category
+	Data *Category `json:"data"`
 	metadata
 }
 
 type txnCacheEntry struct {
-	transaction *Transaction
+	Data *Transaction `json:"data"`
 	metadata
 }
 
 type txnDetailsCacheEntry struct {
-	txnDetails *TransactionDetail
+	Data *TransactionDetail `json:"data"`
 	metadata
 }
 
@@ -52,7 +52,7 @@ type budgetCache struct {
 	TxnCache        map[string]*txnCacheEntry        `json:"transaction_cache"`
 	TxnDetailsCache map[string]*txnDetailsCacheEntry `json:"transaction_details_cache"`
 	budgetEntry     Budget
-	entryMetadata   metadata
+	metadata
 }
 
 // GET
@@ -61,27 +61,27 @@ func (c *budgetCache) Budget() *Budget {
 }
 
 func (c *budgetCache) Account(aID string) *Account {
-	return c.AccountCache[aID].account
+	return c.AccountCache[aID].Data
 }
 
 func (c *budgetCache) Payee(pID string) *Payee {
-	return c.PayeeCache[pID].payee
+	return c.PayeeCache[pID].Data
 }
 
 func (c *budgetCache) Group(gID string) *Group {
-	return c.GroupCache[gID].group
+	return c.GroupCache[gID].Data
 }
 
 func (c *budgetCache) Category(cID string) *Category {
-	return c.CategoryCache[cID].category
+	return c.CategoryCache[cID].Data
 }
 
 func (c *budgetCache) Transaction(tID string) *Transaction {
-	return c.TxnCache[tID].transaction
+	return c.TxnCache[tID].Data
 }
 
 func (c *budgetCache) TransactionDetail(tID string) *TransactionDetail {
-	return c.TxnDetailsCache[tID].txnDetails
+	return c.TxnDetailsCache[tID].Data
 }
 
 type Cache struct {
@@ -123,10 +123,10 @@ func (c *Cache) Budgets(urlQuery string) []*Budget {
 
 	var budgets []*Budget
 	for _, b := range c.Entries {
-		if urlQuery != b.entryMetadata.DestinationURL {
+		if urlQuery != b.DestinationURL {
 			continue
 		}
-		if b.entryMetadata.DestinationURL != EndpointBudgets()+urlQuery {
+		if b.DestinationURL != EndpointBudgets()+urlQuery {
 			continue
 		}
 		budgets = append(budgets, &b.budgetEntry)
@@ -161,7 +161,7 @@ func (c *Cache) Accounts(bID, urlQuery string) []*Account {
 		if entry.DestinationURL != EndpointBudgetAccounts(bID)+urlQuery {
 			continue
 		}
-		accounts = append(accounts, entry.account)
+		accounts = append(accounts, entry.Data)
 	}
 
 	return accounts
@@ -193,7 +193,7 @@ func (c *Cache) Payees(bID, urlQuery string) []*Payee {
 		if entry.DestinationURL != EndpointBudgetPayees(bID)+urlQuery {
 			continue
 		}
-		payees = append(payees, entry.payee)
+		payees = append(payees, entry.Data)
 	}
 
 	return payees
@@ -225,7 +225,7 @@ func (c *Cache) Groups(bID, urlQuery string) []*Group {
 		if entry.DestinationURL != EndpointBudgetGroups(bID)+urlQuery {
 			continue
 		}
-		groups = append(groups, entry.group)
+		groups = append(groups, entry.Data)
 	}
 
 	return groups
@@ -257,7 +257,7 @@ func (c *Cache) Categories(bID, urlQuery string) []*Category {
 		if entry.DestinationURL != EndpointBudgetCategories(bID)+urlQuery {
 			continue
 		}
-		categories = append(categories, entry.category)
+		categories = append(categories, entry.Data)
 	}
 
 	return categories
@@ -289,7 +289,7 @@ func (c *Cache) Transactions(bID, urlQuery string) []*Transaction {
 		if entry.DestinationURL != EndpointBudgetTransactions(bID)+urlQuery {
 			continue
 		}
-		txns = append(txns, entry.transaction)
+		txns = append(txns, entry.Data)
 	}
 
 	return txns
@@ -321,7 +321,7 @@ func (c *Cache) TransactionsDetails(bID, urlQuery string) []*TransactionDetail {
 		if entry.DestinationURL != EndpointBudgetTransactionsDetails(bID)+urlQuery {
 			continue
 		}
-		txns = append(txns, entry.txnDetails)
+		txns = append(txns, entry.Data)
 	}
 
 	return txns
@@ -350,7 +350,7 @@ func (c *Cache) addBudget(dest, bID string, budget *Budget) {
 		TxnCache:        map[string]*txnCacheEntry{},
 		TxnDetailsCache: map[string]*txnDetailsCacheEntry{},
 		budgetEntry:     *budget,
-		entryMetadata: metadata{
+		metadata: metadata{
 			CreatedAt:      time.Now().UTC(),
 			DestinationURL: dest,
 		},
@@ -373,7 +373,7 @@ func (c *Cache) addBudgets(dest string, Entries []*Budget) {
 			TxnCache:        map[string]*txnCacheEntry{},
 			TxnDetailsCache: map[string]*txnDetailsCacheEntry{},
 			budgetEntry:     *b,
-			entryMetadata: metadata{
+			metadata: metadata{
 				CreatedAt:      time.Now().UTC(),
 				DestinationURL: dest,
 			},
@@ -407,7 +407,7 @@ func (c *Cache) addAccount(dest, bID string, account *Account) {
 	}
 
 	c.Entries[bID].AccountCache[account.ID.String()] = &accountCacheEntry{
-		account: account,
+		Data: account,
 		metadata: metadata{
 			CreatedAt:      time.Now().UTC(),
 			DestinationURL: dest,
@@ -430,7 +430,7 @@ func (c *Cache) addAccounts(dest, bID string, accounts []*Account) {
 			continue
 		}
 		c.Entries[bID].AccountCache[a.ID.String()] = &accountCacheEntry{
-			account: a,
+			Data: a,
 			metadata: metadata{
 				CreatedAt:      time.Now().UTC(),
 				DestinationURL: dest,
@@ -465,7 +465,7 @@ func (c *Cache) addPayee(dest, bID string, payee *Payee) {
 	}
 
 	c.Entries[bID].PayeeCache[payee.ID.String()] = &payeeCacheEntry{
-		payee: payee,
+		Data: payee,
 		metadata: metadata{
 			CreatedAt:      time.Now().UTC(),
 			DestinationURL: dest,
@@ -488,7 +488,7 @@ func (c *Cache) addPayees(dest, bID string, payees []*Payee) {
 			continue
 		}
 		c.Entries[bID].PayeeCache[p.ID.String()] = &payeeCacheEntry{
-			payee: p,
+			Data: p,
 			metadata: metadata{
 				CreatedAt:      time.Now().UTC(),
 				DestinationURL: dest,
@@ -523,7 +523,7 @@ func (c *Cache) addGroup(dest, bID string, group *Group) {
 	}
 
 	c.Entries[bID].GroupCache[group.ID.String()] = &groupCacheEntry{
-		group: group,
+		Data: group,
 		metadata: metadata{
 			CreatedAt:      time.Now().UTC(),
 			DestinationURL: dest,
@@ -546,7 +546,7 @@ func (c *Cache) addGroups(dest, bID string, groups []*Group) {
 			continue
 		}
 		c.Entries[bID].GroupCache[g.ID.String()] = &groupCacheEntry{
-			group: g,
+			Data: g,
 			metadata: metadata{
 				CreatedAt:      time.Now().UTC(),
 				DestinationURL: dest,
@@ -581,7 +581,7 @@ func (c *Cache) addCategory(dest, bID string, category *Category) {
 	}
 
 	c.Entries[bID].CategoryCache[category.ID.String()] = &categoryCacheEntry{
-		category: category,
+		Data: category,
 		metadata: metadata{
 			CreatedAt:      time.Now().UTC(),
 			DestinationURL: dest,
@@ -604,7 +604,7 @@ func (c *Cache) addCategories(dest, bID string, categories []*Category) {
 			continue
 		}
 		c.Entries[bID].CategoryCache[cat.ID.String()] = &categoryCacheEntry{
-			category: cat,
+			Data: cat,
 			metadata: metadata{
 				CreatedAt:      time.Now().UTC(),
 				DestinationURL: dest,
@@ -639,7 +639,7 @@ func (c *Cache) addTxn(dest, bID string, txn *Transaction) {
 	}
 
 	c.Entries[bID].TxnCache[txn.ID.String()] = &txnCacheEntry{
-		transaction: txn,
+		Data: txn,
 		metadata: metadata{
 			CreatedAt:      time.Now().UTC(),
 			DestinationURL: dest,
@@ -662,7 +662,7 @@ func (c *Cache) addTxns(dest, bID string, txns []*Transaction) {
 			continue
 		}
 		c.Entries[bID].TxnCache[t.ID.String()] = &txnCacheEntry{
-			transaction: t,
+			Data: t,
 			metadata: metadata{
 				CreatedAt:      time.Now().UTC(),
 				DestinationURL: dest,
@@ -697,7 +697,7 @@ func (c *Cache) addTxnDetails(dest, bID string, txn *TransactionDetail) {
 	}
 
 	c.Entries[bID].TxnDetailsCache[txn.ID.String()] = &txnDetailsCacheEntry{
-		txnDetails: txn,
+		Data: txn,
 		metadata: metadata{
 			CreatedAt:      time.Now().UTC(),
 			DestinationURL: dest,
@@ -720,7 +720,7 @@ func (c *Cache) addTxnsDetails(dest, bID string, txns []*TransactionDetail) {
 			continue
 		}
 		c.Entries[bID].TxnDetailsCache[t.ID.String()] = &txnDetailsCacheEntry{
-			txnDetails: t,
+			Data: t,
 			metadata: metadata{
 				CreatedAt:      time.Now().UTC(),
 				DestinationURL: dest,
