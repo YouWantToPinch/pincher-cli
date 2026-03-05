@@ -80,10 +80,18 @@ func (c *Client) BudgetAccountRestore(bID, aID string) error {
 // BudgetAccountDelete makes an API call to delete an account by ID belonging to
 // the budget identified by the given budget ID.
 //
-// Any existing copy of the item in the client's internal cache is deleted.
+// Any existing copy of the item in the client's internal cache is deleted,
+// assuming that the payload specified hard-deltion. Otherwise, a separate
+// request is made to fetch the account, so as to keep the cache in sync.
 func (c *Client) BudgetAccountDelete(bID, aID string, data BudgetAccountDeleteData) error {
 	endpoint := EndpointBudgetAccount(bID, aID)
 	err := c.Request(http.MethodDelete, endpoint, data, nil)
-	c.Cache.deleteAccount(bID, aID)
+	if data.DeleteHard {
+		c.Cache.deleteAccount(bID, aID)
+	} else {
+		if err == nil {
+			_, _ = c.BudgetAccount(bID, aID)
+		}
+	}
 	return err
 }
