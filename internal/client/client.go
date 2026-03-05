@@ -13,7 +13,6 @@ import (
 	"strings"
 	"time"
 
-	file "github.com/YouWantToPinch/pincher-cli/internal/filemgr"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -28,19 +27,39 @@ type Client struct {
 	parsedBaseURL *url.URL
 	token         string
 	RefreshToken  string
+	autoRefresh   bool // whether or not to retrieve a new token on expiration, for each API call
 }
 
 // NewClient is the proper way to instantiate a client with the sdk.
-func NewClient(timeout, cacheInterval time.Duration, baseURL string) (Client, error) {
+func NewClient(baseURL string, timeout, cacheInterval time.Duration, autoRefresh bool) (Client, error) {
 	c := Client{
 		Cache: *NewCache(cacheInterval),
 		Client: http.Client{
 			Timeout: timeout,
 		},
+		autoRefresh: autoRefresh,
 	}
 	err := c.SetBaseURL(baseURL)
 	if err != nil {
 		return Client{}, fmt.Errorf("client.SetBaseURL: %w", err)
+	}
+	return c, nil
+}
+
+// NewClientWithDefaults returns an auto-refreshing client
+// with a 10-second timeout and 5-minute cacheInterval.
+//
+// Its baseURL is set to the value of defaultBaseURL for
+// hosting locally.
+func NewClientWithDefaults() (Client, error) {
+	c, err := NewClient(
+		defaultBaseURL,
+		time.Second*10,
+		time.Minute*5,
+		true,
+	)
+	if err != nil {
+		return Client{}, err
 	}
 	return c, nil
 }
@@ -70,95 +89,6 @@ func (c *Client) SetBaseURL(newURL string) error {
 
 	slog.Info("Client Base URL set", slog.String("BaseURL", c.baseURL))
 	return nil
-}
-
-// ClearCache calls the Clear() function on
-// the cache attached to the client and
-// forces an early save of the cache file.
-func (c *Client) ClearCache() {
-	c.Cache.Clear()
-	err := c.SaveCacheFile()
-	if err != nil {
-		slog.Error("could not save cache file: " + err.Error())
-	}
-}
-
-// LoadCacheFile looks for a file with the given name within
-// the user cache directory and attempts to load it into the cache.
-func (c *Client) LoadCacheFile() error {
-	const errMsg = "could not load cache: "
-	cachePath, err := file.GetCacheFilepath("cache.json")
-	if err != nil {
-		return fmt.Errorf(errMsg+"%w", err)
-	}
-
-	loadedCache, err := file.ReadJSONFromFile[Cache](cachePath)
-	if err != nil {
-		return fmt.Errorf(errMsg+"%w", err)
-	}
-
-	c.Cache.Set(loadedCache.Entries)
-	return nil
-}
-
-// SaveCacheFile saves the current cache to a local file
-// with the given name under the user cache directory.
-func (c *Client) SaveCacheFile() error {
-	const errMsg = "could not save cache: "
-	cachePath, err := file.GetCacheFilepath("cache.json")
-	if err != nil {
-		return fmt.Errorf(errMsg+"%w", err)
-	}
-	err = file.WriteAsJSON(c.Cache, cachePath)
-	if err != nil {
-		return fmt.Errorf(errMsg+"%w", err)
-	}
-	return nil
-}
-
-// Get wrapper for doRequest
-func (c *Client) Get(url, token string, out any) (response *http.Response, respFromCache bool, err error) {
-	if val, ok := c.Cache.Get(url); ok {
-		slog.Info("retrieving requested data from cache", slog.String("URL", url))
-		err := json.Unmarshal(val, out)
-		if err != nil {
-			slog.Error("attempted to pull request from cached data, but failed: " + err.Error())
-		} else {
-			return nil, true, nil
-		}
-	}
-
-	resp, err := c.doRequestWithCache(http.MethodGet, url, token, nil, out)
-	if err == nil && out != nil {
-		data, cacheErr := json.Marshal(out)
-		if cacheErr != nil {
-			slog.Error(fmt.Sprintf("could not cache response data: %s", cacheErr))
-		} else {
-			c.Cache.Add(url, data, false)
-		}
-	}
-
-	return resp, false, err
-}
-
-// Post wrapper for doRequestWithCache
-func (c *Client) Post(url, token string, payload, out any) (*http.Response, error) {
-	return c.doRequestWithCache(http.MethodPost, url, token, payload, out)
-}
-
-// Put wrapper for doRequestWithCache
-func (c *Client) Put(url, token string, payload any) (*http.Response, error) {
-	return c.doRequestWithCache(http.MethodPut, url, token, payload, nil)
-}
-
-// Patch wrapper for doRequestWithCache
-func (c *Client) Patch(url, token string, payload any) (*http.Response, error) {
-	return c.doRequestWithCache(http.MethodPatch, url, token, payload, nil)
-}
-
-// Delete wrapper for doRequestWithCache
-func (c *Client) Delete(url, token string, payload any) (*http.Response, error) {
-	return c.doRequestWithCache(http.MethodDelete, url, token, payload, nil)
 }
 
 // Request validates a request before making a call to the API with it,
@@ -203,11 +133,51 @@ func (c *Client) doRequest(token *string, method, destination string, data, resu
 		request.Header.Set("Authorization", "Bearer "+*token)
 	}
 
-	response, err := c.Do(request)
-	if err != nil {
-		return err
-	}
+	var response *http.Response
+	destUsesAccessToken := !strings.Contains(destination, "/refresh") && !strings.Contains(destination, "/revoke")
+	// avoid an infinite loop by filtering out endpoints that expect
+	// a refresh token in place of an access token
+	shouldRetry := destUsesAccessToken
+	for {
+		// try to send the request.
+		response, err = c.Do(request)
+		if err != nil {
+			return nil
+		}
 
+		// If the client is not directed to automatically refres haccess tokens,
+		// then we won't try in the first place.
+		if !c.autoRefresh {
+			break
+		}
+
+		// If the server responds with a 401 (unauthorized) code,
+		// we need to check whether or not it concerns an expired access token.
+		tokenExpired, err := checkTokenExpired(*token)
+
+		// if it isn't a 401, we don't care to retry with a new access token
+		if response.StatusCode != http.StatusUnauthorized ||
+			// if no token was required for the request, we don't care
+			*token == "" ||
+			// if the token is not expired, the 401 has nothing to do with tokens
+			(!tokenExpired && err == nil) {
+			break
+		} else if shouldRetry {
+
+			// Try to get a new access token if it is invalid or we got an error.
+			// If that's not possible, log out the user, as their session must therefore be invalid.
+			err := c.UserTokenRefresh()
+			if err != nil {
+				// an error return here means the refrsh token was invalid
+				return err
+			}
+			// update this loop with the new access token
+			token = &c.token
+			shouldRetry = false
+		} else {
+			break
+		}
+	}
 	defer response.Body.Close()
 
 	err = c.handleResponse(response.StatusCode, response.Body, result)
@@ -286,132 +256,9 @@ func sameHostname(a, b *url.URL) bool {
 	return strings.EqualFold(a.Host, b.Host)
 }
 
-// doRequestWithCache is a DEPRECATED function that makes an API call
-// with a request built from the given arguments, and updates the client's
-// internal cache when doing so.
-// doRequestWithCache is being phased out in favor of an approach that expects
-// package users to deliberately work with the internal cache is needed, rather
-// than baking its logic into any logic making API calls.
-// doRequestWithCache has been replaced with Client.Request().
-func (c *Client) doRequestWithCache(method, url, token string, payload, out any) (*http.Response, error) {
-	// try to make the new request.
-	req, err := c.MakeRequest(method, url, token, payload)
-	if err != nil {
-		return nil, err
-	}
-
-	var resp *http.Response
-	shouldRetry := !strings.Contains(url, "/refresh") && !strings.Contains(url, "/revoke") // avoid infinite loop
-	for {
-		// try to send the request.
-		resp, err = c.Do(req)
-		if err != nil {
-			return nil, err
-		}
-
-		// If the server responds with a 401 (unauthorized) code,
-		// we need to check whether or not it concerns an expired access token.
-		tokenExpired, err := checkTokenExpired(token)
-
-		// if it isn't a 401, we don't care to retry with a new access token
-		if resp.StatusCode != http.StatusUnauthorized ||
-			// if no token was required for the request, we don't care
-			token == "" ||
-			// if the token is not expired, the 401 has nothing to do with tokens
-			(!tokenExpired && err == nil) {
-			break
-		} else if shouldRetry {
-
-			// Try to get a new access token if it is invalid or we got an error.
-			// If that's not possible, log out the user, as their session must therefore be invalid.
-			err := c.UserTokenRefresh()
-			if err != nil {
-				// an error return here means the refrsh token was invalid
-				return nil, err
-			}
-			// update this loop with the new access token
-			token = c.token
-			shouldRetry = false
-		} else {
-			break
-		}
-	}
-	defer resp.Body.Close()
-
-	if out != nil {
-		err := json.NewDecoder(resp.Body).Decode(out)
-		if err != nil {
-			return resp, err
-		}
-	}
-
-	// delete existing cache for url, as the resource has been changed
-	switch method {
-	case http.MethodPost:
-		c.Cache.DeleteAllStartsWith(url)
-	case http.MethodPut:
-		fallthrough
-	case http.MethodDelete:
-		path, err := getURLResourcePath(url)
-		if err != nil {
-			slog.Error("could not delete keys with url prefix from cache", slog.String("prefix", url))
-		} else {
-			// delete all probable cache of this resource
-			c.Cache.DeleteAllStartsWith(path)
-		}
-	}
-
-	return resp, nil
-}
-
-// MakeRequest is a DEPRECATED function that accepts
-// arguments for building a request to be used for
-// an API call and returns the result.
-// In doRequest, it is replaced with prepareRequestBody.
-func (c *Client) MakeRequest(method, path, token string, body any) (*http.Request, error) {
-	var buffer io.Reader
-
-	if body != nil {
-		b, err := json.Marshal(body)
-		if err != nil {
-			return nil, err
-		}
-		buffer = bytes.NewReader(b)
-	}
-
-	req, err := http.NewRequest(method, path, buffer)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	if token != "" {
-		req.Header.Set("Authorization", "Bearer "+token)
-	}
-
-	return req, nil
-}
-
 // --------------
 //  Helpers
 // --------------
-
-// getUrlResourcePath trims ONE trailing instance of "/..."
-// from a string with at least one "/".
-// It is made for the purpose of trimming a trailing resource ID
-// from the end of a URL in order to get its parent path.
-// This is useful if you want to clear a cache of this resource
-// type so as to avoid cache inconsistency.
-func getURLResourcePath(url string) (string, error) {
-	// Remove the last segment of the path
-	segments := strings.Split(url, "/")
-	if len(segments) > 1 {
-		url = strings.Join(segments[:len(segments)-1], "/")
-		return url, nil
-	} else {
-		return "", fmt.Errorf("input is not a url")
-	}
-}
 
 func checkTokenExpired(tokenString string) (bool, error) {
 	token, _, err := jwt.NewParser().ParseUnverified(tokenString, jwt.MapClaims{})
