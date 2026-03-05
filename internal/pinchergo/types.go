@@ -1,14 +1,10 @@
-package client
+package pinchergo
 
 import (
 	"time"
 
 	"github.com/google/uuid"
 )
-
-// ----------------------
-//  CLI-EXCLUSIVE TYPES
-// ----------------------
 
 // ----------------------
 //  API COMPATIBILITY
