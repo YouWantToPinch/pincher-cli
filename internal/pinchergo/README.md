@@ -19,7 +19,7 @@ go get github.com/YouWantToPinch/pincher-sdk-go
 First import the package:
 
 ```go
-import "github.com/YouWantToPinch/pincher-sdk-/pinchergo"
+import "github.com/YouWantToPinch/pincher-sdk-go/pinchergo"
 ```
 
 Then, initialize a new **client** using one of the following two functions:
