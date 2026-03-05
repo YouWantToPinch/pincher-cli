@@ -57,7 +57,7 @@ func main() {
 	// give the client the stored refresh token so it will load cache
 	if cliState.Config.StayLoggedIn {
 		cliState.Client.RefreshToken = cliState.Config.RefreshToken
-		if err := cliState.Client.LoadCacheFile(); err != nil {
+		if err := cliState.LoadCacheFile(); err != nil {
 			fmt.Printf("CACHE ERROR: %s\n", err)
 		}
 	} else {
@@ -80,7 +80,7 @@ func main() {
 		}
 
 		// no cache needs to remain if user wants to be logged out
-		err = cliState.Client.SaveCacheFile()
+		err = cliState.SaveCacheFile()
 		if err != nil {
 			fmt.Printf("CACHE ERROR: %s\n", err)
 		} else {
