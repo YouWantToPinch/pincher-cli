@@ -8,7 +8,7 @@ func (c *Client) BudgetAccountCreate(bID string, data BudgetAccountCreateData) e
 	endpoint := EndpointBudgetAccounts(bID)
 	var account *Account
 	err := c.Request(http.MethodPost, endpoint, data, &account)
-	c.Cache.addAccount(bID, account)
+	c.Cache.addAccount(endpoint, bID, account)
 	return err
 }
 
@@ -19,7 +19,7 @@ type accountContainer struct {
 func (c *Client) BudgetAccount(bID, aID string) (account *Account, err error) {
 	endpoint := EndpointBudgetAccount(bID, aID)
 	err = c.Request(http.MethodGet, endpoint, nil, &account)
-	c.Cache.addAccount(bID, account)
+	c.Cache.addAccount(endpoint, bID, account)
 	return account, err
 }
 
@@ -27,7 +27,7 @@ func (c *Client) BudgetAccounts(bID, urlQuery string) (accounts []*Account, err 
 	endpoint := EndpointBudgetAccounts(bID) + urlQuery
 	var container accountContainer
 	err = c.Request(http.MethodGet, endpoint, nil, &container)
-	c.Cache.addAccounts(bID, container.Accounts)
+	c.Cache.addAccounts(endpoint, bID, container.Accounts)
 	return container.Accounts, err
 }
 
