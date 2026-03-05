@@ -2,9 +2,11 @@ package cli
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/YouWantToPinch/pincher-cli/internal/client"
 	"github.com/YouWantToPinch/pincher-cli/internal/config"
+	file "github.com/YouWantToPinch/pincher-cli/internal/filemgr"
 )
 
 // State represents the full state of the CLI during a session,
@@ -202,6 +204,50 @@ func (s *State) GetTxnsDetails(bID, urlQuery string) (txns []*client.Transaction
 	}
 	txns, err = s.Client.BudgetTransactionsDetails(bID, urlQuery)
 	return txns, err
+}
+
+// ClearCache calls the Clear() function on
+// the cache attached to the client and
+// forces an early save of the cache file.
+func (s *State) ClearCache() {
+	s.Client.Cache.Clear()
+	err := s.SaveCacheFile()
+	if err != nil {
+		slog.Error("could not save cache file: " + err.Error())
+	}
+}
+
+// LoadCacheFile looks for a file with the given name within
+// the user cache directory and attempts to load it into the cache.
+func (s *State) LoadCacheFile() error {
+	const errMsg = "could not load cache: "
+	cachePath, err := file.GetCacheFilepath("cache.json")
+	if err != nil {
+		return fmt.Errorf(errMsg+"%w", err)
+	}
+
+	loadedCache, err := file.ReadJSONFromFile[client.Cache](cachePath)
+	if err != nil {
+		return fmt.Errorf(errMsg+"%w", err)
+	}
+
+	s.Client.Cache.Set(loadedCache.Entries)
+	return nil
+}
+
+// SaveCacheFile saves the current cache to a local file
+// with the given name under the user cache directory.
+func (s *State) SaveCacheFile() error {
+	const errMsg = "could not save cache: "
+	cachePath, err := file.GetCacheFilepath("cache.json")
+	if err != nil {
+		return fmt.Errorf(errMsg+"%w", err)
+	}
+	err = file.WriteAsJSON(s.Client.Cache, cachePath)
+	if err != nil {
+		return fmt.Errorf(errMsg+"%w", err)
+	}
+	return nil
 }
 
 func (s *State) NewSession() {
