@@ -51,9 +51,8 @@ func (c *Client) BudgetAccounts(bID, urlQuery string) (accounts []*Account, err 
 // BudgetAccountUpdate makes an API call to update an account belonging to
 // the budget identified by the given budget ID with the given data.
 //
-// Any non-nil result is saved to the client's internal cache, assuming the
-// cache is enabled. With no error returned, a separate request is made to
-// fetch the account, so as to keep the cache in sync.
+// With no error returned, a separate request is made to fetch the account,
+// so as to keep the cache in sync.
 func (c *Client) BudgetAccountUpdate(bID, aID string, data BudgetAccountUpdateData) error {
 	endpoint := EndpointBudgetAccount(bID, aID)
 	err := c.Request(http.MethodPut, endpoint, data, nil)
@@ -68,6 +67,9 @@ func (c *Client) BudgetAccountUpdate(bID, aID string, data BudgetAccountUpdateDa
 // the budget identified by the given budget ID. The update, made via a
 // PATCH request, merely alters the account's deletion status from soft-deleted
 // to non-deleted.
+//
+// With no error returned, a separate request is made to fetch the account,
+// so as to keep the cache in sync.
 func (c *Client) BudgetAccountRestore(bID, aID string) error {
 	endpoint := EndpointBudgetAccount(bID, aID)
 	err := c.Request(http.MethodPatch, endpoint, nil, nil)
