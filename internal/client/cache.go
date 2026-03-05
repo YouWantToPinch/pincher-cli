@@ -1,7 +1,6 @@
 package client
 
 import (
-	"fmt"
 	"maps"
 	"strings"
 	"sync"
@@ -380,7 +379,6 @@ func (c *Cache) addAccount(bID string, account *Account) {
 
 func (c *Cache) addAccounts(bID string, accounts []*Account) {
 	if !c.trackBulkAPICalls || accounts == nil {
-		fmt.Println("quitting addAccounts early")
 		return
 	}
 	c.mu.Lock()
