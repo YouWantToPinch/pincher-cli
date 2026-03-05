@@ -51,7 +51,7 @@ func (c *Client) BudgetCategoryReports(bID, mID string) (categories []*CategoryR
 func (c *Client) BudgetCategoryUpdate(bID, cID string, data BudgetCategoryUpdateData) error {
 	endpoint := EndpointBudgetCategory(bID, cID)
 	err := c.Request(http.MethodPut, endpoint, data, nil)
-	if err != nil {
+	if err == nil {
 		_, _ = c.BudgetCategory(bID, cID)
 	}
 	return err

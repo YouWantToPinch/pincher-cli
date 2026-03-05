@@ -57,7 +57,7 @@ func (c *Client) BudgetTransactionsDetails(bID, urlQuery string) (transactions [
 func (c *Client) BudgetTransactionUpdate(bID, tID string, data BudgetTransactionUpdateData) error {
 	endpoint := EndpointBudgetTransaction(bID, tID)
 	err := c.Request(http.MethodPut, endpoint, data, nil)
-	if err != nil {
+	if err == nil {
 		_, _ = c.BudgetTransaction(bID, tID)
 		_, _ = c.BudgetTransactionDetails(bID, tID)
 	}
