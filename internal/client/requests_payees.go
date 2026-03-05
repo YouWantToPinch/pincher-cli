@@ -49,5 +49,6 @@ func (c *Client) BudgetPayeeRestore(bID, pID string) error {
 func (c *Client) BudgetPayeeDelete(bID, pID string, data BudgetPayeeDeleteData) error {
 	endpoint := EndpointBudgetPayee(bID, pID)
 	err := c.Request(http.MethodDelete, endpoint, data, nil)
+	c.Cache.deletePayee(bID, pID)
 	return err
 }

@@ -358,6 +358,20 @@ func (c *Cache) addBudgets(budgets []*Budget) {
 	}
 }
 
+func (c *Cache) deleteBudget(bID string) {
+	if !c.trackAPICalls {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if _, ok := c.budgets[bID]; !ok {
+		return
+	}
+
+	delete(c.budgets, bID)
+}
+
 func (c *Cache) addAccount(bID string, account *Account) {
 	if !c.trackAPICalls || account == nil {
 		return
@@ -398,6 +412,20 @@ func (c *Cache) addAccounts(bID string, accounts []*Account) {
 			},
 		}
 	}
+}
+
+func (c *Cache) deleteAccount(bID, aID string) {
+	if !c.trackAPICalls {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if _, ok := c.budgets[bID]; !ok {
+		return
+	}
+
+	delete(c.budgets[bID].AccountCache, aID)
 }
 
 func (c *Cache) addPayee(bID string, payee *Payee) {
@@ -442,6 +470,20 @@ func (c *Cache) addPayees(bID string, payees []*Payee) {
 	}
 }
 
+func (c *Cache) deletePayee(bID, pID string) {
+	if !c.trackAPICalls {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if _, ok := c.budgets[bID]; !ok {
+		return
+	}
+
+	delete(c.budgets[bID].PayeeCache, pID)
+}
+
 func (c *Cache) addGroup(bID string, group *Group) {
 	if !c.trackAPICalls || group == nil {
 		return
@@ -482,6 +524,20 @@ func (c *Cache) addGroups(bID string, groups []*Group) {
 			},
 		}
 	}
+}
+
+func (c *Cache) deleteGroup(bID, gID string) {
+	if !c.trackAPICalls {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if _, ok := c.budgets[bID]; !ok {
+		return
+	}
+
+	delete(c.budgets[bID].GroupCache, gID)
 }
 
 func (c *Cache) addCategory(bID string, category *Category) {
@@ -526,6 +582,20 @@ func (c *Cache) addCategories(bID string, categories []*Category) {
 	}
 }
 
+func (c *Cache) deleteCategory(bID, cID string) {
+	if !c.trackAPICalls {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if _, ok := c.budgets[bID]; !ok {
+		return
+	}
+
+	delete(c.budgets[bID].CategoryCache, cID)
+}
+
 func (c *Cache) addTxn(bID string, txn *Transaction) {
 	if !c.trackAPICalls || txn == nil {
 		return
@@ -568,6 +638,20 @@ func (c *Cache) addTxns(bID string, txns []*Transaction) {
 	}
 }
 
+func (c *Cache) deleteTxn(bID, tID string) {
+	if !c.trackAPICalls {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if _, ok := c.budgets[bID]; !ok {
+		return
+	}
+
+	delete(c.budgets[bID].TxnCache, tID)
+}
+
 func (c *Cache) addTxnDetails(bID string, txn *TransactionDetail) {
 	if !c.trackAPICalls || txn == nil {
 		return
@@ -608,6 +692,20 @@ func (c *Cache) addTxnsDetails(bID string, txns []*TransactionDetail) {
 			},
 		}
 	}
+}
+
+func (c *Cache) deleteTxnsDetails(bID, tID string) {
+	if !c.trackAPICalls {
+		return
+	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if _, ok := c.budgets[bID]; !ok {
+		return
+	}
+
+	delete(c.budgets[bID].TxnDetailsCache, tID)
 }
 
 // ---------------------------
