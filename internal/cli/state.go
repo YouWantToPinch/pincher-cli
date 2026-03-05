@@ -38,7 +38,7 @@ func (s *State) GetBudget(bID string) (budget *client.Budget, err error) {
 // to pull from cache, then making an API call if it is
 // unable to do so.
 func (s *State) GetBudgets(bID, urlQuery string) (budgets []*client.Budget, err error) {
-	budgets = s.Client.Cache.Budgets()
+	budgets = s.Client.Cache.Budgets(urlQuery)
 	if budgets != nil {
 		return budgets, nil
 	}
@@ -64,7 +64,7 @@ func (s *State) GetAccount(bID, aID string) (account *client.Account, err error)
 // budget ID. It first attempts to pull from cache, then
 // making an API call if it is unable to do so.
 func (s *State) GetAccounts(bID, urlQuery string) (accounts []*client.Account, err error) {
-	accounts = s.Client.Cache.Accounts(bID)
+	accounts = s.Client.Cache.Accounts(bID, urlQuery)
 	if len(accounts) > 0 {
 		return accounts, nil
 	}
@@ -90,7 +90,7 @@ func (s *State) GetPayee(bID, pID string) (payee *client.Payee, err error) {
 // budget ID. It first attempts to pull from cache, then
 // making an API call if it is unable to do so.
 func (s *State) GetPayees(bID, urlQuery string) (payees []*client.Payee, err error) {
-	payees = s.Client.Cache.Payees(bID)
+	payees = s.Client.Cache.Payees(bID, urlQuery)
 	if len(payees) > 0 {
 		return payees, nil
 	}
@@ -116,7 +116,7 @@ func (s *State) GetGroup(bID, gID string) (group *client.Group, err error) {
 // budget ID. It first attempts to pull from cache, then
 // making an API call if it is unable to do so.
 func (s *State) GetGroups(bID, urlQuery string) (groups []*client.Group, err error) {
-	groups = s.Client.Cache.Groups(bID)
+	groups = s.Client.Cache.Groups(bID, urlQuery)
 	if len(groups) > 0 {
 		return groups, nil
 	}
@@ -142,7 +142,7 @@ func (s *State) GetCategory(bID, cID string) (category *client.Category, err err
 // budget ID. It first attempts to pull from cache, then
 // making an API call if it is unable to do so.
 func (s *State) GetCategories(bID, urlQuery string) (categories []*client.Category, err error) {
-	categories = s.Client.Cache.Categories(bID)
+	categories = s.Client.Cache.Categories(bID, urlQuery)
 	if len(categories) > 0 {
 		return categories, nil
 	}
@@ -169,7 +169,7 @@ func (s *State) GetTxn(bID, tID string) (txn *client.Transaction, err error) {
 // budget ID. It first attempts to pull from cache, then
 // making an API call if it is unable to do so.
 func (s *State) GetTxns(bID, urlQuery string) (txns []*client.Transaction, err error) {
-	txns = s.Client.Cache.Transactions(bID)
+	txns = s.Client.Cache.Transactions(bID, urlQuery)
 	if len(txns) > 0 {
 		return txns, nil
 	}
@@ -196,7 +196,7 @@ func (s *State) GetTxnDetails(bID, tID string) (txn *client.TransactionDetail, e
 // the given budget ID. It first attempts to pull from cache, then
 // making an API call if it is unable to do so.
 func (s *State) GetTxnsDetails(bID, urlQuery string) (txns []*client.TransactionDetail, err error) {
-	txns = s.Client.Cache.TransactionsDetails(bID)
+	txns = s.Client.Cache.TransactionsDetails(bID, urlQuery)
 	if len(txns) > 0 {
 		return txns, nil
 	}
