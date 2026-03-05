@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/YouWantToPinch/pincher-cli/internal/client"
+	pgo "github.com/YouWantToPinch/pincher-cli/internal/pinchergo"
 )
 
 func handlerPayee(s *State, c *handlerContext) error {
@@ -33,8 +33,8 @@ func handlePayeeAdd(s *State, c *handlerContext) error {
 	c.args.trackOptArgs(&c.cmd, "notes")
 	notes, _ := c.args.pfx()
 
-	err := s.Client.BudgetPayeeCreate(s.Session.ActiveBudget.ID.String(), client.BudgetPayeeCreateData{
-		MetaData: client.MetaData{
+	err := s.Client.BudgetPayeeCreate(s.Session.ActiveBudget.ID.String(), pgo.BudgetPayeeCreateData{
+		MetaData: pgo.MetaData{
 			Name:  name,
 			Notes: notes,
 		},
@@ -75,8 +75,8 @@ func handlePayeeList(s *State, c *handlerContext) error {
 		return payees[i].Name < payees[j].Name
 	})
 	const uuidLength = 36
-	maxLenName := MaxOfStrings(ExtractStrings(payees, func(b *client.Payee) string { return b.Name })...)
-	maxLenNotes := MaxOfStrings(ExtractStrings(payees, func(b *client.Payee) string { return b.Notes })...)
+	maxLenName := MaxOfStrings(ExtractStrings(payees, func(b *pgo.Payee) string { return b.Name })...)
+	maxLenNotes := MaxOfStrings(ExtractStrings(payees, func(b *pgo.Payee) string { return b.Notes })...)
 	fmt.Printf("  %-*s | %-*s | %s\n", maxLenName, "NAME", uuidLength, "ID", "NOTES")
 	fmt.Printf("  %s-+-%s-+-%s\n", nDashes(maxLenName), nDashes(uuidLength), nDashes(maxLenNotes))
 	for _, payee := range payees {
@@ -109,8 +109,8 @@ func handlePayeeUpdate(s *State, c *handlerContext) error {
 		payloadNotes = payee.Notes
 	}
 
-	err = s.Client.BudgetPayeeUpdate(s.Session.ActiveBudget.ID.String(), payee.ID.String(), client.BudgetPayeeUpdateData{
-		MetaData: client.MetaData{
+	err = s.Client.BudgetPayeeUpdate(s.Session.ActiveBudget.ID.String(), payee.ID.String(), pgo.BudgetPayeeUpdateData{
+		MetaData: pgo.MetaData{
 			Name:  payloadName,
 			Notes: payloadNotes,
 		},
@@ -136,7 +136,7 @@ func handlePayeeDelete(s *State, c *handlerContext) error {
 		return err
 	}
 
-	err = s.Client.BudgetPayeeDelete(s.Session.ActiveBudget.ID.String(), payee.ID.String(), client.BudgetPayeeDeleteData{
+	err = s.Client.BudgetPayeeDelete(s.Session.ActiveBudget.ID.String(), payee.ID.String(), pgo.BudgetPayeeDeleteData{
 		NewPayeeName: newPayeeName,
 	})
 	if err != nil {

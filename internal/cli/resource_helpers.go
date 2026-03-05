@@ -3,10 +3,10 @@ package cli
 import (
 	"fmt"
 
-	"github.com/YouWantToPinch/pincher-cli/internal/client"
+	pgo "github.com/YouWantToPinch/pincher-cli/internal/pinchergo"
 )
 
-func findBudgetByName(name string, budgets []*client.Budget) (*client.Budget, error) {
+func findBudgetByName(name string, budgets []*pgo.Budget) (*pgo.Budget, error) {
 	for i := range len(budgets) {
 		if name == budgets[i].Name {
 			return budgets[i], nil
@@ -15,7 +15,7 @@ func findBudgetByName(name string, budgets []*client.Budget) (*client.Budget, er
 	return nil, fmt.Errorf("no budgets found with provided name '%s'", name)
 }
 
-func findAccountByName(name string, accounts []*client.Account) (*client.Account, error) {
+func findAccountByName(name string, accounts []*pgo.Account) (*pgo.Account, error) {
 	for i := range len(accounts) {
 		if name == accounts[i].Name {
 			return accounts[i], nil
@@ -24,7 +24,7 @@ func findAccountByName(name string, accounts []*client.Account) (*client.Account
 	return nil, fmt.Errorf("no accounts found with provided name '%s'", name)
 }
 
-func findGroupByName(name string, groups []*client.Group) (*client.Group, error) {
+func findGroupByName(name string, groups []*pgo.Group) (*pgo.Group, error) {
 	for i := range len(groups) {
 		if name == groups[i].Name {
 			return groups[i], nil
@@ -33,7 +33,7 @@ func findGroupByName(name string, groups []*client.Group) (*client.Group, error)
 	return nil, fmt.Errorf("no groups found with provided name '%s'", name)
 }
 
-func findCategoryByName(name string, categories []*client.Category) (*client.Category, error) {
+func findCategoryByName(name string, categories []*pgo.Category) (*pgo.Category, error) {
 	for i := range len(categories) {
 		if name == categories[i].Name {
 			return categories[i], nil
@@ -42,7 +42,7 @@ func findCategoryByName(name string, categories []*client.Category) (*client.Cat
 	return nil, fmt.Errorf("no categories found with provided name '%s'", name)
 }
 
-func findPayeeByName(name string, payees []*client.Payee) (*client.Payee, error) {
+func findPayeeByName(name string, payees []*pgo.Payee) (*pgo.Payee, error) {
 	for i := range len(payees) {
 		if name == payees[i].Name {
 			return payees[i], nil

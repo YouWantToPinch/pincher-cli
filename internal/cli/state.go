@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/YouWantToPinch/pincher-cli/internal/client"
 	"github.com/YouWantToPinch/pincher-cli/internal/config"
 	file "github.com/YouWantToPinch/pincher-cli/internal/filemgr"
+	pgo "github.com/YouWantToPinch/pincher-cli/internal/pinchergo"
 )
 
 // State represents the full state of the CLI during a session,
@@ -16,7 +16,7 @@ type State struct {
 	DoneChan *chan bool
 	Logger   *Logger
 	Config   *config.Config
-	Client   *client.Client
+	Client   *pgo.Client
 	Session  *cliSession
 	CmdQueue chan<- string
 	styles   *styles
@@ -26,7 +26,7 @@ type State struct {
 // budget belonging to the active user. It first
 // attempts to pull from cache, then making an API
 // call if it is unable to do so.
-func (s *State) GetBudget(bID string) (budget *client.Budget, err error) {
+func (s *State) GetBudget(bID string) (budget *pgo.Budget, err error) {
 	budget = s.Client.Cache.Budget(bID)
 	if budget != nil {
 		return budget, nil
@@ -39,7 +39,7 @@ func (s *State) GetBudget(bID string) (budget *client.Budget, err error) {
 // budgets belonging to the active user. It first attempts
 // to pull from cache, then making an API call if it is
 // unable to do so.
-func (s *State) GetBudgets(bID, urlQuery string) (budgets []*client.Budget, err error) {
+func (s *State) GetBudgets(bID, urlQuery string) (budgets []*pgo.Budget, err error) {
 	budgets = s.Client.Cache.Budgets(urlQuery)
 	if budgets != nil {
 		return budgets, nil
@@ -52,7 +52,7 @@ func (s *State) GetBudgets(bID, urlQuery string) (budgets []*client.Budget, err 
 // account by ID belonging to the budget which corresponds
 // to the given budget ID. It first attempts to pull from
 // cache, then making an API call if it is unable to do so.
-func (s *State) GetAccount(bID, aID string) (account *client.Account, err error) {
+func (s *State) GetAccount(bID, aID string) (account *pgo.Account, err error) {
 	account = s.Client.Cache.Account(bID, aID)
 	if account != nil {
 		return account, nil
@@ -65,7 +65,7 @@ func (s *State) GetAccount(bID, aID string) (account *client.Account, err error)
 // accounts belonging to budget which corresponds to the given
 // budget ID. It first attempts to pull from cache, then
 // making an API call if it is unable to do so.
-func (s *State) GetAccounts(bID, urlQuery string) (accounts []*client.Account, err error) {
+func (s *State) GetAccounts(bID, urlQuery string) (accounts []*pgo.Account, err error) {
 	accounts = s.Client.Cache.Accounts(bID, urlQuery)
 	if len(accounts) > 0 {
 		return accounts, nil
@@ -78,7 +78,7 @@ func (s *State) GetAccounts(bID, urlQuery string) (accounts []*client.Account, e
 // payee by ID belonging to the budget which corresponds
 // to the given budget ID. It first attempts to pull from
 // cache, then making an API call if it is unable to do so.
-func (s *State) GetPayee(bID, pID string) (payee *client.Payee, err error) {
+func (s *State) GetPayee(bID, pID string) (payee *pgo.Payee, err error) {
 	payee = s.Client.Cache.Payee(bID, pID)
 	if payee != nil {
 		return payee, nil
@@ -91,7 +91,7 @@ func (s *State) GetPayee(bID, pID string) (payee *client.Payee, err error) {
 // payees belonging to budget which corresponds to the given
 // budget ID. It first attempts to pull from cache, then
 // making an API call if it is unable to do so.
-func (s *State) GetPayees(bID, urlQuery string) (payees []*client.Payee, err error) {
+func (s *State) GetPayees(bID, urlQuery string) (payees []*pgo.Payee, err error) {
 	payees = s.Client.Cache.Payees(bID, urlQuery)
 	if len(payees) > 0 {
 		return payees, nil
@@ -104,7 +104,7 @@ func (s *State) GetPayees(bID, urlQuery string) (payees []*client.Payee, err err
 // group by ID belonging to the budget which corresponds
 // to the given budget ID. It first attempts to pull from
 // cache, then making an API call if it is unable to do so.
-func (s *State) GetGroup(bID, gID string) (group *client.Group, err error) {
+func (s *State) GetGroup(bID, gID string) (group *pgo.Group, err error) {
 	group = s.Client.Cache.Group(bID, gID)
 	if group != nil {
 		return group, nil
@@ -117,7 +117,7 @@ func (s *State) GetGroup(bID, gID string) (group *client.Group, err error) {
 // groups belonging to budget which corresponds to the given
 // budget ID. It first attempts to pull from cache, then
 // making an API call if it is unable to do so.
-func (s *State) GetGroups(bID, urlQuery string) (groups []*client.Group, err error) {
+func (s *State) GetGroups(bID, urlQuery string) (groups []*pgo.Group, err error) {
 	groups = s.Client.Cache.Groups(bID, urlQuery)
 	if len(groups) > 0 {
 		return groups, nil
@@ -130,7 +130,7 @@ func (s *State) GetGroups(bID, urlQuery string) (groups []*client.Group, err err
 // category by ID belonging to the budget which corresponds
 // to the given budget ID. It first attempts to pull from
 // cache, then making an API call if it is unable to do so.
-func (s *State) GetCategory(bID, cID string) (category *client.Category, err error) {
+func (s *State) GetCategory(bID, cID string) (category *pgo.Category, err error) {
 	category = s.Client.Cache.Category(bID, cID)
 	if category != nil {
 		return category, nil
@@ -143,7 +143,7 @@ func (s *State) GetCategory(bID, cID string) (category *client.Category, err err
 // categories belonging to budget which corresponds to the given
 // budget ID. It first attempts to pull from cache, then
 // making an API call if it is unable to do so.
-func (s *State) GetCategories(bID, urlQuery string) (categories []*client.Category, err error) {
+func (s *State) GetCategories(bID, urlQuery string) (categories []*pgo.Category, err error) {
 	categories = s.Client.Cache.Categories(bID, urlQuery)
 	if len(categories) > 0 {
 		return categories, nil
@@ -157,7 +157,7 @@ func (s *State) GetCategories(bID, urlQuery string) (categories []*client.Catego
 // corresponds to the given budget ID. It first
 // attempts to pull from cache, then making an API
 // call if it is unable to do so.
-func (s *State) GetTxn(bID, tID string) (txn *client.Transaction, err error) {
+func (s *State) GetTxn(bID, tID string) (txn *pgo.Transaction, err error) {
 	txn = s.Client.Cache.Transaction(bID, tID)
 	if txn != nil {
 		return txn, nil
@@ -170,7 +170,7 @@ func (s *State) GetTxn(bID, tID string) (txn *client.Transaction, err error) {
 // transactions belonging to budget which corresponds to the given
 // budget ID. It first attempts to pull from cache, then
 // making an API call if it is unable to do so.
-func (s *State) GetTxns(bID, urlQuery string) (txns []*client.Transaction, err error) {
+func (s *State) GetTxns(bID, urlQuery string) (txns []*pgo.Transaction, err error) {
 	txns = s.Client.Cache.Transactions(bID, urlQuery)
 	if len(txns) > 0 {
 		return txns, nil
@@ -184,7 +184,7 @@ func (s *State) GetTxns(bID, urlQuery string) (txns []*client.Transaction, err e
 // which corresponds to the given budget ID. It first
 // attempts to pull from cache, then making an API call
 // if it is unable to do so.
-func (s *State) GetTxnDetails(bID, tID string) (txn *client.TransactionDetail, err error) {
+func (s *State) GetTxnDetails(bID, tID string) (txn *pgo.TransactionDetail, err error) {
 	txn = s.Client.Cache.TransactionDetails(bID, tID)
 	if txn != nil {
 		return txn, nil
@@ -197,7 +197,7 @@ func (s *State) GetTxnDetails(bID, tID string) (txn *client.TransactionDetail, e
 // transaction details belonging to budget which corresponds to
 // the given budget ID. It first attempts to pull from cache, then
 // making an API call if it is unable to do so.
-func (s *State) GetTxnsDetails(bID, urlQuery string) (txns []*client.TransactionDetail, err error) {
+func (s *State) GetTxnsDetails(bID, urlQuery string) (txns []*pgo.TransactionDetail, err error) {
 	txns = s.Client.Cache.TransactionsDetails(bID, urlQuery)
 	if len(txns) > 0 {
 		return txns, nil
@@ -207,7 +207,7 @@ func (s *State) GetTxnsDetails(bID, urlQuery string) (txns []*client.Transaction
 }
 
 // ClearCache calls the Clear() function on
-// the cache attached to the client and
+// the cache attached to the pgo.and
 // forces an early save of the cache file.
 func (s *State) ClearCache() {
 	s.Client.Cache.Clear()
@@ -226,7 +226,7 @@ func (s *State) LoadCacheFile() error {
 		return fmt.Errorf(errMsg+"%w", err)
 	}
 
-	loadedCache, err := file.ReadJSONFromFile[client.Cache](cachePath)
+	loadedCache, err := file.ReadJSONFromFile[pgo.Cache](cachePath)
 	if err != nil {
 		return fmt.Errorf(errMsg+"%w", err)
 	}
@@ -312,8 +312,8 @@ func (s *State) getStyledPrompt() string {
 // a logged-in user.
 type cliSession struct {
 	CommandRegistry *commandRegistry
-	ActiveUser      client.User
-	ActiveBudget    client.Budget
+	ActiveUser      pgo.User
+	ActiveBudget    pgo.Budget
 }
 
 // Init preregisters all commands to the internal command registry.
@@ -331,7 +331,7 @@ func (s *cliSession) Init() {
 	s.CommandRegistry.batchRegistration(makeBaseCommandHandlers(), Registered)
 }
 
-func (s *cliSession) OnLogin(user client.User) {
+func (s *cliSession) OnLogin(user pgo.User) {
 	// register commands that require login
 	s.CommandRegistry.register("budget")
 	s.ActiveUser = user
@@ -345,6 +345,6 @@ func (s *cliSession) OnViewBudget() {
 
 func (s *cliSession) OnLogout() {
 	// deregister commands
-	s.ActiveUser = client.User{}
+	s.ActiveUser = pgo.User{}
 	s.CommandRegistry.deregisterNonBaseCommands()
 }

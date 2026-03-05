@@ -5,8 +5,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/YouWantToPinch/pincher-cli/internal/client"
 	cc "github.com/YouWantToPinch/pincher-cli/internal/currency"
+	pgo "github.com/YouWantToPinch/pincher-cli/internal/pinchergo"
 )
 
 func handlerCategory(s *State, c *handlerContext) error {
@@ -41,8 +41,8 @@ func handleCategoryAdd(s *State, c *handlerContext) error {
 	c.args.trackOptArgs(&c.cmd, "group")
 	groupName, _ := c.args.pfx()
 
-	err := s.Client.BudgetCategoryCreate(s.Session.ActiveBudget.ID.String(), client.BudgetCategoryCreateData{
-		MetaData: client.MetaData{
+	err := s.Client.BudgetCategoryCreate(s.Session.ActiveBudget.ID.String(), pgo.BudgetCategoryCreateData{
+		MetaData: pgo.MetaData{
 			Name:  name,
 			Notes: notes,
 		},
@@ -79,7 +79,7 @@ func handleCategoryAssign(s *State, c *handlerContext) error {
 	c.args.trackOptArgs(&c.cmd, "from")
 	fromCategory, _ := c.args.pfx()
 
-	err = s.Client.BudgetCategoryAssign(s.Session.ActiveBudget.ID.String(), monthStr, client.BudgetCategoryAssignData{
+	err = s.Client.BudgetCategoryAssign(s.Session.ActiveBudget.ID.String(), monthStr, pgo.BudgetCategoryAssignData{
 		Amount:       parsedAmount,
 		ToCategory:   toCategory,
 		FromCategory: fromCategory,
@@ -121,11 +121,11 @@ func handleCategoryReports(s *State, c *handlerContext) error {
 		return nil
 	}
 	fmt.Printf("Categories under budget %s: \n", s.Session.ActiveBudget.Name)
-	maxLenMonth := MaxOfStrings(ExtractStrings(reports, func(r *client.CategoryReport) string { return r.MonthID.Format("2006-01") })...)
-	maxLenName := MaxOfStrings(ExtractStrings(reports, func(r *client.CategoryReport) string { return r.Name })...)
-	maxLenAssigned := MaxOfStrings(ExtractStrings(reports, func(r *client.CategoryReport) string { return cc.Format(r.Assigned, s.Config.CurrencyISOCode, true) })...)
-	maxLenActivity := MaxOfStrings(ExtractStrings(reports, func(r *client.CategoryReport) string { return cc.Format(r.Activity, s.Config.CurrencyISOCode, true) })...)
-	maxLenBalance := MaxOfStrings(ExtractStrings(reports, func(r *client.CategoryReport) string { return cc.Format(r.Balance, s.Config.CurrencyISOCode, true) })...)
+	maxLenMonth := MaxOfStrings(ExtractStrings(reports, func(r *pgo.CategoryReport) string { return r.MonthID.Format("2006-01") })...)
+	maxLenName := MaxOfStrings(ExtractStrings(reports, func(r *pgo.CategoryReport) string { return r.Name })...)
+	maxLenAssigned := MaxOfStrings(ExtractStrings(reports, func(r *pgo.CategoryReport) string { return cc.Format(r.Assigned, s.Config.CurrencyISOCode, true) })...)
+	maxLenActivity := MaxOfStrings(ExtractStrings(reports, func(r *pgo.CategoryReport) string { return cc.Format(r.Activity, s.Config.CurrencyISOCode, true) })...)
+	maxLenBalance := MaxOfStrings(ExtractStrings(reports, func(r *pgo.CategoryReport) string { return cc.Format(r.Balance, s.Config.CurrencyISOCode, true) })...)
 	fmt.Printf("  %-*s | %-*s | %-*s | %-*s | %s\n", maxLenMonth, "MONTH", maxLenName, "NAME", maxLenAssigned, "ASSIGNED", maxLenActivity, "ACTIVITY", "BALANCE")
 	fmt.Printf("  %s-+-%s-+-%s-+-%s-+-%s\n", nDashes(maxLenMonth), nDashes(maxLenName), nDashes(maxLenAssigned), nDashes(maxLenActivity), nDashes(maxLenBalance))
 	for _, report := range reports {
@@ -166,8 +166,8 @@ func handleCategoryList(s *State, c *handlerContext) error {
 		return categories[i].Name < categories[j].Name
 	})
 	const uuidLength = 36
-	maxLenName := MaxOfStrings(ExtractStrings(categories, func(b *client.Category) string { return b.Name })...)
-	maxLenNotes := MaxOfStrings(ExtractStrings(categories, func(b *client.Category) string { return b.Notes })...)
+	maxLenName := MaxOfStrings(ExtractStrings(categories, func(b *pgo.Category) string { return b.Name })...)
+	maxLenNotes := MaxOfStrings(ExtractStrings(categories, func(b *pgo.Category) string { return b.Notes })...)
 	fmt.Printf("  %-*s | %-*s | %s\n", maxLenName, "NAME", uuidLength, "ID", "NOTES")
 	fmt.Printf("  %s-+-%s-+-%s\n", nDashes(maxLenName), nDashes(uuidLength), nDashes(maxLenNotes))
 	for _, category := range categories {
@@ -203,8 +203,8 @@ func handleCategoryUpdate(s *State, c *handlerContext) error {
 		payloadNotes = category.Notes
 	}
 
-	err = s.Client.BudgetCategoryUpdate(s.Session.ActiveBudget.ID.String(), category.ID.String(), client.BudgetCategoryUpdateData{
-		MetaData: client.MetaData{
+	err = s.Client.BudgetCategoryUpdate(s.Session.ActiveBudget.ID.String(), category.ID.String(), pgo.BudgetCategoryUpdateData{
+		MetaData: pgo.MetaData{
 			Name:  payloadName,
 			Notes: payloadNotes,
 		},

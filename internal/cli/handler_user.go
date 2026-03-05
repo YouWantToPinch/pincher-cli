@@ -3,7 +3,7 @@ package cli
 import (
 	"fmt"
 
-	"github.com/YouWantToPinch/pincher-cli/internal/client"
+	pgo "github.com/YouWantToPinch/pincher-cli/internal/pinchergo"
 )
 
 func handlerUser(s *State, c *handlerContext) error {
@@ -35,7 +35,7 @@ func handleUserAdd(s *State, c *handlerContext) error {
 	if password != retypedPassword {
 		return fmt.Errorf("password fields did not match")
 	}
-	err := s.Client.UserCreate(client.UserCreateData{
+	err := s.Client.UserCreate(pgo.UserCreateData{
 		Username: username,
 		Password: password,
 	})
@@ -51,7 +51,7 @@ func handleUserLogin(s *State, c *handlerContext) error {
 	username, _ := c.args.pfx()
 	password, _ := c.args.pfx()
 
-	user, err := s.Client.UserLogin(client.UserLoginData{
+	user, err := s.Client.UserLogin(pgo.UserLoginData{
 		Username: username,
 		Password: password,
 	})
@@ -105,7 +105,7 @@ func handleUserUpdate(s *State, c *handlerContext) error {
 		}
 	}
 
-	err = s.Client.UserUpdate(client.UserUpdateData{
+	err = s.Client.UserUpdate(pgo.UserUpdateData{
 		Username: newUsername,
 		Password: newPassword,
 	})
@@ -125,7 +125,7 @@ func handleUserDelete(s *State, c *handlerContext) error {
 	if password != retypedPassword {
 		return fmt.Errorf("password fields did not match")
 	}
-	err := s.Client.UserDelete(client.UserDeleteData{
+	err := s.Client.UserDelete(pgo.UserDeleteData{
 		Username: username,
 		Password: password,
 	})

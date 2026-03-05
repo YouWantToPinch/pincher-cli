@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/YouWantToPinch/pincher-cli/internal/client"
+	pgo "github.com/YouWantToPinch/pincher-cli/internal/pinchergo"
 )
 
 func handlerAccount(s *State, c *handlerContext) error {
@@ -33,16 +33,16 @@ func handleAccountAdd(s *State, c *handlerContext) error {
 	c.args.trackOptArgs(&c.cmd, "off-budget")
 	accountType, _ := c.args.pfx()
 	if accountType == "SET" {
-		accountType = client.BudgetAccountTypeOffBudget
+		accountType = pgo.BudgetAccountTypeOffBudget
 	} else {
-		accountType = client.BudgetAccountTypeOnBudget
+		accountType = pgo.BudgetAccountTypeOnBudget
 	}
 
 	c.args.trackOptArgs(&c.cmd, "notes")
 	notes, _ := c.args.pfx()
 
-	err := s.Client.BudgetAccountCreate(s.Session.ActiveBudget.ID.String(), client.BudgetAccountCreateData{
-		MetaData: client.MetaData{
+	err := s.Client.BudgetAccountCreate(s.Session.ActiveBudget.ID.String(), pgo.BudgetAccountCreateData{
+		MetaData: pgo.MetaData{
 			Name:  name,
 			Notes: notes,
 		},
@@ -83,8 +83,8 @@ func handleAccountList(s *State, c *handlerContext) error {
 		return accounts[i].Name < accounts[j].Name
 	})
 	const uuidLength = 36
-	maxLenName := MaxOfStrings(ExtractStrings(accounts, func(b *client.Account) string { return b.Name })...)
-	maxLenNotes := MaxOfStrings(ExtractStrings(accounts, func(b *client.Account) string { return b.Notes })...)
+	maxLenName := MaxOfStrings(ExtractStrings(accounts, func(b *pgo.Account) string { return b.Name })...)
+	maxLenNotes := MaxOfStrings(ExtractStrings(accounts, func(b *pgo.Account) string { return b.Notes })...)
 	fmt.Printf("  %-*s | %-*s | %s\n", maxLenName, "NAME", uuidLength, "ID", "NOTES")
 	fmt.Printf("  %s-+-%s-+-%s\n", nDashes(maxLenName), nDashes(uuidLength), nDashes(maxLenNotes))
 	for _, account := range accounts {
@@ -122,8 +122,8 @@ func handleAccountUpdate(s *State, c *handlerContext) error {
 		payloadNotes = account.Notes
 	}
 
-	err = s.Client.BudgetAccountUpdate(s.Session.ActiveBudget.ID.String(), account.ID.String(), client.BudgetAccountUpdateData{
-		MetaData: client.MetaData{
+	err = s.Client.BudgetAccountUpdate(s.Session.ActiveBudget.ID.String(), account.ID.String(), pgo.BudgetAccountUpdateData{
+		MetaData: pgo.MetaData{
 			Name:  payloadName,
 			Notes: payloadNotes,
 		},
@@ -176,7 +176,7 @@ func handleAccountDelete(s *State, c *handlerContext) error {
 		return err
 	}
 
-	err = s.Client.BudgetAccountDelete(s.Session.ActiveBudget.ID.String(), account.ID.String(), client.BudgetAccountDeleteData{
+	err = s.Client.BudgetAccountDelete(s.Session.ActiveBudget.ID.String(), account.ID.String(), pgo.BudgetAccountDeleteData{
 		DeleteHard: deleteHard,
 	})
 	if err != nil {

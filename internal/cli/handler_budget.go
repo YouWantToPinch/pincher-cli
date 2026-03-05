@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/YouWantToPinch/pincher-cli/internal/client"
 	cc "github.com/YouWantToPinch/pincher-cli/internal/currency"
+	pgo "github.com/YouWantToPinch/pincher-cli/internal/pinchergo"
 )
 
 func handlerBudget(s *State, c *handlerContext) error {
@@ -39,8 +39,8 @@ func handleBudgetAdd(s *State, c *handlerContext) error {
 	c.args.trackOptArgs(&c.cmd, "notes")
 	notes, _ := c.args.pfx()
 
-	err := s.Client.BudgetCreate(s.Session.ActiveBudget.ID.String(), client.BudgetCreateData{
-		MetaData: client.MetaData{
+	err := s.Client.BudgetCreate(s.Session.ActiveBudget.ID.String(), pgo.BudgetCreateData{
+		MetaData: pgo.MetaData{
 			Name:  name,
 			Notes: notes,
 		},
@@ -134,8 +134,8 @@ func handleBudgetList(s *State, c *handlerContext) error {
 		return budgets[i].Name < budgets[j].Name
 	})
 	const uuidLength = 36
-	maxLenName := MaxOfStrings(ExtractStrings(budgets, func(b *client.Budget) string { return b.Name })...)
-	maxLenNotes := MaxOfStrings(ExtractStrings(budgets, func(b *client.Budget) string { return b.Notes })...)
+	maxLenName := MaxOfStrings(ExtractStrings(budgets, func(b *pgo.Budget) string { return b.Name })...)
+	maxLenNotes := MaxOfStrings(ExtractStrings(budgets, func(b *pgo.Budget) string { return b.Notes })...)
 	fmt.Printf("  %-*s | %-*s | %s\n", maxLenName, "NAME", uuidLength, "ID", "NOTES")
 	fmt.Printf("  %s-+-%s-+-%s\n", nDashes(maxLenName), nDashes(uuidLength), nDashes(maxLenNotes))
 	for _, budget := range budgets {
@@ -169,8 +169,8 @@ func handleBudgetUpdate(s *State, c *handlerContext) error {
 		payloadNotes = budget.Notes
 	}
 
-	err = s.Client.BudgetUpdate(budget.ID.String(), client.BudgetCreateData{
-		MetaData: client.MetaData{
+	err = s.Client.BudgetUpdate(budget.ID.String(), pgo.BudgetCreateData{
+		MetaData: pgo.MetaData{
 			Name:  payloadName,
 			Notes: payloadNotes,
 		},
