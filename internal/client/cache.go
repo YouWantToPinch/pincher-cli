@@ -120,13 +120,19 @@ func (c *Cache) Budget(bID string) *Budget {
 	return b.Budget()
 }
 
-func (c *Cache) Budgets() []*Budget {
+func (c *Cache) Budgets(urlQuery string) []*Budget {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	var budgets []*Budget
-	for _, v := range c.budgets {
-		budgets = append(budgets, &v.budgetEntry)
+	for _, b := range c.budgets {
+		if urlQuery != b.entryMetadata.DestinationURL {
+			continue
+		}
+		if b.entryMetadata.DestinationURL != EndpointBudgets()+urlQuery {
+			continue
+		}
+		budgets = append(budgets, &b.budgetEntry)
 	}
 
 	return budgets
@@ -144,7 +150,7 @@ func (c *Cache) Account(bID, aID string) *Account {
 	return b.Account(aID)
 }
 
-func (c *Cache) Accounts(bID string) []*Account {
+func (c *Cache) Accounts(bID, urlQuery string) []*Account {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -155,6 +161,9 @@ func (c *Cache) Accounts(bID string) []*Account {
 
 	accounts := make([]*Account, 0, len(b.AccountCache))
 	for _, entry := range b.AccountCache {
+		if entry.DestinationURL != EndpointBudgetAccounts(bID)+urlQuery {
+			continue
+		}
 		accounts = append(accounts, entry.account)
 	}
 
@@ -173,7 +182,7 @@ func (c *Cache) Payee(bID, pID string) *Payee {
 	return b.Payee(pID)
 }
 
-func (c *Cache) Payees(bID string) []*Payee {
+func (c *Cache) Payees(bID, urlQuery string) []*Payee {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -184,6 +193,9 @@ func (c *Cache) Payees(bID string) []*Payee {
 
 	payees := make([]*Payee, 0, len(b.PayeeCache))
 	for _, entry := range b.PayeeCache {
+		if entry.DestinationURL != EndpointBudgetPayees(bID)+urlQuery {
+			continue
+		}
 		payees = append(payees, entry.payee)
 	}
 
@@ -202,7 +214,7 @@ func (c *Cache) Group(bID, gID string) *Group {
 	return b.Group(gID)
 }
 
-func (c *Cache) Groups(bID string) []*Group {
+func (c *Cache) Groups(bID, urlQuery string) []*Group {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -213,6 +225,9 @@ func (c *Cache) Groups(bID string) []*Group {
 
 	groups := make([]*Group, 0, len(b.GroupCache))
 	for _, entry := range b.GroupCache {
+		if entry.DestinationURL != EndpointBudgetGroups(bID)+urlQuery {
+			continue
+		}
 		groups = append(groups, entry.group)
 	}
 
@@ -231,7 +246,7 @@ func (c *Cache) Category(bID, cID string) *Category {
 	return b.Category(cID)
 }
 
-func (c *Cache) Categories(bID string) []*Category {
+func (c *Cache) Categories(bID, urlQuery string) []*Category {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -242,6 +257,9 @@ func (c *Cache) Categories(bID string) []*Category {
 
 	categories := make([]*Category, 0, len(b.CategoryCache))
 	for _, entry := range b.CategoryCache {
+		if entry.DestinationURL != EndpointBudgetCategories(bID)+urlQuery {
+			continue
+		}
 		categories = append(categories, entry.category)
 	}
 
@@ -260,7 +278,7 @@ func (c *Cache) Transaction(bID, tID string) *Transaction {
 	return b.Transaction(tID)
 }
 
-func (c *Cache) Transactions(bID string) []*Transaction {
+func (c *Cache) Transactions(bID, urlQuery string) []*Transaction {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -271,6 +289,9 @@ func (c *Cache) Transactions(bID string) []*Transaction {
 
 	txns := make([]*Transaction, 0, len(b.TxnCache))
 	for _, entry := range b.TxnCache {
+		if entry.DestinationURL != EndpointBudgetTransactions(bID)+urlQuery {
+			continue
+		}
 		txns = append(txns, entry.transaction)
 	}
 
@@ -289,7 +310,7 @@ func (c *Cache) TransactionDetails(bID, tID string) *TransactionDetail {
 	return b.TransactionDetail(tID)
 }
 
-func (c *Cache) TransactionsDetails(bID string) []*TransactionDetail {
+func (c *Cache) TransactionsDetails(bID, urlQuery string) []*TransactionDetail {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -300,6 +321,9 @@ func (c *Cache) TransactionsDetails(bID string) []*TransactionDetail {
 
 	txns := make([]*TransactionDetail, 0, len(b.TxnDetailsCache))
 	for _, entry := range b.TxnDetailsCache {
+		if entry.DestinationURL != EndpointBudgetTransactionsDetails(bID)+urlQuery {
+			continue
+		}
 		txns = append(txns, entry.txnDetails)
 	}
 
