@@ -8,7 +8,7 @@ func (c *Client) BudgetCreate(bID string, data BudgetCreateData) error {
 	endpoint := EndpointBudgets()
 	var budget *Budget
 	err := c.Request(http.MethodPost, endpoint, data, &budget)
-	c.Cache.addBudget(bID, budget)
+	c.Cache.addBudget(endpoint, bID, budget)
 	return err
 }
 
@@ -19,7 +19,7 @@ type budgetContainer struct {
 func (c *Client) Budget(bID string) (budget *Budget, err error) {
 	endpoint := EndpointBudget(bID)
 	err = c.Request(http.MethodGet, endpoint, nil, &budget)
-	c.Cache.addBudget(bID, budget)
+	c.Cache.addBudget(endpoint, bID, budget)
 	return budget, err
 }
 
@@ -27,7 +27,7 @@ func (c *Client) Budgets(bID, urlQuery string) (budgets []*Budget, err error) {
 	endpoint := EndpointBudgets() + urlQuery
 	var container budgetContainer
 	err = c.Request(http.MethodGet, endpoint, nil, &container)
-	c.Cache.addBudgets(container.Budgets)
+	c.Cache.addBudgets(endpoint, container.Budgets)
 	return container.Budgets, err
 }
 

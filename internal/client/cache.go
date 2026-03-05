@@ -310,7 +310,7 @@ func (c *Cache) TransactionsDetails(bID string) []*TransactionDetail {
 //    SETTER FUNCTIONS
 // ----------------------
 
-func (c *Cache) addBudget(bID string, budget *Budget) {
+func (c *Cache) addBudget(dest, bID string, budget *Budget) {
 	if !c.trackAPICalls || budget == nil {
 		return
 	}
@@ -330,12 +330,13 @@ func (c *Cache) addBudget(bID string, budget *Budget) {
 		TxnDetailsCache: map[string]*txnDetailsCacheEntry{},
 		budgetEntry:     *budget,
 		entryMetadata: metadata{
-			CreatedAt: time.Now().UTC(),
+			CreatedAt:      time.Now().UTC(),
+			DestinationURL: dest,
 		},
 	}
 }
 
-func (c *Cache) addBudgets(budgets []*Budget) {
+func (c *Cache) addBudgets(dest string, budgets []*Budget) {
 	if !c.trackBulkAPICalls || budgets == nil {
 		return
 	}
@@ -352,7 +353,8 @@ func (c *Cache) addBudgets(budgets []*Budget) {
 			TxnDetailsCache: map[string]*txnDetailsCacheEntry{},
 			budgetEntry:     *b,
 			entryMetadata: metadata{
-				CreatedAt: time.Now().UTC(),
+				CreatedAt:      time.Now().UTC(),
+				DestinationURL: dest,
 			},
 		}
 	}
@@ -372,7 +374,7 @@ func (c *Cache) deleteBudget(bID string) {
 	delete(c.budgets, bID)
 }
 
-func (c *Cache) addAccount(bID string, account *Account) {
+func (c *Cache) addAccount(dest, bID string, account *Account) {
 	if !c.trackAPICalls || account == nil {
 		return
 	}
@@ -386,12 +388,13 @@ func (c *Cache) addAccount(bID string, account *Account) {
 	c.budgets[bID].AccountCache[account.ID.String()] = &accountCacheEntry{
 		account: account,
 		metadata: metadata{
-			CreatedAt: time.Now().UTC(),
+			CreatedAt:      time.Now().UTC(),
+			DestinationURL: dest,
 		},
 	}
 }
 
-func (c *Cache) addAccounts(bID string, accounts []*Account) {
+func (c *Cache) addAccounts(dest, bID string, accounts []*Account) {
 	if !c.trackBulkAPICalls || accounts == nil {
 		return
 	}
@@ -408,7 +411,8 @@ func (c *Cache) addAccounts(bID string, accounts []*Account) {
 		c.budgets[bID].AccountCache[a.ID.String()] = &accountCacheEntry{
 			account: a,
 			metadata: metadata{
-				CreatedAt: time.Now().UTC(),
+				CreatedAt:      time.Now().UTC(),
+				DestinationURL: dest,
 			},
 		}
 	}
@@ -428,7 +432,7 @@ func (c *Cache) deleteAccount(bID, aID string) {
 	delete(c.budgets[bID].AccountCache, aID)
 }
 
-func (c *Cache) addPayee(bID string, payee *Payee) {
+func (c *Cache) addPayee(dest, bID string, payee *Payee) {
 	if !c.trackAPICalls || payee == nil {
 		return
 	}
@@ -442,12 +446,13 @@ func (c *Cache) addPayee(bID string, payee *Payee) {
 	c.budgets[bID].PayeeCache[payee.ID.String()] = &payeeCacheEntry{
 		payee: payee,
 		metadata: metadata{
-			CreatedAt: time.Now().UTC(),
+			CreatedAt:      time.Now().UTC(),
+			DestinationURL: dest,
 		},
 	}
 }
 
-func (c *Cache) addPayees(bID string, payees []*Payee) {
+func (c *Cache) addPayees(dest, bID string, payees []*Payee) {
 	if !c.trackBulkAPICalls || payees == nil {
 		return
 	}
@@ -464,7 +469,8 @@ func (c *Cache) addPayees(bID string, payees []*Payee) {
 		c.budgets[bID].PayeeCache[p.ID.String()] = &payeeCacheEntry{
 			payee: p,
 			metadata: metadata{
-				CreatedAt: time.Now().UTC(),
+				CreatedAt:      time.Now().UTC(),
+				DestinationURL: dest,
 			},
 		}
 	}
@@ -484,7 +490,7 @@ func (c *Cache) deletePayee(bID, pID string) {
 	delete(c.budgets[bID].PayeeCache, pID)
 }
 
-func (c *Cache) addGroup(bID string, group *Group) {
+func (c *Cache) addGroup(dest, bID string, group *Group) {
 	if !c.trackAPICalls || group == nil {
 		return
 	}
@@ -498,12 +504,13 @@ func (c *Cache) addGroup(bID string, group *Group) {
 	c.budgets[bID].GroupCache[group.ID.String()] = &groupCacheEntry{
 		group: group,
 		metadata: metadata{
-			CreatedAt: time.Now().UTC(),
+			CreatedAt:      time.Now().UTC(),
+			DestinationURL: dest,
 		},
 	}
 }
 
-func (c *Cache) addGroups(bID string, groups []*Group) {
+func (c *Cache) addGroups(dest, bID string, groups []*Group) {
 	if !c.trackBulkAPICalls || groups == nil {
 		return
 	}
@@ -520,7 +527,8 @@ func (c *Cache) addGroups(bID string, groups []*Group) {
 		c.budgets[bID].GroupCache[g.ID.String()] = &groupCacheEntry{
 			group: g,
 			metadata: metadata{
-				CreatedAt: time.Now().UTC(),
+				CreatedAt:      time.Now().UTC(),
+				DestinationURL: dest,
 			},
 		}
 	}
@@ -540,7 +548,7 @@ func (c *Cache) deleteGroup(bID, gID string) {
 	delete(c.budgets[bID].GroupCache, gID)
 }
 
-func (c *Cache) addCategory(bID string, category *Category) {
+func (c *Cache) addCategory(dest, bID string, category *Category) {
 	if !c.trackAPICalls || category == nil {
 		return
 	}
@@ -554,12 +562,13 @@ func (c *Cache) addCategory(bID string, category *Category) {
 	c.budgets[bID].CategoryCache[category.ID.String()] = &categoryCacheEntry{
 		category: category,
 		metadata: metadata{
-			CreatedAt: time.Now().UTC(),
+			CreatedAt:      time.Now().UTC(),
+			DestinationURL: dest,
 		},
 	}
 }
 
-func (c *Cache) addCategories(bID string, categories []*Category) {
+func (c *Cache) addCategories(dest, bID string, categories []*Category) {
 	if !c.trackBulkAPICalls || categories == nil {
 		return
 	}
@@ -576,7 +585,8 @@ func (c *Cache) addCategories(bID string, categories []*Category) {
 		c.budgets[bID].CategoryCache[cat.ID.String()] = &categoryCacheEntry{
 			category: cat,
 			metadata: metadata{
-				CreatedAt: time.Now().UTC(),
+				CreatedAt:      time.Now().UTC(),
+				DestinationURL: dest,
 			},
 		}
 	}
@@ -596,7 +606,7 @@ func (c *Cache) deleteCategory(bID, cID string) {
 	delete(c.budgets[bID].CategoryCache, cID)
 }
 
-func (c *Cache) addTxn(bID string, txn *Transaction) {
+func (c *Cache) addTxn(dest, bID string, txn *Transaction) {
 	if !c.trackAPICalls || txn == nil {
 		return
 	}
@@ -610,12 +620,13 @@ func (c *Cache) addTxn(bID string, txn *Transaction) {
 	c.budgets[bID].TxnCache[txn.ID.String()] = &txnCacheEntry{
 		transaction: txn,
 		metadata: metadata{
-			CreatedAt: time.Now().UTC(),
+			CreatedAt:      time.Now().UTC(),
+			DestinationURL: dest,
 		},
 	}
 }
 
-func (c *Cache) addTxns(bID string, txns []*Transaction) {
+func (c *Cache) addTxns(dest, bID string, txns []*Transaction) {
 	if !c.trackBulkAPICalls || txns == nil {
 		return
 	}
@@ -632,7 +643,8 @@ func (c *Cache) addTxns(bID string, txns []*Transaction) {
 		c.budgets[bID].TxnCache[t.ID.String()] = &txnCacheEntry{
 			transaction: t,
 			metadata: metadata{
-				CreatedAt: time.Now().UTC(),
+				CreatedAt:      time.Now().UTC(),
+				DestinationURL: dest,
 			},
 		}
 	}
@@ -652,7 +664,7 @@ func (c *Cache) deleteTxn(bID, tID string) {
 	delete(c.budgets[bID].TxnCache, tID)
 }
 
-func (c *Cache) addTxnDetails(bID string, txn *TransactionDetail) {
+func (c *Cache) addTxnDetails(dest, bID string, txn *TransactionDetail) {
 	if !c.trackAPICalls || txn == nil {
 		return
 	}
@@ -666,12 +678,13 @@ func (c *Cache) addTxnDetails(bID string, txn *TransactionDetail) {
 	c.budgets[bID].TxnDetailsCache[txn.ID.String()] = &txnDetailsCacheEntry{
 		txnDetails: txn,
 		metadata: metadata{
-			CreatedAt: time.Now().UTC(),
+			CreatedAt:      time.Now().UTC(),
+			DestinationURL: dest,
 		},
 	}
 }
 
-func (c *Cache) addTxnsDetails(bID string, txns []*TransactionDetail) {
+func (c *Cache) addTxnsDetails(dest, bID string, txns []*TransactionDetail) {
 	if !c.trackBulkAPICalls || txns == nil {
 		return
 	}
@@ -688,7 +701,8 @@ func (c *Cache) addTxnsDetails(bID string, txns []*TransactionDetail) {
 		c.budgets[bID].TxnDetailsCache[t.ID.String()] = &txnDetailsCacheEntry{
 			txnDetails: t,
 			metadata: metadata{
-				CreatedAt: time.Now().UTC(),
+				CreatedAt:      time.Now().UTC(),
+				DestinationURL: dest,
 			},
 		}
 	}

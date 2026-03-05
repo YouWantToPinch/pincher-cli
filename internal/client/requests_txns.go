@@ -8,7 +8,7 @@ func (c *Client) BudgetTransactionCreate(bID string, data BudgetTransactionCreat
 	endpoint := EndpointBudgetTransactions(bID)
 	var txn *Transaction
 	err := c.Request(http.MethodPost, endpoint, data, &txn)
-	c.Cache.addTxn(bID, txn)
+	c.Cache.addTxn(endpoint, bID, txn)
 	if err != nil {
 		// retrieve & cache the detailed version as well
 		_, _ = c.BudgetTransactionDetails(bID, txn.ID.String())
@@ -23,7 +23,7 @@ type transactionContainer struct {
 func (c *Client) BudgetTransaction(bID, tID string) (txn *Transaction, err error) {
 	endpoint := EndpointBudgetGroup(bID, tID)
 	err = c.Request(http.MethodGet, endpoint, nil, &txn)
-	c.Cache.addTxn(bID, txn)
+	c.Cache.addTxn(endpoint, bID, txn)
 	return txn, err
 }
 
@@ -31,7 +31,7 @@ func (c *Client) BudgetTransactions(bID, urlQuery string) (transactions []*Trans
 	endpoint := EndpointBudgetTransactions(bID) + urlQuery
 	var container transactionContainer
 	err = c.Request(http.MethodGet, endpoint, nil, &container)
-	c.Cache.addTxns(bID, container.Transactions)
+	c.Cache.addTxns(endpoint, bID, container.Transactions)
 	return container.Transactions, err
 }
 
@@ -42,7 +42,7 @@ type transactionDetailContainer struct {
 func (c *Client) BudgetTransactionDetails(bID, tID string) (txn *TransactionDetail, err error) {
 	endpoint := EndpointBudgetTransactionDetails(bID, tID)
 	err = c.Request(http.MethodGet, endpoint, nil, &txn)
-	c.Cache.addTxnDetails(bID, txn)
+	c.Cache.addTxnDetails(endpoint, bID, txn)
 	return txn, err
 }
 
@@ -50,7 +50,7 @@ func (c *Client) BudgetTransactionsDetails(bID, urlQuery string) (transactions [
 	endpoint := EndpointBudgetTransactionsDetails(bID) + urlQuery
 	var container transactionDetailContainer
 	err = c.Request(http.MethodGet, endpoint, nil, &container)
-	c.Cache.addTxnsDetails(bID, container.Transactions)
+	c.Cache.addTxnsDetails(endpoint, bID, container.Transactions)
 	return container.Transactions, err
 }
 

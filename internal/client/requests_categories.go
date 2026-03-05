@@ -8,7 +8,7 @@ func (c *Client) BudgetCategoryCreate(bID string, data BudgetCategoryCreateData)
 	endpoint := EndpointBudgetCategories(bID)
 	var category *Category
 	err := c.Request(http.MethodPost, endpoint, data, &category)
-	c.Cache.addCategory(bID, category)
+	c.Cache.addCategory(endpoint, bID, category)
 	return err
 }
 
@@ -25,7 +25,7 @@ type categoryContainer struct {
 func (c *Client) BudgetCategory(bID, cID string) (category *Category, err error) {
 	endpoint := EndpointBudgetCategory(bID, cID)
 	err = c.Request(http.MethodGet, endpoint, nil, &category)
-	c.Cache.addCategory(bID, category)
+	c.Cache.addCategory(endpoint, bID, category)
 	return category, err
 }
 
@@ -33,7 +33,7 @@ func (c *Client) BudgetCategories(bID, urlQuery string) (categories []*Category,
 	endpoint := EndpointBudgetCategories(bID) + urlQuery
 	var container categoryContainer
 	err = c.Request(http.MethodGet, endpoint, nil, &container)
-	c.Cache.addCategories(bID, container.Categories)
+	c.Cache.addCategories(endpoint, bID, container.Categories)
 	return container.Categories, err
 }
 
