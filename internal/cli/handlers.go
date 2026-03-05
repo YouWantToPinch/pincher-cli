@@ -91,14 +91,11 @@ func handlerHelp(s *State, c *handlerContext) error {
 }
 
 func handlerReady(s *State, c *handlerContext) error {
-	isReady, err := s.Client.GetServerReady()
-	if err != nil {
-		return fmt.Errorf("server could not be reached; %w", err)
-	}
+	isReady, _ := s.Client.GetServerReady()
 	if isReady {
 		fmt.Println("Server is ready!")
 		return nil
 	}
-	fmt.Println("Server not ready.")
+	fmt.Println("Server could not be reached.")
 	return nil
 }
