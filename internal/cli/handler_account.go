@@ -71,7 +71,11 @@ func handleAccountList(s *State, c *handlerContext) error {
 		return err
 	}
 	if len(accounts) == 0 {
-		fmt.Printf("No accounts found belonging to budget %s. \n", s.Session.ActiveBudget.Name)
+		d := ""
+		if listDeletedQuery != "" {
+			d = "deleted "
+		}
+		fmt.Printf("No %saccounts found belonging to budget %s. \n", d, s.Session.ActiveBudget.Name)
 		return nil
 	}
 	fmt.Printf("Accounts under budget %s: \n", s.Session.ActiveBudget.Name)
@@ -157,7 +161,13 @@ func handleAccountDelete(s *State, c *handlerContext) error {
 	c.args.trackOptArgs(&c.cmd, "hard")
 	flagDeleteHard, _ := c.args.pfx()
 
-	accounts, err := s.GetAccounts(s.Session.ActiveBudget.ID.String(), "?deleted")
+	deleteHard := flagDeleteHard == "SET"
+	deleteQuery := ""
+	if deleteHard {
+		deleteQuery = "?deleted"
+	}
+
+	accounts, err := s.GetAccounts(s.Session.ActiveBudget.ID.String(), deleteQuery)
 	if err != nil {
 		return err
 	}
@@ -167,15 +177,15 @@ func handleAccountDelete(s *State, c *handlerContext) error {
 	}
 
 	err = s.Client.BudgetAccountDelete(s.Session.ActiveBudget.ID.String(), account.ID.String(), client.BudgetAccountDeleteData{
-		DeleteHard: flagDeleteHard == "SET",
+		DeleteHard: deleteHard,
 	})
 	if err != nil {
 		return err
 	}
-	if flagDeleteHard == "SET" {
+	if deleteHard {
 		fmt.Println("Account deleted. It cannot be restored.")
 	} else {
-		fmt.Println("Account deleted. It may be restored, or permanently deleted.")
+		fmt.Println("Account is deleted. It may be restored, or permanently deleted.")
 	}
 	return nil
 }
