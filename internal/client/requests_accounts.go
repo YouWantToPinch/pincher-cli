@@ -71,6 +71,9 @@ func (c *Client) BudgetAccountUpdate(bID, aID string, data BudgetAccountUpdateDa
 func (c *Client) BudgetAccountRestore(bID, aID string) error {
 	endpoint := EndpointBudgetAccount(bID, aID)
 	err := c.Request(http.MethodPatch, endpoint, nil, nil)
+	if err == nil {
+		_, _ = c.BudgetAccount(bID, aID)
+	}
 	return err
 }
 
