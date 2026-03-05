@@ -8,7 +8,7 @@ import (
 	"time"
 
 	cc "github.com/YouWantToPinch/pincher-cli/internal/currency"
-	pgo "github.com/YouWantToPinch/pincher-cli/internal/pinchergo"
+	pgo "github.com/YouWantToPinch/pincher-sdk-go/pinchergo"
 )
 
 func handlerTxn(s *State, c *handlerContext) error {

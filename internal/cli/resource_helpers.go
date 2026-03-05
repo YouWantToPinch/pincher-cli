@@ -3,7 +3,7 @@ package cli
 import (
 	"fmt"
 
-	pgo "github.com/YouWantToPinch/pincher-cli/internal/pinchergo"
+	pgo "github.com/YouWantToPinch/pincher-sdk-go/pinchergo"
 )
 
 func findBudgetByName(name string, budgets []*pgo.Budget) (*pgo.Budget, error) {

@@ -3,7 +3,7 @@ package cli
 import (
 	"fmt"
 
-	pgo "github.com/YouWantToPinch/pincher-cli/internal/pinchergo"
+	pgo "github.com/YouWantToPinch/pincher-sdk-go/pinchergo"
 )
 
 func handlerUser(s *State, c *handlerContext) error {
