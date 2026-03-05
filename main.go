@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log/slog"
-	"time"
 
 	"github.com/YouWantToPinch/pincher-cli/internal/cli"
 	"github.com/YouWantToPinch/pincher-cli/internal/client"
@@ -48,7 +47,7 @@ func main() {
 	}
 	cliState.Config = cfg
 
-	client, err := client.NewClient(time.Second*10, time.Minute*5, cliState.Config.BaseURL)
+	client, err := client.NewClientWithDefaults()
 	if err != nil {
 		panic("client.NewClient: " + err.Error())
 	}
