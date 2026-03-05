@@ -34,7 +34,7 @@ func (c *Client) BudgetAccounts(bID, urlQuery string) (accounts []*Account, err 
 func (c *Client) BudgetAccountUpdate(bID, aID string, data BudgetAccountUpdateData) error {
 	endpoint := EndpointBudgetAccount(bID, aID)
 	err := c.Request(http.MethodPut, endpoint, data, nil)
-	if err != nil {
+	if err == nil {
 		_, _ = c.BudgetAccount(bID, aID)
 	}
 

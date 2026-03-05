@@ -34,7 +34,7 @@ func (c *Client) BudgetPayees(bID, urlQuery string) (Payees []*Payee, err error)
 func (c *Client) BudgetPayeeUpdate(bID, pID string, data BudgetPayeeUpdateData) error {
 	endpoint := EndpointBudgetPayee(bID, pID)
 	err := c.Request(http.MethodPut, endpoint, data, nil)
-	if err != nil {
+	if err == nil {
 		_, _ = c.BudgetPayee(bID, pID)
 	}
 	return err

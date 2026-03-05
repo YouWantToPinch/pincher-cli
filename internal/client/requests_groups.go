@@ -34,7 +34,7 @@ func (c *Client) BudgetGroups(bID, urlQuery string) (groups []*Group, err error)
 func (c *Client) BudgetGroupUpdate(bID, gID string, data BudgetGroupUpdateData) error {
 	endpoint := EndpointBudgetGroup(bID, gID)
 	err := c.Request(http.MethodPut, endpoint, data, nil)
-	if err != nil {
+	if err == nil {
 		_, _ = c.BudgetGroup(bID, gID)
 	}
 	return err
