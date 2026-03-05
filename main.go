@@ -5,8 +5,8 @@ import (
 	"log/slog"
 
 	"github.com/YouWantToPinch/pincher-cli/internal/cli"
-	"github.com/YouWantToPinch/pincher-cli/internal/client"
 	"github.com/YouWantToPinch/pincher-cli/internal/config"
+	pgo "github.com/YouWantToPinch/pincher-cli/internal/pinchergo"
 )
 
 // Quit is used by main() to ensure deletion of empty log files
@@ -47,7 +47,7 @@ func main() {
 	}
 	cliState.Config = cfg
 
-	client, err := client.NewClientWithDefaults()
+	client, err := pgo.NewClientWithDefaults()
 	if err != nil {
 		panic("client.NewClient: " + err.Error())
 	}

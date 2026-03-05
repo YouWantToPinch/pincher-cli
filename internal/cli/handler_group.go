@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/YouWantToPinch/pincher-cli/internal/client"
+	pgo "github.com/YouWantToPinch/pincher-cli/internal/pinchergo"
 )
 
 func handlerGroup(s *State, c *handlerContext) error {
@@ -33,8 +33,8 @@ func handleGroupAdd(s *State, c *handlerContext) error {
 	c.args.trackOptArgs(&c.cmd, "notes")
 	notes, _ := c.args.pfx()
 
-	err := s.Client.BudgetGroupCreate(s.Session.ActiveBudget.ID.String(), client.BudgetGroupCreateData{
-		MetaData: client.MetaData{
+	err := s.Client.BudgetGroupCreate(s.Session.ActiveBudget.ID.String(), pgo.BudgetGroupCreateData{
+		MetaData: pgo.MetaData{
 			Name:  name,
 			Notes: notes,
 		},
@@ -76,8 +76,8 @@ func handleGroupList(s *State, c *handlerContext) error {
 		return groups[i].Name < groups[j].Name
 	})
 	const uuidLength = 36
-	maxLenName := MaxOfStrings(ExtractStrings(groups, func(b *client.Group) string { return b.Name })...)
-	maxLenNotes := MaxOfStrings(ExtractStrings(groups, func(b *client.Group) string { return b.Notes })...)
+	maxLenName := MaxOfStrings(ExtractStrings(groups, func(b *pgo.Group) string { return b.Name })...)
+	maxLenNotes := MaxOfStrings(ExtractStrings(groups, func(b *pgo.Group) string { return b.Notes })...)
 	fmt.Printf("  %-*s | %-*s | %s\n", maxLenName, "NAME", uuidLength, "ID", "NOTES")
 	fmt.Printf("  %s-+-%s-+-%s\n", nDashes(maxLenName), nDashes(uuidLength), nDashes(maxLenNotes))
 	for _, group := range groups {
@@ -110,8 +110,8 @@ func handleGroupUpdate(s *State, c *handlerContext) error {
 		payloadNotes = group.Notes
 	}
 
-	err = s.Client.BudgetGroupUpdate(s.Session.ActiveBudget.ID.String(), group.ID.String(), client.BudgetGroupUpdateData{
-		MetaData: client.MetaData{
+	err = s.Client.BudgetGroupUpdate(s.Session.ActiveBudget.ID.String(), group.ID.String(), pgo.BudgetGroupUpdateData{
+		MetaData: pgo.MetaData{
 			Name:  payloadName,
 			Notes: payloadNotes,
 		},

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/YouWantToPinch/pincher-cli/internal/client"
 	cc "github.com/YouWantToPinch/pincher-cli/internal/currency"
+	pgo "github.com/YouWantToPinch/pincher-cli/internal/pinchergo"
 )
 
 func handlerTxn(s *State, c *handlerContext) error {
@@ -54,7 +54,7 @@ func handleTxnTransfer(s *State, c *handlerContext) error {
 	c.args.trackOptArgs(&c.cmd, "cleared")
 	isCleared, _ := c.args.pfx()
 
-	err = s.Client.BudgetTransactionCreate(s.Session.ActiveBudget.ID.String(), client.BudgetTransactionCreateData{
+	err = s.Client.BudgetTransactionCreate(s.Session.ActiveBudget.ID.String(), pgo.BudgetTransactionCreateData{
 		AccountName:         fromAccountName,
 		TransferAccountName: toAccountName,
 		TransactionDate:     transactionDate,
@@ -126,7 +126,7 @@ func handleTxnLog(s *State, c *handlerContext) error {
 		}
 		amounts[category] = int64(totalAmount)
 	}
-	err = s.Client.BudgetTransactionCreate(s.Session.ActiveBudget.ID.String(), client.BudgetTransactionCreateData{
+	err = s.Client.BudgetTransactionCreate(s.Session.ActiveBudget.ID.String(), pgo.BudgetTransactionCreateData{
 		AccountName:         accountName,
 		TransferAccountName: "",
 		TransactionDate:     transactionDate,
@@ -175,11 +175,11 @@ func handleTxnList(s *State, c *handlerContext) error {
 		return txns[i].TransactionDate.Before(txns[j].TransactionDate)
 	})
 	// const uuidLength = 36
-	maxLenDate := MaxOfStrings(ExtractStrings(txns, func(t *client.TransactionDetail) string { return t.TransactionDate.Format("2006-01-02") })...)
-	maxLenAmount := MaxOfStrings(ExtractStrings(txns, func(t *client.TransactionDetail) string {
+	maxLenDate := MaxOfStrings(ExtractStrings(txns, func(t *pgo.TransactionDetail) string { return t.TransactionDate.Format("2006-01-02") })...)
+	maxLenAmount := MaxOfStrings(ExtractStrings(txns, func(t *pgo.TransactionDetail) string {
 		return cc.Format(t.TotalAmount, s.Config.CurrencyISOCode, true)
 	})...)
-	maxLenNotes := MaxOfStrings(ExtractStrings(txns, func(t *client.TransactionDetail) string { return firstNChars(t.Notes, 25) + "..." })...)
+	maxLenNotes := MaxOfStrings(ExtractStrings(txns, func(t *pgo.TransactionDetail) string { return firstNChars(t.Notes, 25) + "..." })...)
 	fmt.Printf("  %-*s | %-*s | %s\n", maxLenDate, "DATE", maxLenAmount, "AMOUNT", "NOTES")
 	fmt.Printf("  %s-+-%s-+-%s\n", nDashes(maxLenDate), nDashes(maxLenAmount), nDashes(maxLenNotes))
 	for _, txn := range txns {
