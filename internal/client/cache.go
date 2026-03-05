@@ -2,7 +2,6 @@ package client
 
 import (
 	"maps"
-	"strings"
 	"sync"
 	"time"
 )
@@ -11,7 +10,6 @@ type metadata struct {
 	DestinationURL string    `json:"destination_url"` // request by which this entry was acquired
 	CreatedAt      time.Time `json:"created_at"`      // time at which this entry was created
 	Protected      bool      `json:"protected"`       // whether this entry is protected from the reap loop
-	Data           []byte    `json:"data"`            // data tied to entry
 }
 
 type accountCacheEntry struct {
@@ -90,7 +88,7 @@ type Cache struct {
 	mu *sync.Mutex
 
 	// map of budget IDs to a subcache of budget resources
-	budgets map[string]*budgetCache
+	Entries map[string]*budgetCache `json:"cached_entries"`
 
 	// whether to update cache entries from relevant API calls
 	// related to singleton resources
@@ -100,7 +98,6 @@ type Cache struct {
 	// related to resource collections
 	trackBulkAPICalls bool
 
-	Entries  map[string]metadata `json:"cached_entries"`
 	interval time.Duration
 }
 
@@ -112,7 +109,7 @@ func (c *Cache) Budget(bID string) *Budget {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	b, ok := c.budgets[bID]
+	b, ok := c.Entries[bID]
 	if !ok {
 		return nil
 	}
@@ -125,7 +122,7 @@ func (c *Cache) Budgets(urlQuery string) []*Budget {
 	defer c.mu.Unlock()
 
 	var budgets []*Budget
-	for _, b := range c.budgets {
+	for _, b := range c.Entries {
 		if urlQuery != b.entryMetadata.DestinationURL {
 			continue
 		}
@@ -142,7 +139,7 @@ func (c *Cache) Account(bID, aID string) *Account {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	b, ok := c.budgets[bID]
+	b, ok := c.Entries[bID]
 	if !ok {
 		return nil
 	}
@@ -154,7 +151,7 @@ func (c *Cache) Accounts(bID, urlQuery string) []*Account {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	b, ok := c.budgets[bID]
+	b, ok := c.Entries[bID]
 	if !ok {
 		return nil
 	}
@@ -174,7 +171,7 @@ func (c *Cache) Payee(bID, pID string) *Payee {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	b, ok := c.budgets[bID]
+	b, ok := c.Entries[bID]
 	if !ok {
 		return nil
 	}
@@ -186,7 +183,7 @@ func (c *Cache) Payees(bID, urlQuery string) []*Payee {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	b, ok := c.budgets[bID]
+	b, ok := c.Entries[bID]
 	if !ok {
 		return nil
 	}
@@ -206,7 +203,7 @@ func (c *Cache) Group(bID, gID string) *Group {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	b, ok := c.budgets[bID]
+	b, ok := c.Entries[bID]
 	if !ok {
 		return nil
 	}
@@ -218,7 +215,7 @@ func (c *Cache) Groups(bID, urlQuery string) []*Group {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	b, ok := c.budgets[bID]
+	b, ok := c.Entries[bID]
 	if !ok {
 		return nil
 	}
@@ -238,7 +235,7 @@ func (c *Cache) Category(bID, cID string) *Category {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	b, ok := c.budgets[bID]
+	b, ok := c.Entries[bID]
 	if !ok {
 		return nil
 	}
@@ -250,7 +247,7 @@ func (c *Cache) Categories(bID, urlQuery string) []*Category {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	b, ok := c.budgets[bID]
+	b, ok := c.Entries[bID]
 	if !ok {
 		return nil
 	}
@@ -270,7 +267,7 @@ func (c *Cache) Transaction(bID, tID string) *Transaction {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	b, ok := c.budgets[bID]
+	b, ok := c.Entries[bID]
 	if !ok {
 		return nil
 	}
@@ -282,7 +279,7 @@ func (c *Cache) Transactions(bID, urlQuery string) []*Transaction {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	b, ok := c.budgets[bID]
+	b, ok := c.Entries[bID]
 	if !ok {
 		return nil
 	}
@@ -302,7 +299,7 @@ func (c *Cache) TransactionDetails(bID, tID string) *TransactionDetail {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	b, ok := c.budgets[bID]
+	b, ok := c.Entries[bID]
 	if !ok {
 		return nil
 	}
@@ -314,7 +311,7 @@ func (c *Cache) TransactionsDetails(bID, urlQuery string) []*TransactionDetail {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	b, ok := c.budgets[bID]
+	b, ok := c.Entries[bID]
 	if !ok {
 		return nil
 	}
@@ -341,11 +338,11 @@ func (c *Cache) addBudget(dest, bID string, budget *Budget) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if _, ok := c.budgets[bID]; !ok {
+	if _, ok := c.Entries[bID]; !ok {
 		return
 	}
 
-	c.budgets[bID] = &budgetCache{
+	c.Entries[bID] = &budgetCache{
 		AccountCache:    map[string]*accountCacheEntry{},
 		PayeeCache:      map[string]*payeeCacheEntry{},
 		GroupCache:      map[string]*groupCacheEntry{},
@@ -360,15 +357,15 @@ func (c *Cache) addBudget(dest, bID string, budget *Budget) {
 	}
 }
 
-func (c *Cache) addBudgets(dest string, budgets []*Budget) {
-	if !c.trackBulkAPICalls || budgets == nil {
+func (c *Cache) addBudgets(dest string, Entries []*Budget) {
+	if !c.trackBulkAPICalls || Entries == nil {
 		return
 	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	for _, b := range budgets {
-		c.budgets[b.ID.String()] = &budgetCache{
+	for _, b := range Entries {
+		c.Entries[b.ID.String()] = &budgetCache{
 			AccountCache:    map[string]*accountCacheEntry{},
 			PayeeCache:      map[string]*payeeCacheEntry{},
 			GroupCache:      map[string]*groupCacheEntry{},
@@ -391,11 +388,11 @@ func (c *Cache) deleteBudget(bID string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if _, ok := c.budgets[bID]; !ok {
+	if _, ok := c.Entries[bID]; !ok {
 		return
 	}
 
-	delete(c.budgets, bID)
+	delete(c.Entries, bID)
 }
 
 func (c *Cache) addAccount(dest, bID string, account *Account) {
@@ -405,11 +402,11 @@ func (c *Cache) addAccount(dest, bID string, account *Account) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if _, ok := c.budgets[bID]; !ok {
+	if _, ok := c.Entries[bID]; !ok {
 		return
 	}
 
-	c.budgets[bID].AccountCache[account.ID.String()] = &accountCacheEntry{
+	c.Entries[bID].AccountCache[account.ID.String()] = &accountCacheEntry{
 		account: account,
 		metadata: metadata{
 			CreatedAt:      time.Now().UTC(),
@@ -425,14 +422,14 @@ func (c *Cache) addAccounts(dest, bID string, accounts []*Account) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if _, ok := c.budgets[bID]; !ok {
+	if _, ok := c.Entries[bID]; !ok {
 		return
 	}
 	for _, a := range accounts {
 		if a == nil {
 			continue
 		}
-		c.budgets[bID].AccountCache[a.ID.String()] = &accountCacheEntry{
+		c.Entries[bID].AccountCache[a.ID.String()] = &accountCacheEntry{
 			account: a,
 			metadata: metadata{
 				CreatedAt:      time.Now().UTC(),
@@ -449,11 +446,11 @@ func (c *Cache) deleteAccount(bID, aID string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if _, ok := c.budgets[bID]; !ok {
+	if _, ok := c.Entries[bID]; !ok {
 		return
 	}
 
-	delete(c.budgets[bID].AccountCache, aID)
+	delete(c.Entries[bID].AccountCache, aID)
 }
 
 func (c *Cache) addPayee(dest, bID string, payee *Payee) {
@@ -463,11 +460,11 @@ func (c *Cache) addPayee(dest, bID string, payee *Payee) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if _, ok := c.budgets[bID]; !ok {
+	if _, ok := c.Entries[bID]; !ok {
 		return
 	}
 
-	c.budgets[bID].PayeeCache[payee.ID.String()] = &payeeCacheEntry{
+	c.Entries[bID].PayeeCache[payee.ID.String()] = &payeeCacheEntry{
 		payee: payee,
 		metadata: metadata{
 			CreatedAt:      time.Now().UTC(),
@@ -483,14 +480,14 @@ func (c *Cache) addPayees(dest, bID string, payees []*Payee) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if _, ok := c.budgets[bID]; !ok {
+	if _, ok := c.Entries[bID]; !ok {
 		return
 	}
 	for _, p := range payees {
 		if p == nil {
 			continue
 		}
-		c.budgets[bID].PayeeCache[p.ID.String()] = &payeeCacheEntry{
+		c.Entries[bID].PayeeCache[p.ID.String()] = &payeeCacheEntry{
 			payee: p,
 			metadata: metadata{
 				CreatedAt:      time.Now().UTC(),
@@ -507,11 +504,11 @@ func (c *Cache) deletePayee(bID, pID string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if _, ok := c.budgets[bID]; !ok {
+	if _, ok := c.Entries[bID]; !ok {
 		return
 	}
 
-	delete(c.budgets[bID].PayeeCache, pID)
+	delete(c.Entries[bID].PayeeCache, pID)
 }
 
 func (c *Cache) addGroup(dest, bID string, group *Group) {
@@ -521,11 +518,11 @@ func (c *Cache) addGroup(dest, bID string, group *Group) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if _, ok := c.budgets[bID]; !ok {
+	if _, ok := c.Entries[bID]; !ok {
 		return
 	}
 
-	c.budgets[bID].GroupCache[group.ID.String()] = &groupCacheEntry{
+	c.Entries[bID].GroupCache[group.ID.String()] = &groupCacheEntry{
 		group: group,
 		metadata: metadata{
 			CreatedAt:      time.Now().UTC(),
@@ -541,14 +538,14 @@ func (c *Cache) addGroups(dest, bID string, groups []*Group) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if _, ok := c.budgets[bID]; !ok {
+	if _, ok := c.Entries[bID]; !ok {
 		return
 	}
 	for _, g := range groups {
 		if g == nil {
 			continue
 		}
-		c.budgets[bID].GroupCache[g.ID.String()] = &groupCacheEntry{
+		c.Entries[bID].GroupCache[g.ID.String()] = &groupCacheEntry{
 			group: g,
 			metadata: metadata{
 				CreatedAt:      time.Now().UTC(),
@@ -565,11 +562,11 @@ func (c *Cache) deleteGroup(bID, gID string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if _, ok := c.budgets[bID]; !ok {
+	if _, ok := c.Entries[bID]; !ok {
 		return
 	}
 
-	delete(c.budgets[bID].GroupCache, gID)
+	delete(c.Entries[bID].GroupCache, gID)
 }
 
 func (c *Cache) addCategory(dest, bID string, category *Category) {
@@ -579,11 +576,11 @@ func (c *Cache) addCategory(dest, bID string, category *Category) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if _, ok := c.budgets[bID]; !ok {
+	if _, ok := c.Entries[bID]; !ok {
 		return
 	}
 
-	c.budgets[bID].CategoryCache[category.ID.String()] = &categoryCacheEntry{
+	c.Entries[bID].CategoryCache[category.ID.String()] = &categoryCacheEntry{
 		category: category,
 		metadata: metadata{
 			CreatedAt:      time.Now().UTC(),
@@ -599,14 +596,14 @@ func (c *Cache) addCategories(dest, bID string, categories []*Category) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if _, ok := c.budgets[bID]; !ok {
+	if _, ok := c.Entries[bID]; !ok {
 		return
 	}
 	for _, cat := range categories {
 		if cat == nil {
 			continue
 		}
-		c.budgets[bID].CategoryCache[cat.ID.String()] = &categoryCacheEntry{
+		c.Entries[bID].CategoryCache[cat.ID.String()] = &categoryCacheEntry{
 			category: cat,
 			metadata: metadata{
 				CreatedAt:      time.Now().UTC(),
@@ -623,11 +620,11 @@ func (c *Cache) deleteCategory(bID, cID string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if _, ok := c.budgets[bID]; !ok {
+	if _, ok := c.Entries[bID]; !ok {
 		return
 	}
 
-	delete(c.budgets[bID].CategoryCache, cID)
+	delete(c.Entries[bID].CategoryCache, cID)
 }
 
 func (c *Cache) addTxn(dest, bID string, txn *Transaction) {
@@ -637,11 +634,11 @@ func (c *Cache) addTxn(dest, bID string, txn *Transaction) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if _, ok := c.budgets[bID]; !ok {
+	if _, ok := c.Entries[bID]; !ok {
 		return
 	}
 
-	c.budgets[bID].TxnCache[txn.ID.String()] = &txnCacheEntry{
+	c.Entries[bID].TxnCache[txn.ID.String()] = &txnCacheEntry{
 		transaction: txn,
 		metadata: metadata{
 			CreatedAt:      time.Now().UTC(),
@@ -657,14 +654,14 @@ func (c *Cache) addTxns(dest, bID string, txns []*Transaction) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if _, ok := c.budgets[bID]; !ok {
+	if _, ok := c.Entries[bID]; !ok {
 		return
 	}
 	for _, t := range txns {
 		if t == nil {
 			continue
 		}
-		c.budgets[bID].TxnCache[t.ID.String()] = &txnCacheEntry{
+		c.Entries[bID].TxnCache[t.ID.String()] = &txnCacheEntry{
 			transaction: t,
 			metadata: metadata{
 				CreatedAt:      time.Now().UTC(),
@@ -681,11 +678,11 @@ func (c *Cache) deleteTxn(bID, tID string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if _, ok := c.budgets[bID]; !ok {
+	if _, ok := c.Entries[bID]; !ok {
 		return
 	}
 
-	delete(c.budgets[bID].TxnCache, tID)
+	delete(c.Entries[bID].TxnCache, tID)
 }
 
 func (c *Cache) addTxnDetails(dest, bID string, txn *TransactionDetail) {
@@ -695,11 +692,11 @@ func (c *Cache) addTxnDetails(dest, bID string, txn *TransactionDetail) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if _, ok := c.budgets[bID]; !ok {
+	if _, ok := c.Entries[bID]; !ok {
 		return
 	}
 
-	c.budgets[bID].TxnDetailsCache[txn.ID.String()] = &txnDetailsCacheEntry{
+	c.Entries[bID].TxnDetailsCache[txn.ID.String()] = &txnDetailsCacheEntry{
 		txnDetails: txn,
 		metadata: metadata{
 			CreatedAt:      time.Now().UTC(),
@@ -715,14 +712,14 @@ func (c *Cache) addTxnsDetails(dest, bID string, txns []*TransactionDetail) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if _, ok := c.budgets[bID]; !ok {
+	if _, ok := c.Entries[bID]; !ok {
 		return
 	}
 	for _, t := range txns {
 		if t == nil {
 			continue
 		}
-		c.budgets[bID].TxnDetailsCache[t.ID.String()] = &txnDetailsCacheEntry{
+		c.Entries[bID].TxnDetailsCache[t.ID.String()] = &txnDetailsCacheEntry{
 			txnDetails: t,
 			metadata: metadata{
 				CreatedAt:      time.Now().UTC(),
@@ -739,45 +736,24 @@ func (c *Cache) deleteTxnsDetails(bID, tID string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	if _, ok := c.budgets[bID]; !ok {
+	if _, ok := c.Entries[bID]; !ok {
 		return
 	}
 
-	delete(c.budgets[bID].TxnDetailsCache, tID)
+	delete(c.Entries[bID].TxnDetailsCache, tID)
 }
 
 // ---------------------------
 //  DEPRECATED CACHE FUNCTIONS
 // ---------------------------
 
-func (c *Cache) Set(entries map[string]metadata) {
+// Set copies the input entries map of budgetIDs->budgetCaches
+// to the cache
+func (c *Cache) Set(entries map[string]*budgetCache) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	maps.Copy(c.Entries, entries)
-}
-
-func (c *Cache) Add(key string, value []byte, protect bool) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	c.Entries[key] = metadata{
-		CreatedAt: time.Now().UTC(),
-		Data:      value,
-		Protected: protect,
-	}
-}
-
-func (c *Cache) Get(key string) (entryData []byte, found bool) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	val, ok := c.Entries[key]
-	if !ok {
-		return nil, false
-	}
-
-	return val.Data, true
 }
 
 func (c *Cache) reapLoop() {
@@ -798,7 +774,7 @@ func (c *Cache) reap() {
 	// FOR EACH subcache, but I was getting errors when
 	// trying...
 
-	for _, bCache := range c.budgets {
+	for _, bCache := range c.Entries {
 		for aID, entry := range bCache.AccountCache {
 			if !entry.Protected && (time.Since(entry.CreatedAt) > c.interval) {
 				delete(bCache.AccountCache, aID)
@@ -830,34 +806,6 @@ func (c *Cache) reap() {
 			}
 		}
 	}
-
-	for key, val := range c.Entries {
-		if !val.Protected && (time.Since(val.CreatedAt) > c.interval) {
-			delete(c.Entries, key)
-		}
-	}
-}
-
-func (c *Cache) Delete(key string) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	delete(c.Entries, key)
-}
-
-// DeleteAllStartsWith removes all cached entries whose
-// key starts with the given prefix.
-// This can be used to invalidate all entries related
-// to a resource that may have had an instance updated or removed.
-func (c *Cache) DeleteAllStartsWith(prefix string) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	for key := range c.Entries {
-		if strings.HasPrefix(key, prefix) {
-			delete(c.Entries, key)
-		}
-	}
 }
 
 // Clear deletes all cached entries.
@@ -874,8 +822,7 @@ func NewCache(interval time.Duration) *Cache {
 		interval:          interval,
 		trackAPICalls:     true,
 		trackBulkAPICalls: true,
-		Entries:           make(map[string]metadata),
-		budgets:           map[string]*budgetCache{},
+		Entries:           map[string]*budgetCache{},
 	}
 
 	go cache.reapLoop()
