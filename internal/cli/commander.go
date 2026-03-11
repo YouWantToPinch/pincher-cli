@@ -134,14 +134,15 @@ type cmdElement struct {
 }
 
 func (e *cmdElement) usage(withOptions bool) string {
-	usage := e.name
+	var usage strings.Builder
+	usage.WriteString(e.name)
 	for _, arg := range e.parameters {
-		usage += " <" + arg + ">"
+		usage.WriteString(" <" + arg + ">")
 	}
 	if len(e.options) > 0 {
-		usage += " [options]\n"
+		usage.WriteString(" [options]\n")
 		if withOptions {
-			usage += "OPTIONS:\n"
+			usage.WriteString("OPTIONS:\n")
 			column1 := []string{}
 			column2 := []string{}
 			for _, opt := range e.options {
@@ -152,12 +153,12 @@ func (e *cmdElement) usage(withOptions bool) string {
 				column1 = append(column1, fmt.Sprintf("  %s--%s", shorthand, opt.name))
 				column2 = append(column2, opt.description)
 			}
-			usage += makeAlignedTable(column1, column2)
+			usage.WriteString(makeAlignedTable(column1, column2))
 		}
 	} else {
-		usage += "\n"
+		usage.WriteString("\n")
 	}
-	return usage
+	return usage.String()
 }
 
 func (e *cmdElement) argCount() int {
