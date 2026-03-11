@@ -1,4 +1,6 @@
-package cli
+// Package currency provides a Currency type which may be used
+// to format integer values as currency strings, or vice versa.
+package currency
 
 import (
 	"fmt"
@@ -51,12 +53,13 @@ func Format(amount int64, ISOCode string, useSymbol bool) string {
 	return res
 }
 
-// Parse takes a string, attempts to parse
-// it as the given currency by ISO, and if successful,
-// converts the string to an integer representing the
-// dollar unit of the currency, before multiplying the
-// result by the factor necessary to produce the same
-// value in the currency's smallest unit.
+// Parse takes a string, attempts to parse it as the
+// given currency by ISO, and if successful, converts
+// the string to an integer representing the dollar unit
+// of the currency, before multiplying the result by the
+// factor necessary to produce the same value in the
+// currency's smallest unit.
+//
 // If the string could could not be parsed as the given
 // currency, an error is returned.
 func Parse(s string, currencyISO string) (int64, error) {
@@ -101,17 +104,16 @@ func Parse(s string, currencyISO string) (int64, error) {
 	case 1:
 		dollarString := pair[0]
 
-		// WARN: Localization of a currency like Indian Rupees
-		// would demand use of the Indian Numbering System, and
-		// may call this modulo into question, necessitating the
-		// aforementioned modification.
-
 		// let thousand-place separation be optional
 		if strings.Contains(dollarString, string(currency.ThousandSeparator)) {
-			// For the International System of Units,
-			// separators for the portion preceding the
-			// decimal should be found after every
-			// third digit.
+			// For the International System of Units, separators for
+			// the portion preceding the decimal should be found
+			// after every third digit.
+			//
+			// WARN: Localization of a currency like Indian Rupees
+			// would demand use of the Indian Numbering System, and
+			// may call this modulo into question.
+
 			if len(dollarString)%4 == 0 {
 				return 0, fmt.Errorf("string could not be parsed as given currency")
 			}
