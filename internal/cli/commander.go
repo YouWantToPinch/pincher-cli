@@ -10,11 +10,9 @@ import (
 
 // command represents a submission by a user through the CLI.
 type command struct {
+	opts map[string][]string // options, mapped to their own subset of arguments, that a handler may permit
+	args []string            // positional arguments that a handler may expect
 	name string
-	// positional arguments that a handler may expect
-	args []string
-	// options, mapped to their own subset of arguments, that a handler may permit
-	opts map[string][]string
 }
 
 func (c *command) parse(handler *cmdHandler, input string) error {
@@ -121,14 +119,17 @@ func (c *command) parse(handler *cmdHandler, input string) error {
 type cmdElement struct {
 	name        string
 	description string
-	// Priority refers to an element's relevance to output.
-	// The lower the value, the higher the priority.
-	priority int
-	// A slice of expected arguments, in order, expected by this cmdElement.
-	parameters []string
+
 	// Options that this cmdElement accepts.
 	// Should go UNUSED in cases where cmdElement IS an option, for obvious reasons.
 	options []cmdElement
+
+	// A slice of expected arguments, in order, expected by this cmdElement.
+	parameters []string
+
+	// Priority refers to an element's relevance to output.
+	// The lower the value, the higher the priority.
+	priority int
 	// whether or not this element is an option that may be treated as a flag
 	useShorthand bool
 }
@@ -184,8 +185,8 @@ type handlerContext struct {
 // (depending on the tracked index), with each call of its postfix function.
 type argTracker struct {
 	cmdArgs     *[]string
-	cmdArgIndex int
 	optArgs     *[]string
+	cmdArgIndex int
 	optArgIndex int
 }
 
@@ -232,9 +233,9 @@ func (a *argTracker) pfx() (string, error) {
 // cmdHandler represents a command which can be run.
 type cmdHandler struct {
 	cmdElement
-	nonRegMsg string
 	actions   []cmdElement
 	callback  HandlerFunc
+	nonRegMsg string
 	//
 	//
 	// Handlers more integral to the base functioning of the CLI,
@@ -276,11 +277,10 @@ const (
 	Registered
 )
 
-// a commandRegistry tracks any number of commands that a user
+// commandRegistry tracks any number of commands that a user
 // has available to use. Some commands may require prerequisite
 // actions before they are registered.
 type commandRegistry struct {
-	handlers map[string]*cmdHandler
 	// preregistration of commands allows for users to predictably
 	// know what commands are in theory POSSIBLE to execute within
 	// the CLI, without yet registering them for use.
@@ -289,6 +289,7 @@ type commandRegistry struct {
 	// successfully is still dependent on some other action happening first,
 	// such as logging in.
 	registry map[string]registrationStatus
+	handlers map[string]*cmdHandler
 }
 
 func (c *commandRegistry) run(s *State, input string) error {

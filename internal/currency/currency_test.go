@@ -8,10 +8,10 @@ import (
 func Test_Format(t *testing.T) {
 	tests := []struct {
 		name      string
-		input     int64
 		isoCode   string
-		useSymbol bool
 		expected  string
+		input     int64
+		useSymbol bool
 	}{
 		{
 			input:     20000,

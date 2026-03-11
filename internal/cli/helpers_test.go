@@ -6,8 +6,8 @@ import (
 
 func TestCleanInput(t *testing.T) {
 	tests := []struct {
-		input    string
 		expected []string
+		input    string
 	}{
 		{
 			input:    " hello world ",

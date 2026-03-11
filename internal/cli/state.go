@@ -13,12 +13,12 @@ import (
 // regardless of user login. It knows the full context of all
 // systems connected.
 type State struct {
+	CmdQueue chan<- string
 	DoneChan *chan bool
 	Logger   *Logger
 	Config   *config.Config
 	Client   *pgo.Client
 	Session  *cliSession
-	CmdQueue chan<- string
 	styles   *styles
 }
 
@@ -311,9 +311,9 @@ func (s *State) getStyledPrompt() string {
 // cliSession represents the state of the CLI in regard to
 // a logged-in user.
 type cliSession struct {
-	CommandRegistry *commandRegistry
 	ActiveUser      pgo.User
 	ActiveBudget    pgo.Budget
+	CommandRegistry *commandRegistry
 }
 
 // Init preregisters all commands to the internal command registry.

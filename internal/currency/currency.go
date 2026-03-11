@@ -7,20 +7,20 @@ import (
 )
 
 type Currency struct {
+	Name              string `json:"name"`
 	ISOCode           string `json:"iso_code"`
 	Symbol            string `json:"symbol"`
+	DecimalFactor     int64  `json:"decimal_factor"`
 	DecimalSeparator  rune   `json:"decimal_separator"`
 	ThousandSeparator rune   `json:"thousand_separator"`
 	SymbolBefore      bool   `json:"symbol_before"`
-	Name              string `json:"name"`
-	DecimalFactor     int64  `json:"decimal_factor"`
 }
 
 var Currencies = map[string]Currency{
-	"USD": {"USD", "$", '.', ',', true, "US Dollar", 100},
-	"CAD": {"CAD", "$", '.', ',', true, "Canadian Dollar", 100},
-	"EUR": {"EUR", "€", ',', '.', true, "Euro", 100},
-	"GBP": {"GBP", "£", '.', ',', true, "Pound Sterling", 100},
+	"USD": {"US Dollar", "USD", "$", 100, '.', ',', true},
+	"CAD": {"Canadian Dollar", "CAD", "$", 100, '.', ',', true},
+	"EUR": {"Euro", "EUR", "€", 100, ',', '.', true},
+	"GBP": {"Pound Sterling", "GBP", "£", 100, '.', ',', true},
 }
 
 // NOTE: Further localization of this software may
