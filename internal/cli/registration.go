@@ -254,11 +254,6 @@ func makeResourceCommandHandlers() []*cmdHandler {
 							description: "rewrite account notes",
 							parameters:  []string{"new_notes"},
 						},
-						{
-							name:        "type",
-							description: "choose different account type",
-							parameters:  []string{"new_type"},
-						},
 					},
 				},
 				{

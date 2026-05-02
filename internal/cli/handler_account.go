@@ -111,11 +111,6 @@ func handleAccountUpdate(s *State, c *handlerContext) error {
 	if err != nil {
 		payloadName = account.Name
 	}
-	c.args.trackOptArgs(&c.cmd, "type")
-	payloadAccountType, err := c.args.pfx()
-	if err != nil {
-		payloadAccountType = account.AccountType
-	}
 	c.args.trackOptArgs(&c.cmd, "notes")
 	payloadNotes, err := c.args.pfx()
 	if err != nil {
@@ -123,11 +118,8 @@ func handleAccountUpdate(s *State, c *handlerContext) error {
 	}
 
 	err = s.Client.BudgetAccountUpdate(s.Session.ActiveBudget.ID.String(), account.ID.String(), pgo.BudgetAccountUpdateData{
-		MetaData: pgo.MetaData{
-			Name:  payloadName,
-			Notes: payloadNotes,
-		},
-		AccountType: payloadAccountType,
+		Name:  payloadName,
+		Notes: payloadNotes,
 	})
 	if err != nil {
 		return err

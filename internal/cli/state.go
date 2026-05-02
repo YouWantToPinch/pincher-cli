@@ -39,12 +39,12 @@ func (s *State) GetBudget(bID string) (budget *pgo.Budget, err error) {
 // budgets belonging to the active user. It first attempts
 // to pull from cache, then making an API call if it is
 // unable to do so.
-func (s *State) GetBudgets(bID, urlQuery string) (budgets []*pgo.Budget, err error) {
+func (s *State) GetBudgets(urlQuery string) (budgets []*pgo.Budget, err error) {
 	budgets = s.Client.Cache.Budgets(urlQuery)
 	if budgets != nil {
 		return budgets, nil
 	}
-	budgets, err = s.Client.Budgets(bID, urlQuery)
+	budgets, err = s.Client.Budgets(urlQuery)
 	return budgets, err
 }
 
