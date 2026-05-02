@@ -9,12 +9,11 @@ type ConfigSettings struct {
 	BaseURL         string `json:"db_url" smname:"Database URL" smdes:"URL of the server to connect to"`
 	CurrencyISOCode string `json:"currency_iso_code" smname:"Currency ISO" smdes:"The ISO Code of the currency desired for monetary visualization"`
 	StayLoggedIn    bool   `json:"stay_logged_in" smname:"Stay Logged In" smdes:"Keep a login session alive on exit."`
-	VimKeysEnabled  bool   `json:"vim_keys_enabled" smname:"Vim Keys Enabled" smdes:"Use vim keys to navigate CLI menus."`
 }
 
 // Config represents a configuration specific to the local machine.
 type Config struct {
-	RefreshToken string `json:"refresh_token"`
+	RefreshToken string `bl:"" json:"refresh_token"`
 	ConfigSettings
 }
 
@@ -32,7 +31,6 @@ func (c *Config) SetDefaults(dbURL string) {
 		BaseURL:         dbURL,
 		StayLoggedIn:    true,
 		CurrencyISOCode: "USD",
-		VimKeysEnabled:  true,
 	}
 }
 

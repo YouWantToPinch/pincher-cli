@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/YouWantToPinch/pincher-cli/internal/config"
-	ui "github.com/bntrtm/gostructui"
+	ui "github.com/bntrtm/structly/menu"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -24,23 +24,22 @@ func handlerConfig(s *State, c *handlerContext) error {
 }
 
 func handleConfigEdit(s *State, c *handlerContext) error {
-	customMenuSettings := &ui.MenuSettings{}
-	customMenuSettings.Init()
-	customMenuSettings.Header = "Edit your local configuration: "
+	customOptions := ui.NewMenuOptions()
+	customOptions.SetHeader("Edit your local configuration: ")
 
 	newConfig := s.Config.ConfigSettings
-	configEditMenu, err := ui.InitialTModelStructMenu(&newConfig, []string{"RefreshToken"}, true, customMenuSettings)
+	menu, err := ui.NewMenuWithOptions(&newConfig, customOptions)
 	if err != nil {
 		return err
 	}
-	p := tea.NewProgram(configEditMenu)
-	if entry, err := p.Run(); err != nil {
+	p := tea.NewProgram(menu)
+	if _, err := p.Run(); err != nil {
 		return err
 	} else {
-		if entry.(ui.TModelStructMenu).QuitWithCancel {
+		if menu.EndState.QuitWithCancel {
 			fmt.Printf("Canceled user configuration changes.\n")
 		} else {
-			err = entry.(ui.TModelStructMenu).ParseStruct(&newConfig)
+			err = menu.ParseStruct(&newConfig)
 			if err != nil {
 				return err
 			}
