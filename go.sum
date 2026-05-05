@@ -1,5 +1,7 @@
 github.com/YouWantToPinch/pincher-sdk-go v0.0.0-20260502002256-051641e2427d h1:vCQmLw2A/H24GmMOV7Sh1/BU05vzpkAcf7zxp4K8074=
 github.com/YouWantToPinch/pincher-sdk-go v0.0.0-20260502002256-051641e2427d/go.mod h1:pZ/EE1LeoXSdQMxqjo8GiuqpVQndW26afLlafglVS5c=
+github.com/YouWantToPinch/pincher-sdk-go v0.0.0-20260505161211-da7aac2ca432 h1:5LD94dSQwI3INPT/Qa+qKoXfYKvbV2KMaafdJtAy1Dc=
+github.com/YouWantToPinch/pincher-sdk-go v0.0.0-20260505161211-da7aac2ca432/go.mod h1:pZ/EE1LeoXSdQMxqjo8GiuqpVQndW26afLlafglVS5c=
 github.com/aymanbagabas/go-osc52/v2 v2.0.1 h1:HwpRHbFMcZLEVr42D4p7XBqjyuxQH5SMiErDT4WkJ2k=
 github.com/aymanbagabas/go-osc52/v2 v2.0.1/go.mod h1:uYgXzlJ7ZpABp8OJ+exZzJJhRNQ2ASbcXHWsFqH8hp8=
 github.com/bntrtm/structly v1.2.0 h1:IUAV5ewJ7HKjhuAJ0scGQmO3+TzqiZTi0vTLqbQmwxA=

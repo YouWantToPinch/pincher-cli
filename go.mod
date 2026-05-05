@@ -3,7 +3,7 @@ module github.com/YouWantToPinch/pincher-cli
 go 1.25.5
 
 require (
-	github.com/YouWantToPinch/pincher-sdk-go v0.0.0-20260502002256-051641e2427d
+	github.com/YouWantToPinch/pincher-sdk-go v0.0.0-20260505161211-da7aac2ca432
 	github.com/bntrtm/structly v1.2.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
